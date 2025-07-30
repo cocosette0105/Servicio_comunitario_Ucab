@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from 'react'; // Importa React y hooks necesarios
 import { FileText, Download, Filter, Calendar, User, MapPin, ChevronDown } from 'lucide-react'; // Importa íconos de la librería lucide-react
 import { Work, ReportFilters } from '../types'; // Importa los tipos Work y ReportFilters
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 
 // Define las props que recibe el componente Reports
 interface ReportsProps {
@@ -58,37 +61,70 @@ const Reports: React.FC<ReportsProps> = ({ works }) => {
     setFilters({});
   };
 
+  const exportToPDF = () => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(14);
+  doc.text('Reporte de Obras del Museo', 14, 15);
+
+  const headers = [['ID', 'Nombre', 'Artista', 'Fecha Realización', 'Fecha Ingreso', 'Ubicación', 'Descripción']];
+
+  const data = filteredWorks.map(work => [
+    work.id,
+    work.name,
+    work.artist,
+    new Date(work.realizationDate).toLocaleDateString('es-ES'),
+    new Date(work.museumEntryDate).toLocaleDateString('es-ES'),
+    work.physicalLocation,
+    work.description.replace(/\n/g, ' ') // quita saltos de línea
+  ]);
+
+  autoTable(doc, {
+    startY: 20,
+    head: headers,
+    body: data,
+    styles: {
+      fontSize: 8,
+      cellPadding: 2,
+    },
+    headStyles: {
+      fillColor: [41, 128, 185], // azul UCAB
+      textColor: 255,
+      fontStyle: 'bold',
+    },
+  });
+
+  doc.save(`reporte_obras_${new Date().toISOString().split('T')[0]}.pdf`);
+};
+
+
   // Exporta los resultados filtrados a un archivo CSV
   const exportToCSV = () => {
-    // Define los encabezados del CSV
-    const headers = ['ID', 'Nombre', 'Artista', 'Fecha Realización', 'Fecha Ingreso', 'Ubicación', 'Descripción'];
-    // Construye el contenido del CSV
-    const csvContent = [
-      headers.join(','), // Encabezados
-      ...filteredWorks.map(work => [
-        work.id,
-        `"${work.name}"`,
-        `"${work.artist}"`,
-        work.realizationDate,
-        work.museumEntryDate,
-        `"${work.physicalLocation}"`,
-        `"${work.description.replace(/"/g, '""')}"` // Escapa comillas dobles en la descripción
-      ].join(','))
-    ].join('\n');
+  const headers = ['ID', 'Nombre', 'Artista', 'Fecha Realización', 'Fecha Ingreso', 'Ubicación', 'Descripción'];
 
-    // Crea un blob y lo descarga como archivo CSV
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (link.download !== undefined) { // Verifica si el navegador soporta la descarga
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `reporte_obras_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click(); // Dispara la descarga
-      document.body.removeChild(link);
-    }
-  };
+  const csvContent = [
+    headers.join(';'), // <-- Cambia a punto y coma
+    ...filteredWorks.map(work => [
+      work.id,
+      `"${work.name}"`,
+      `"${work.artist}"`,
+      new Date(work.realizationDate).toLocaleDateString('es-ES'), // <-- Formato legible
+      new Date(work.museumEntryDate).toLocaleDateString('es-ES'),
+      `"${work.physicalLocation}"`,
+      `"${work.description.replace(/"/g, '""')}"`
+    ].join(';'))
+  ].join('\n');
+
+  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // <-- BOM para Excel
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `reporte_obras_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
   // Calcula estadísticas de las obras filtradas
   const stats = {
@@ -137,6 +173,15 @@ const Reports: React.FC<ReportsProps> = ({ works }) => {
             <Download className="h-5 w-5" /> {/* Ícono de descarga */}
             <span>Exportar CSV</span>
           </button>
+          
+          <button
+              onClick={exportToPDF}
+               className="flex items-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+              >
+             <Download className="h-5 w-5" />
+              <span>Exportar PDF</span>
+              </button>
+
         </div>
       </div>
 

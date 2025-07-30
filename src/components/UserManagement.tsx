@@ -34,7 +34,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
     fullName: '',
     username: '',
     password: '',
-    role: 'curador'
+    role: 'colaborador'
   });
 
   // Filtra los usuarios según el término de búsqueda (por nombre, usuario o rol)
@@ -69,7 +69,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
     }
     
     // Limpia el formulario y oculta el formulario modal
-    setFormData({ fullName: '', username: '', password: '', role: 'curador' });
+    setFormData({ fullName: '', username: '', password: '', role: 'colaborador' });
     setShowForm(false);
   };
 
@@ -114,19 +114,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
   // Etiquetas legibles para los roles de usuario
   const roleLabels = {
     administrador: 'Administrador',
-    curador: 'Curador',
-    mantenimiento: 'Mantenimiento',
-    seguridad: 'Seguridad',
-    restaurador: 'Restaurador'
+  supervisor: 'Supervisor',
+  colaborador: 'Colaborador'
   };
 
   // Colores de fondo y texto para cada rol
   const roleColors = {
-    administrador: 'bg-red-100 text-red-800',
-    curador: 'bg-blue-100 text-blue-800',
-    mantenimiento: 'bg-green-100 text-green-800',
-    seguridad: 'bg-yellow-100 text-yellow-800',
-    restaurador: 'bg-purple-100 text-purple-800'
+     administrador: 'bg-red-100 text-red-800',
+  supervisor: 'bg-yellow-100 text-yellow-800',
+  colaborador: 'bg-green-100 text-green-800'
   };
 
   // Renderizado principal del componente
@@ -145,7 +141,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
         {/* Botón para mostrar el formulario de agregar usuario */}
         <button
           onClick={() => {
-            setFormData({ fullName: '', username: '', password: '', role: 'curador' });
+            setFormData({ fullName: '', username: '', password: '', role: 'colaborador' });
             setEditingUser(null);
             setShowForm(true);
           }}

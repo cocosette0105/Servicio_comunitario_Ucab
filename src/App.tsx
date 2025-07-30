@@ -1,5 +1,5 @@
 // Importa funciones esenciales de React
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 // Importa el formulario de inicio de sesión
 import LoginForm from './components/LoginForm';
@@ -79,7 +79,7 @@ function App() {
           fullName: 'María González',
           username: 'mgonzalez',
           password: 'curador123',
-          role: 'curador',
+          role: 'administrador',
           createdAt: '2024-01-15',
           isActive: true
         },
@@ -88,7 +88,7 @@ function App() {
           fullName: 'Carlos Mendoza',
           username: 'cmendoza',
           password: 'mant456',
-          role: 'mantenimiento',
+          role: 'colaborador',
           createdAt: '2024-02-10',
           isActive: true
         }

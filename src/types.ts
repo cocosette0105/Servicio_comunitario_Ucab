@@ -30,7 +30,7 @@ export interface SystemUser {
   fullName: string;
   username: string;
   password: string;
-  role: 'administrador' | 'curador' | 'mantenimiento' | 'seguridad' | 'restaurador';
+  role: 'administrador' | 'supervisor' | 'colaborador'; // Roles actualizados
   createdAt: string;
   isActive: boolean;
 }
