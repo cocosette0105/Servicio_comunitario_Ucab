@@ -10,17 +10,25 @@ const Overview: React.FC<OverviewProps> = ({ works }) => { // Componente funcion
   const stats = { // Calcula estadísticas generales de las obras.
     totalWorks: works.length, // Total de obras registradas.
     uniqueArtists: new Set(works.map(work => work.artist)).size, // Número de artistas únicos.
-    uniqueLocations: new Set(works.map(work => work.physicalLocation)).size, // Número de ubicaciones físicas únicas.
-    recentWorks: works.filter(work => { // Número de obras ingresadas en el último año.
-      const entryDate = new Date(work.museumEntryDate);
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      return entryDate > oneYearAgo;
-    }).length
+    uniqueLocations: new Set(works.map(work => work.storageLocation)).size, // Número de ubicaciones únicas.
+    // Filtra las obras ingresadas en el último año y cuenta cuántas hay.
+recentWorks: works.filter(work => {
+  const entryDate = new Date(work.collection?.entryDate ?? ''); // Obtiene la fecha de ingreso de la obra.
+  if (isNaN(entryDate.getTime())) return false; // Si la fecha es inválida, no cuenta la obra.
+  // Compara la fecha de ingreso con la fecha actual menos un año. 
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  return entryDate > oneYearAgo;
+}).length
+
   };
 
   const recentWorks = works // Obtiene las 5 obras más recientemente ingresadas, ordenadas por fecha.
-    .sort((a, b) => new Date(b.museumEntryDate).getTime() - new Date(a.museumEntryDate).getTime())
+   .sort((a, b) =>
+  new Date(b.collection?.entryDate ?? '').getTime() -
+  new Date(a.collection?.entryDate ?? '').getTime()
+)
+
     .slice(0, 5);
 
   return (
@@ -96,12 +104,14 @@ const Overview: React.FC<OverviewProps> = ({ works }) => { // Componente funcion
                 <div>
                   <h3 className="font-bold text-amber-900 text-lg">{work.name}</h3>
                   <p className="text-amber-700 font-medium">Por {work.artist}</p>
-                  <p className="text-amber-600 mt-1">{work.physicalLocation}</p>
+                  <p className="text-amber-600 mt-1">{work.storageLocation}</p>
+
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-amber-900">
-                    {new Date(work.museumEntryDate).toLocaleDateString('es-ES')} {/* Fecha de ingreso en formato español */}
-                  </p>
+                 <p className="text-sm font-bold text-amber-900">
+  {new Date(work.collection?.entryDate ?? '').toLocaleDateString('es-ES')}
+</p>
+
                   <p className="text-xs text-amber-600 font-medium">Fecha de ingreso</p>
                 </div>
               </div>

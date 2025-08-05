@@ -30,11 +30,12 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
   const filteredWorks = works.filter(work =>
     work.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     work.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    work.physicalLocation.toLowerCase().includes(searchTerm.toLowerCase())
+   (work.storageLocation ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Maneja la adición de una nueva obra
-  const handleAddWork = (workData: Omit<Work, 'id'>) => {
+  const handleAddWork = (workData: Partial<Work>) => {
+
     // Verifica si ya existe una obra con el mismo ID
     const existingWork = works.find(work => work.id === (workData as any).id);
     if (existingWork) {
@@ -50,7 +51,7 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
   };
 
   // Maneja la edición de una obra existente
-  const handleEditWork = (workData: Omit<Work, 'id'>) => {
+  const handleEditWork = (workData: Partial<Work>) => {
     if (editingWork) {
       // Verifica si el nuevo ID ya existe en otra obra distinta a la que se edita
       const existingWork = works.find(work => work.id === (workData as any).id && work.id !== editingWork.id);
@@ -201,17 +202,17 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
                       <p className="font-bold text-amber-900 text-lg">{work.name}</p>
                       <p className="text-sm text-amber-600 font-medium">
                         {/* Muestra la fecha de realización formateada */}
-                        Realizada: {new Date(work.realizationDate).toLocaleDateString('es-ES')}
+                        Realizada: {work.realizationDate ??'Sin fecha' }
                       </p>
                     </div>
                   </td>
                   {/* Columna artista */}
                   <td className="px-8 py-6 text-amber-900 font-semibold">{work.artist}</td>
                   {/* Columna ubicación física */}
-                  <td className="px-8 py-6 text-amber-700">{work.physicalLocation}</td>
+                  <td className="px-8 py-6 text-amber-700">{work.storageLocation}</td>
                   {/* Columna fecha de ingreso al museo */}
                   <td className="px-8 py-6 text-amber-700 font-medium">
-                    {new Date(work.museumEntryDate).toLocaleDateString('es-ES')}
+                    {work.collection?.entryDate ?? 'Sin fecha'}
                   </td>
                   {/* Columna de acciones (ver, editar, eliminar) */}
                   <td className="px-8 py-6">

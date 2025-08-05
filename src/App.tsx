@@ -42,27 +42,86 @@ function App() {
     } else {
       // Si no hay obras guardadas, se inicializa con datos de ejemplo
       const sampleWorks: Work[] = [
-        {
-          id: '1',
-          name: 'La Dama de Azul',
-          realizationDate: '1890-03-15',
-          artist: 'Carmen Vásquez',
-          museumEntryDate: '1920-06-10',
-          description: 'Óleo sobre lienzo que representa una dama de la alta sociedad colonial vestida de azul cobalto.',
-          observations: 'Obra en excelente estado de conservación',
-          physicalLocation: 'Sala A - Estante 1 - Posición 3'
-        },
-        {
-          id: '2',
-          name: 'Paisaje Andino',
-          realizationDate: '1925-08-22',
-          artist: 'Roberto Martínez',
-          museumEntryDate: '1935-12-05',
-          description: 'Acuarela que captura la majestuosidad de los Andes durante el amanecer.',
-          observations: 'Requiere cuidado especial por la técnica de acuarela',
-          physicalLocation: 'Sala B - Estante 2 - Posición 1'
-        }
-      ];
+  {
+    id: '1',
+    inventoryNumber: 'MCF-001',
+    previousNumbers: 'ANT-123',
+    name: 'La Dama de Azul',
+    artist: 'Carmen Vásquez',
+    classification: 'Pintura al óleo',
+    realizationDate: '1890',
+    technique: 'Óleo sobre lienzo',
+    materials: 'Lienzo y óleo',
+    dimensions: {
+      height: '120 cm',
+      width: '80 cm'
+    },
+    description: 'Óleo sobre lienzo que representa una dama de la alta sociedad colonial vestida de azul cobalto.',
+    observations: 'Obra en excelente estado de conservación',
+    conservationState: {
+      condition: 'Bueno',
+      integrity: 'Completo'
+    },
+    technicalData: {},
+    references: {},
+    photoUrl: '',
+    storageLocation: 'Sala A - Estante 1 - Posición 3',
+    collection: {
+      acquisitionSource: 'Colección privada',
+      acquisitionMethod: 'Donación',
+      entryDate: '1920-06-10'
+    },
+    responsibleEntity: {
+      name: 'Museo Central',
+      address: 'Av. Principal #123'
+    },
+    inventory: {
+      responsible: 'María González',
+      date: '2024-01-01',
+      supervisor: 'Carlos Mendoza',
+      supervisorDate: '2024-01-02'
+    }
+  },
+  {
+    id: '2',
+    inventoryNumber: 'MCF-002',
+    name: 'Paisaje Andino',
+    artist: 'Roberto Martínez',
+    classification: 'Acuarela',
+    realizationDate: '1925',
+    technique: 'Acuarela sobre papel',
+    materials: 'Papel y pigmentos',
+    dimensions: {
+      height: '90 cm',
+      width: '60 cm'
+    },
+    description: 'Acuarela que captura la majestuosidad de los Andes durante el amanecer.',
+    observations: 'Requiere cuidado especial por la técnica de acuarela',
+    conservationState: {
+      condition: 'Regular',
+      integrity: 'Completo'
+    },
+    technicalData: {},
+    references: {},
+    photoUrl: '',
+    storageLocation: 'Sala B - Estante 2 - Posición 1',
+    collection: {
+      acquisitionSource: 'Galería Andina',
+      acquisitionMethod: 'Compra',
+      entryDate: '1935-12-05'
+    },
+    responsibleEntity: {
+      name: 'Museo Central',
+      address: 'Av. Principal #123'
+    },
+    inventory: {
+      responsible: 'Carlos Mendoza',
+      date: '2024-01-10',
+      supervisor: 'María González',
+      supervisorDate: '2024-01-11'
+    }
+  }
+];
       setWorks(sampleWorks); // Se asignan obras de ejemplo
       localStorage.setItem('museum_works', JSON.stringify(sampleWorks)); // Se guardan en localStorage
     }

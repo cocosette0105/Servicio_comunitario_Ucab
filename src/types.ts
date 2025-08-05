@@ -6,21 +6,89 @@ export interface User {
 }
 
 export interface Work {
-  id: string;
-  name: string;
-  realizationDate: string;
-  artist: string;
-  museumEntryDate: string;
-  description: string;
-  observations?: string; // Nuevo campo para observaciones
-  physicalLocation: string;
+  id: string; // ID interno de la base de datos
+  
+  // SECCIÓN: IDENTIFICACIÓN
+  inventoryNumber: string; // N° de Identificación (ej. MCF-219)
+  previousNumbers?: string; // N°s anteriores
+  name: string; // Nombre del Objeto / Título de la Obra
+  artist: string; // Autor/Artesano/Taller
+  
+  // SECCIÓN: DATOS TÉCNICOS
+  classification: string; // Clasificación Genérica (ej. OBRA GRAFICA)
+  realizationDate: string; // Corresponde a "Epoca / Estilo / Movim. / Escuela"
+  technique: string; // Técnica (ej. AGUAFUERTE)
+  materials: string; // Materiales
+  dimensions: {
+    height?: string;
+    width?: string;
+    depth?: string;
+    diameter?: string;
+  };
+  
+  // SECCIÓN: DESCRIPCIÓN Y OBSERVACIONES
+  description: string; // Descripción formal
+  signatureDetails?: string; // Ubicación y detalles de la firma
+  observations?: string; // Otras observaciones generales
+  
+  // SECCIÓN: FOTOGRAFÍA
+  photo?: File; // Para la carga de un nuevo archivo de imagen
+  photoUrl?: string; // URL de la foto ya existente
+  
+  // SECCIÓN: ESTADO DE CONSERVACIÓN
+  conservationState: {
+    condition: 'Bueno' | 'Regular' | 'Malo' | '';
+    integrity: 'Completo' | 'Incompleto' | 'Fragmento' | '';
+  };
+  
+  // SECCIÓN: DATOS TÉCNICOS
+  technicalData: {
+    provenance?: string;       // Procedencia
+    culture?: string;          // Cultura/Tradición
+    eraStyle?: string;         // Epoca /Estilo...
+    value?: string;            // Valor / Moneda
+    appraiser?: string;        // Responsable de avalúo
+    appraisalDate?: string;    // Fecha de avalúo
+    originalOwner?: string;    // Propietario Original
+  };
+  
+  // SECCIÓN: REFERENCIAS
+  references: {
+    documents?: string; // Documentos relacionados
+    bibliography?: string; // Bibliografía
+    exhibitions?: string; // Exposiciones
+    treatments?: string; // Tratamientos realizados
+  };
+  
+  storageLocation?: string; // Ubicación en Depósito
+  
+  // SECCIÓN: COLECCIÓN
+  collection: {
+    acquisitionSource?: string; // Fuente de adquisición
+    acquisitionMethod?: string; // Forma de adquisición
+    entryDate?: string;         // Fecha de Ingreso
+  };
+  
+  // SECCIÓN: RESPONSABLE DE LA OBRA
+  responsibleEntity: {
+    name?: string; // Nombre de la entidad responsable
+    address?: string; // Dirección de la entidad responsable
+  };
+  
+  // SECCIÓN: INVENTARIO
+  inventory: {
+    responsible?: string; // Responsable del inventario
+    date?: string; // Fecha de inventario
+    supervisor?: string; // Supervisor del inventario
+    supervisorDate?: string; // Fecha de supervisión
+  };
 }
 
 export interface ReportFilters {
   artist?: string;
   realizationDateFrom?: string;
   realizationDateTo?: string;
-  physicalLocation?: string;
+  storageLocation?: string;
   entryDateFrom?: string;
   entryDateTo?: string;
 }
