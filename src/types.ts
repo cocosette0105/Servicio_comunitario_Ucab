@@ -110,8 +110,29 @@ export interface MovementRecord {
   date: string;
   type: 'entrada' | 'salida';
   reason: string;
-  responsible: string;
   notes?: string;
+  // Nuevos campos para detalles de la obra
+  workDetails: {
+    author: string;
+    title: string;
+    technique: string;
+    dimensions: string;
+    collection: string;
+  };
+  // Nuevo campo para estado de conservación
+  conservationState: string;
+  // Información de quien recibe la obra
+  receiver: {
+    name: string;
+    idCard: string;
+    phone: string;
+  };
+  // Información de quien entrega la obra
+  deliverer: {
+    name: string;
+    idCard: string;
+    phone: string;
+  };
 }
 
 export interface MaintenanceRecord {

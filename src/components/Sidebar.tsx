@@ -13,7 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
   const menuItems = [ // Define los ítems del menú lateral con su id, etiqueta e ícono.
     { id: 'overview', label: 'Panel Principal', icon: Home },
     { id: 'works', label: 'Gestión de Obras', icon: Package },
-    { id: 'reports', label: 'Reportes', icon: FileText },
+    { id: 'reports', label: 'Reportes de Obras', icon: FileText },
     { id: 'users', label: 'Gestión de Usuarios', icon: Users },
     { id: 'movements', label: 'Historial de Movimientos', icon: ArrowUpDown },
     { id: 'maintenance', label: 'Historial de Mantenimiento', icon: Wrench },

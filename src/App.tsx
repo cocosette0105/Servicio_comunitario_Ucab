@@ -35,103 +35,69 @@ function App() {
       setUser(JSON.parse(savedUser));
     }
 
-    // Verifica si hay obras guardadas previamente
-    const savedWorks = localStorage.getItem('museum_works');
-    if (savedWorks) {
-      setWorks(JSON.parse(savedWorks)); // Se cargan las obras guardadas
-    } else {
-      // Si no hay obras guardadas, se inicializa con datos de ejemplo
-      const sampleWorks: Work[] = [
+ //datos de ejemplo de obras, ya no coloca los del storage
+    const sampleWorks: Work[] = [
   {
-    id: '1',
-    inventoryNumber: 'MCF-001',
-    previousNumbers: 'ANT-123',
-    name: 'La Dama de Azul',
-    artist: 'Carmen Vásquez',
-    classification: 'Pintura al óleo',
-    realizationDate: '1890',
-    technique: 'Óleo sobre lienzo',
-    materials: 'Lienzo y óleo',
+    inventoryNumber: "INV-001",
+    name: "Retrato de Simón Bolívar",
+    artist: "Martín Tovar y Tovar",
+    classification: "Pintura al óleo",
+    technique: "Óleo",
+    materials: "Lienzo",
+    realizationDate: "1883",
     dimensions: {
-      height: '120 cm',
-      width: '80 cm'
+      height: 120,
+      width: 90,
+      depth: undefined,
+      diameter: undefined,
     },
-    description: 'Óleo sobre lienzo que representa una dama de la alta sociedad colonial vestida de azul cobalto.',
-    observations: 'Obra en excelente estado de conservación',
+    description: "Retrato clásico del Libertador Simón Bolívar, representado con uniforme militar y mirada firme hacia el horizonte. Pintado con trazos suaves y detallados.",
+    observations: "Obra en excelente estado, recientemente restaurada.",
+    photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Mart%C3%ADn_Tovar_y_Tovar_-_Sim%C3%B3n_Bol%C3%ADvar_1883.jpg/800px-Mart%C3%ADn_Tovar_y_Tovar_-_Sim%C3%B3n_Bol%C3%ADvar_1883.jpg",
     conservationState: {
-      condition: 'Bueno',
-      integrity: 'Completo'
+      condition: "Bueno",
+      integrity: "Completo",
     },
-    technicalData: {},
-    references: {},
-    photoUrl: '',
-    storageLocation: 'Sala A - Estante 1 - Posición 3',
+    references: {
+      documents: "Certificado de autenticidad emitido por el Museo Nacional.",
+      bibliography: "Libro 'La pintura venezolana del siglo XIX', pág. 145.",
+      exhibitions: "Expuesta en el Museo de Bellas Artes, 2019.",
+      treatments: "Restauración superficial en 2022 para conservación del color.",
+    },
+    technicalData: {
+      provenance: "Museo Nacional de Historia",
+      culture: "Venezolana",
+      value: "50000 USD",
+      appraiser: "Ana Rodríguez",
+      appraisalDate: "2023-11-15",
+      originalOwner: "Colección privada de la familia Bolívar",
+    },
     collection: {
-      acquisitionSource: 'Colección privada',
-      acquisitionMethod: 'Donación',
-      entryDate: '1920-06-10'
+      acquisitionSource: "Donación del Ministerio de Cultura",
+      acquisitionMethod: "Donación",
+      entryDate: "2023-12-01",
     },
     responsibleEntity: {
-      name: 'Museo Central',
-      address: 'Av. Principal #123'
+      name: "Museo Nacional de Historia",
+      address: "Av. Universidad, Caracas, Venezuela",
     },
     inventory: {
-      responsible: 'María González',
-      date: '2024-01-01',
-      supervisor: 'Carlos Mendoza',
-      supervisorDate: '2024-01-02'
-    }
+      responsible: "Carlos Pérez",
+      date: "2024-01-05",
+      supervisor: "Laura Mendoza",
+      supervisorDate: "2024-01-06",
+    },
+    storageLocation: "Depósito A - Estantería 4, Nivel 2",
+    previousNumbers: "CAT-2005-021, REG-1987-045",
   },
-  {
-    id: '2',
-    inventoryNumber: 'MCF-002',
-    name: 'Paisaje Andino',
-    artist: 'Roberto Martínez',
-    classification: 'Acuarela',
-    realizationDate: '1925',
-    technique: 'Acuarela sobre papel',
-    materials: 'Papel y pigmentos',
-    dimensions: {
-      height: '90 cm',
-      width: '60 cm'
-    },
-    description: 'Acuarela que captura la majestuosidad de los Andes durante el amanecer.',
-    observations: 'Requiere cuidado especial por la técnica de acuarela',
-    conservationState: {
-      condition: 'Regular',
-      integrity: 'Completo'
-    },
-    technicalData: {},
-    references: {},
-    photoUrl: '',
-    storageLocation: 'Sala B - Estante 2 - Posición 1',
-    collection: {
-      acquisitionSource: 'Galería Andina',
-      acquisitionMethod: 'Compra',
-      entryDate: '1935-12-05'
-    },
-    responsibleEntity: {
-      name: 'Museo Central',
-      address: 'Av. Principal #123'
-    },
-    inventory: {
-      responsible: 'Carlos Mendoza',
-      date: '2024-01-10',
-      supervisor: 'María González',
-      supervisorDate: '2024-01-11'
-    }
-  }
+  
 ];
       setWorks(sampleWorks); // Se asignan obras de ejemplo
       localStorage.setItem('museum_works', JSON.stringify(sampleWorks)); // Se guardan en localStorage
-    }
+    
 
-    // Verifica si hay usuarios del sistema guardados
-    const savedSystemUsers = localStorage.getItem('museum_system_users');
-    if (savedSystemUsers) {
-      setSystemUsers(JSON.parse(savedSystemUsers)); // Se cargan los usuarios guardados
-    } else {
-      // Si no hay usuarios, se inicializa con datos de ejemplo
+
+   //datos de ejemplo de usuarios, ya no coloca los del storage
       const sampleUsers: SystemUser[] = [
         {
           id: '1',
@@ -150,18 +116,23 @@ function App() {
           role: 'colaborador',
           createdAt: '2024-02-10',
           isActive: true
-        }
+        },
+        {
+          id: '3',
+          fullName: 'Maria Mendoza',
+          username: 'mmendoza',
+          password: 'mant456',
+          role: 'colaborador',
+          createdAt: '2024-02-10',
+          isActive: true
+        },
+        
       ];
       setSystemUsers(sampleUsers); // Se asignan usuarios de ejemplo
       localStorage.setItem('museum_system_users', JSON.stringify(sampleUsers)); // Se guardan en localStorage
-    }
+    //}
 
-    // Verifica si hay registros de movimiento guardados
-    const savedMovements = localStorage.getItem('museum_movements');
-    if (savedMovements) {
-      setMovementRecords(JSON.parse(savedMovements)); // Se cargan los movimientos guardados
-    } else {
-      // Si no existen, se inicializa con un registro de ejemplo
+    //ejemplo para movimientos, ya no coloca los del storage
       const sampleMovements: MovementRecord[] = [
         {
           id: '1',
@@ -170,13 +141,34 @@ function App() {
           date: '2024-01-20',
           type: 'salida',
           reason: 'Exposición temporal en Museo Nacional',
-          responsible: 'María González',
-          notes: 'Préstamo por 3 meses'
+          notes: 'Préstamo por 3 meses',
+          // Detalles de la obra - información expandida para mejor control
+          workDetails: {
+            author: 'Carmen Vásquez',
+            title: 'La Dama de Azul',
+            technique: 'Óleo sobre lienzo',
+            dimensions: '80 x 60 cm',
+            collection: 'Colección Permanente'
+          },
+          // Estado de conservación - campo crítico para movimientos
+          conservationState: 'Excelente estado, sin daños visibles',
+          // Información del receptor - necesaria para trazabilidad
+          receiver: {
+            name: 'Dr. Carlos Mendoza',
+            idCard: '12.345.678',
+            phone: '+58 212-555-0123'
+          },
+          // Información del entregador - responsabilidad institucional
+          deliverer: {
+            name: 'María González',
+            idCard: '87.654.321',
+            phone: '+58 212-555-0456'
+          }
         }
       ];
-      setMovementRecords(sampleMovements); // Se asigna el movimiento de ejemplo
-      localStorage.setItem('museum_movements', JSON.stringify(sampleMovements)); // Se guarda en localStorage
-    }
+      setMovementRecords(sampleMovements);
+      localStorage.setItem('museum_movements', JSON.stringify(sampleMovements));
+  
 
     // Verifica si hay registros de mantenimiento guardados
     const savedMaintenance = localStorage.getItem('museum_maintenance');

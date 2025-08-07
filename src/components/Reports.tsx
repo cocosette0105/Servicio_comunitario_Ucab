@@ -134,7 +134,7 @@ const Reports: React.FC<ReportsProps> = ({ works }) => {
     <div className="p-8 space-y-8 bg-gradient-to-br from-amber-50 to-white min-h-screen">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-800 to-amber-900 bg-clip-text text-transparent mb-3">Reportes</h1>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-800 to-amber-900 bg-clip-text text-transparent mb-3">Reportes de Obras</h1>
           <p className="text-amber-700 text-lg">Genere reportes detallados de las obras del museo</p>
         </div>
         <div className="flex items-center space-x-3">
