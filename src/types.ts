@@ -139,9 +139,13 @@ export interface MaintenanceRecord {
   id: string;
   workId: string;
   workName: string;
+  workType: 'Pintura' | 'Escultura' | 'Instalación' | 'Cerámica' | 'Fotografía' | 'Artes gráficas' | 'Otros';
+  author: string;
+  dimensions: string;
+  technique: string;
+  year: string;
+  currentPrice: string;
+  maintenanceCategory: 'Conservación preventiva' | 'Conservación curativa';
+  interventionDescription: string;
   date: string;
-  maintenanceType: string;
-  observations: string;
-  responsible: string;
-  status: 'completado' | 'en_proceso' | 'pendiente';
 }

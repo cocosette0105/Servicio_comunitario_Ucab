@@ -170,27 +170,31 @@ function App() {
       localStorage.setItem('museum_movements', JSON.stringify(sampleMovements));
   
 
-    // Verifica si hay registros de mantenimiento guardados
+    /*// Verifica si hay registros de mantenimiento guardados, aqui iria BD
     const savedMaintenance = localStorage.getItem('museum_maintenance');
     if (savedMaintenance) {
       setMaintenanceRecords(JSON.parse(savedMaintenance)); // Se cargan los registros guardados
-    } else {
+    } else {*/
       // Se inicializa con un mantenimiento de ejemplo
       const sampleMaintenance: MaintenanceRecord[] = [
         {
           id: '1',
-          workId: '2',
-          workName: 'Paisaje Andino',
-          date: '2024-01-25',
-          maintenanceType: 'Limpieza y conservación',
-          observations: 'Se realizó limpieza superficial y aplicación de barniz protector',
-          responsible: 'Carlos Mendoza',
-          status: 'completado'
+          workId: 'INV-001',
+          workName: 'Retrato de Simón Bolívar',
+          workType: 'Pintura',
+          author: 'Martín Tovar y Tovar',
+          dimensions: '120 x 90 cm',
+          technique: 'Óleo sobre lienzo',
+          year: '1883',
+          currentPrice: 'Bs. 150.000,00',
+          maintenanceCategory: 'Conservación preventiva',
+          interventionDescription: 'Se realizó limpieza superficial con técnicas especializadas y aplicación de barniz protector para preservar los colores originales.',
+          date: '2024-01-25'
         }
       ];
       setMaintenanceRecords(sampleMaintenance); // Se asigna al estado
       localStorage.setItem('museum_maintenance', JSON.stringify(sampleMaintenance)); // Se guarda en localStorage
-    }
+    //}
   }, []);
 
   // Función que gestiona el login, actualiza estado y guarda el usuario en localStorage
