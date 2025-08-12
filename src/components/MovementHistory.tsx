@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Plus, Search, Calendar, ArrowUpCircle, ArrowDownCircle, Filter, ChevronDown, Download, FileText, Edit, Eye, Trash2 } from 'lucide-react';
 import { MovementRecord, Work } from '../types';
+import jsPDF from "jspdf"; //para el pdf
+import html2canvas from "html2canvas"; //para el pdf no olvidar instalar npm install jspdf html2canvas
+
+
 
 interface MovementHistoryProps {
   records: MovementRecord[];
@@ -288,192 +292,101 @@ const MovementHistory: React.FC<MovementHistoryProps> = ({ records, works, onUpd
     setShowForm(false);
   };
 
-  // Función para generar y descargar PDF - funcionalidad completamente nueva
-  const generatePDF = (record: MovementRecord) => {
-    // Creación del contenido HTML para el PDF con estructura profesional
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Registro de Movimiento - ${record.workName}</title>
-        <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            margin: 40px; 
-            line-height: 1.6; 
-            color: #333;
-          }
-          .header { 
-            text-align: center; 
-            border-bottom: 3px solid #1e40af; 
-            padding-bottom: 20px; 
-            margin-bottom: 30px;
-          }
-          .museum-name { 
-            font-size: 24px; 
-            font-weight: bold; 
-            color: #1e40af; 
-            margin-bottom: 10px;
-          }
-          .document-title { 
-            font-size: 18px; 
-            color: #666; 
-          }
-          .section { 
-            margin-bottom: 25px; 
-            padding: 15px; 
-            border-left: 4px solid #3b82f6; 
-            background-color: #eff6ff;
-          }
-          .section-title { 
-            font-size: 16px; 
-            font-weight: bold; 
-            color: #1e40af; 
-            margin-bottom: 10px; 
-            border-bottom: 1px solid #3b82f6; 
-            padding-bottom: 5px;
-          }
-          .field { 
-            margin-bottom: 8px; 
-          }
-          .field-label { 
-            font-weight: bold; 
-            color: #1e3a8a; 
-            display: inline-block; 
-            width: 150px;
-          }
-          .field-value { 
-            color: #333; 
-          }
-          .movement-type { 
-            display: inline-block; 
-            padding: 5px 15px; 
-            border-radius: 20px; 
-            font-weight: bold; 
-            color: white;
-            background-color: ${record.type === 'entrada' ? '#28a745' : '#dc3545'};
-          }
-          .footer { 
-            margin-top: 40px; 
-            text-align: center; 
-            font-size: 12px; 
-            color: #666; 
-            border-top: 1px solid #ddd; 
-            padding-top: 20px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="museum-name">Museo Carmelo Fernández</div>
-          <div class="document-title">Registro de Movimiento de Obra</div>
-        </div>
 
-        <div class="section">
-          <div class="section-title">Información General del Movimiento</div>
-          <div class="field">
-            <span class="field-label">Fecha:</span>
-            <span class="field-value">${new Date(record.date).toLocaleDateString('es-ES')}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Tipo:</span>
-            <span class="movement-type">${record.type === 'entrada' ? 'ENTRADA' : 'SALIDA'}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Motivo:</span>
-            <span class="field-value">${record.reason}</span>
-          </div>
-          ${record.notes ? `
-          <div class="field">
-            <span class="field-label">Notas:</span>
-            <span class="field-value">${record.notes}</span>
-          </div>
-          ` : ''}
-        </div>
+// Función para generar y descargar PDF real
+const generatePDF = async (record: MovementRecord) => {
+  // Logo en Base64 hay que arreglarlo porque aun no sale
+  const logoBase64 =
+    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wCEAAQEBAQEBAUFBQUHBwYHBwoJCAgJCg8KCwoLCg8WDhAODhAOFhQYExITGBQjHBgYHCMpIiAiKTEsLDE+Oz5RUW0BBAQEBAQEBQUFBQcHBgcHCgkICAkKDwoLCgsKDxYOEA4OEA4WFBgTEhMYF...MUy9/9k=";
 
-        <div class="section">
-          <div class="section-title">Detalles de la Obra</div>
-          <div class="field">
-            <span class="field-label">Título:</span>
-            <span class="field-value">${record.workDetails.title}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Autor:</span>
-            <span class="field-value">${record.workDetails.author}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Técnica:</span>
-            <span class="field-value">${record.workDetails.technique}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Medidas:</span>
-            <span class="field-value">${record.workDetails.dimensions}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Colección:</span>
-            <span class="field-value">${record.workDetails.collection}</span>
-          </div>
+  // HTML temporal para convertir a imagen
+  const tempContainer = document.createElement("div");
+  tempContainer.style.width = "800px";
+  tempContainer.innerHTML = `
+    <div style="font-family: Arial, sans-serif; padding: 40px; font-size: 14px; line-height: 1.6; color: #000;">
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+        <img src="${logoBase64}" style="height: 80px;">
+        <div>
+          <h2 style="margin: 0; font-size: 18px;">Museo Carmelo Fernández</h2>
         </div>
+      </div>
 
-        <div class="section">
-          <div class="section-title">Estado de Conservación</div>
-          <div class="field">
-            <span class="field-value">${record.conservationState}</span>
-          </div>
+      <div style="text-align: center; font-weight: bold; font-size: 18px; text-transform: uppercase; margin-bottom: 20px;">
+        INGRESO DE OBRAS
+      </div>
+
+      <div style="margin-bottom: 15px;">
+  Hoy <span style="border-bottom: 1px dashed #000; display: inline-block; min-width: 200px; padding-bottom: 5px; line-height: 1.6;">${new Date(
+    record.date
+  ).toLocaleDateString("es-ES")}</span>,
+  el Museo Carmelo Fernández recibe del ciudadano(a):
+  <span style="border-bottom: 1px dashed #000; min-width: 200px; padding-bottom: 5px; line-height: 1.6;">${record.receiver.name}</span> C.I.:
+  <span style="border-bottom: 1px dashed #000; min-width: 200px; padding-bottom: 5px; line-height: 1.6;">${record.receiver.idCard}</span>
+  la obra que se describe a continuación:
+</div>
+
+      <div style="margin-bottom: 15px;">
+        <b>Autor:</b> ${record.workDetails.author}<br>
+        <b>Título:</b> ${record.workDetails.title}<br>
+        <b>Técnica:</b> ${record.workDetails.technique}<br>
+        <b>Medidas:</b> ${record.workDetails.dimensions}<br>
+        <b>Colección:</b> ${record.workDetails.collection}
+      </div>
+
+      <div style="margin-bottom: 15px;">
+  La obra mencionada ingresa al museo con el objetivo de:
+  <span style="border-bottom: 1px dashed #000; min-width: 300px; padding-bottom: 5px; line-height: 1.6;">${record.reason}</span>
+</div>
+
+      <div style="margin-bottom: 15px;">
+        <b>Estado de conservación:</b><br>
+        ${record.conservationState}
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 40px;">
+        <div style="width: 45%;">
+          <p><strong>Recibe por el Museo:</strong></p>
+          <p>Nombre: ${record.deliverer.name}</p>
+          <p>C.I.: ${record.deliverer.idCard}</p>
+          <p>Firma: _______________________</p>
+          <p>Teléfono: ${record.deliverer.phone}</p>
         </div>
-
-        <div class="section">
-          <div class="section-title">Información del Receptor</div>
-          <div class="field">
-            <span class="field-label">Nombre:</span>
-            <span class="field-value">${record.receiver.name}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Cédula:</span>
-            <span class="field-value">${record.receiver.idCard}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Teléfono:</span>
-            <span class="field-value">${record.receiver.phone}</span>
-          </div>
+        <div style="width: 45%;">
+          <p><strong>Entrega:</strong></p>
+          <p>Nombre: ${record.receiver.name}</p>
+          <p>C.I.: ${record.receiver.idCard}</p>
+          <p>Firma: _______________________</p>
+          <p>Teléfono: ${record.receiver.phone}</p>
         </div>
+      </div>
 
-        <div class="section">
-          <div class="section-title">Información del Entregador</div>
-          <div class="field">
-            <span class="field-label">Nombre:</span>
-            <span class="field-value">${record.deliverer.name}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Cédula:</span>
-            <span class="field-value">${record.deliverer.idCard}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">Teléfono:</span>
-            <span class="field-value">${record.deliverer.phone}</span>
-          </div>
-        </div>
+      <div style="margin-top: 30px; font-size: 10px; text-align: center;">
+        Calle de servicio del Complejo Cultural Andrés Bello, 2da Av. Entre calles 13 y 14, San Felipe, Estado Yaracuy
+      </div>
+    </div>
+  `;
 
-        <div class="footer">
-          <p>Documento generado el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}</p>
-          <p>Sistema de Gestión de Bóveda - Museo Carmelo Fernández</p>
-        </div>
-      </body>
-      </html>
-    `;
+  document.body.appendChild(tempContainer);
 
-    // Creación y descarga del archivo PDF usando la API del navegador
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `movimiento_${record.workName.replace(/\s+/g, '_')}_${record.date}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+  // Convertir HTML a imagen
+  const canvas = await html2canvas(tempContainer, { scale: 2 });
+  const imgData = canvas.toDataURL("image/png");
+
+  // Crear PDF con jsPDF
+  const pdf = new jsPDF("p", "mm", "a4");
+  const imgProps = pdf.getImageProperties(imgData);
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+  // Descargar
+  pdf.save(`movimiento_${record.workName.replace(/\s+/g, "_")}_${record.date}.pdf`);
+
+  // Limpiar HTML temporal
+  document.body.removeChild(tempContainer);
+};
+
 
   // Función para limpiar filtros - mantiene funcionalidad original
   const clearFilters = () => {
