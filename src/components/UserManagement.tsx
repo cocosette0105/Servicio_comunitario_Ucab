@@ -127,16 +127,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
 
   // Renderizado principal del componente
   return (
-    <div className="p-8 space-y-8 bg-gradient-to-br from-yellow-50 to-white min-h-screen">
+    <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       {/* Encabezado y botón para agregar usuario */}
       <div className="flex items-center justify-between">
         <div>
           {/* Título principal */}
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-800 to-amber-900 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-3">
             Gestión de Usuarios
           </h1>
           {/* Descripción */}
-          <p className="text-amber-700 text-lg">Administre los usuarios del sistema del museo</p>
+          <p className="text-[#192d71] text-lg">Administre los usuarios del sistema del museo</p>
         </div>
         {/* Botón para mostrar el formulario de agregar usuario */}
         <button
@@ -145,7 +145,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
             setEditingUser(null);
             setShowForm(true);
           }}
-          className="flex items-center space-x-3 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+          className="flex items-center space-x-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
         >
           <Plus className="h-6 w-6" />
           <span>Agregar Usuario</span>
@@ -154,59 +154,59 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
 
       {/* Formulario para crear o editar usuario */}
       {showForm && (
-        <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-8">
-          <h2 className="text-2xl font-bold text-amber-900 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-8">
+          <h2 className="text-2xl font-bold text-[#192d71] mb-6">
             {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
           </h2>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Campo para el nombre completo */}
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">
+              <label className="block text-sm font-bold text-[#192d71] mb-3">
                 Nombre Completo *
               </label>
               <input
                 type="text"
                 value={formData.fullName}
                 onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                className="w-full px-5 py-4 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900"
+                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
                 required
               />
             </div>
             {/* Campo para el nombre de usuario */}
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">
+              <label className="block text-sm font-bold text-[#192d71] mb-3">
                 Nombre de Usuario *
               </label>
               <input
                 type="text"
                 value={formData.username}
                 onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                className="w-full px-5 py-4 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900"
+                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
                 required
               />
             </div>
             {/* Campo para la contraseña */}
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">
+              <label className="block text-sm font-bold text-[#192d71] mb-3">
                 Contraseña *
               </label>
               <input
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                className="w-full px-5 py-4 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900"
+                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
                 required
               />
             </div>
             {/* Campo para el rol del usuario */}
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">
+              <label className="block text-sm font-bold text-[#192d71] mb-3">
                 Rol *
               </label>
               <select
                 value={formData.role}
                 onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as SystemUser['role'] }))}
-                className="w-full px-5 py-4 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900"
+                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
                 required
               >
                 {Object.entries(roleLabels).map(([value, label]) => (
@@ -219,13 +219,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-6 py-3 text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition-all duration-200 font-semibold"
+                className="px-6 py-3 text-[#192d71] bg-[#192d71]/10 hover:bg-[#192d71]/20 rounded-xl transition-all duration-200 font-semibold"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+                className="px-6 py-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
               >
                 {editingUser ? 'Actualizar' : 'Crear'} Usuario
               </button>
@@ -235,19 +235,19 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
       )}
 
       {/* Tabla de usuarios */}
-      <div className="bg-white rounded-2xl shadow-lg border border-amber-200">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
         {/* Barra de búsqueda */}
-        <div className="p-8 border-b border-amber-200">
+        <div className="p-8 border-b border-[#192d71]/20">
           <div className="relative">
             {/* Ícono de búsqueda */}
-            <Search className="absolute left-4 top-4 h-6 w-6 text-amber-600" />
+            <Search className="absolute left-4 top-4 h-6 w-6 text-[#192d71]" />
             {/* Input para buscar usuarios */}
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre, usuario o rol..."
-              className="w-full pl-14 pr-6 py-4 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900 placeholder-amber-600 text-lg"
+              className="w-full pl-14 pr-6 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60 text-lg"
             />
           </div>
         </div>
@@ -255,38 +255,38 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
         {/* Contenedor de la tabla */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-amber-100 to-amber-50">
+            <thead className="bg-gradient-to-r from-[#192d71]/10 to-[#192d71]/5">
               <tr>
                 {/* Encabezados de la tabla */}
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Usuario
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Contraseña
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Rol
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Fecha Creación
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-amber-100">
+            <tbody className="divide-y divide-[#192d71]/10">
               {/* Mapea y muestra cada usuario filtrado en una fila */}
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gradient-to-r hover:from-amber-50 hover:to-white transition-all duration-200">
+                <tr key={user.id} className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200">
                   {/* Columna nombre y usuario */}
                   <td className="px-8 py-6">
                     <div>
-                      <p className="font-bold text-amber-900 text-lg">{user.fullName}</p>
-                      <p className="text-sm text-amber-600 font-medium">@{user.username}</p>
+                      <p className="font-bold text-[#192d71] text-lg">{user.fullName}</p>
+                      <p className="text-sm text-[#192d71]/70 font-medium">@{user.username}</p>
                     </div>
                   </td>
                   {/* Columna contraseña (oculta o visible) */}
@@ -298,7 +298,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                       {/* Botón para alternar visibilidad de la contraseña */}
                       <button
                         onClick={() => togglePasswordVisibility(user.id)}
-                        className="p-1 text-amber-600 hover:text-amber-800 transition-colors"
+                        className="p-1 text-[#192d71] hover:text-[#1e3a8a] transition-colors"
                       >
                         {showPasswords[user.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -321,7 +321,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                     </span>
                   </td>
                   {/* Columna fecha de creación */}
-                  <td className="px-8 py-6 text-amber-700 font-medium">
+                  <td className="px-8 py-6 text-[#192d71]/80 font-medium">
                     {new Date(user.createdAt).toLocaleDateString('es-ES')}
                   </td>
                   {/* Columna de acciones (activar/desactivar, editar, eliminar) */}
@@ -362,7 +362,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
 
         {/* Mensaje si no hay usuarios que mostrar */}
         {filteredUsers.length === 0 && (
-          <div className="p-12 text-center text-amber-600 font-medium text-lg">
+          <div className="p-12 text-center text-[#192d71]/60 font-medium text-lg">
             {searchTerm ? 'No se encontraron usuarios que coincidan con la búsqueda' : 'No hay usuarios registrados'}
           </div>
         )}

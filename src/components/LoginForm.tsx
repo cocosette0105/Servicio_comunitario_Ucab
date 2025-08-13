@@ -1,5 +1,5 @@
 import React, { useState } from 'react'; // Importa React y el hook useState para manejar el estado local del componente.
-import { Mouse as Museum, Lock, User as UserIcon } from 'lucide-react'; // Importa íconos desde la librería lucide-react para usarlos en el formulario.
+import { Lock, User as UserIcon } from 'lucide-react'; // Importa íconos desde la librería lucide-react para usarlos en el formulario.
 import { User } from '../types'; // Importa el tipo User para tipar el usuario autenticado.
 
 interface LoginFormProps { // Define las propiedades que recibe el componente LoginForm.
@@ -29,22 +29,22 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => { // Componente fun
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#192d71] via-[#1e3a8a] to-[#192d71] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Contenedor principal con fondo degradado y centrado vertical/horizontal */}
       <div className={`absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20`}></div>
       {/* Fondo decorativo con patrón de círculos */}
-      <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-md relative z-10 border border-amber-100">
+      <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-md relative z-10 border border-[#192d71]/20">
         {/* Tarjeta blanca con borde, sombra y padding */}
         <div className="text-center mb-8">
           {/* Encabezado del formulario */}
           <div className="flex items-center justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-amber-700 to-amber-900 rounded-2xl flex items-center justify-center shadow-lg">
-              <Museum className="h-8 w-8 text-white" /> {/* Ícono del museo */}
+            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg border-2 border-[#192d71]/20">
+              <img src="/foto logo.jpg" alt="Logo Museo Carmelo Fernández" className="w-16 h-16 object-contain" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-800 to-amber-900 bg-clip-text text-transparent mb-2">Museo Carmelo Fernández</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-2">Museo Carmelo Fernández</h1>
           {/* Título principal con efecto de gradiente */}
-          <p className="text-amber-700 font-medium">Sistema de Gestión de Bóveda</p>
+          <p className="text-[#192d71] font-medium">Sistema de Gestión de Bóveda</p>
           {/* Subtítulo */}
         </div>
 
@@ -55,12 +55,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => { // Componente fun
               Usuario
             </label>
             <div className="relative">
-              <UserIcon className="absolute left-4 top-4 h-5 w-5 text-amber-600" /> {/* Ícono de usuario */}
+              <UserIcon className="absolute left-4 top-4 h-5 w-5 text-[#192d71]" /> {/* Ícono de usuario */}
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)} // Actualiza el estado username al escribir.
-                className="w-full pl-12 pr-4 py-4 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900 placeholder-amber-500"
+                className="w-full pl-12 pr-4 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60"
                 placeholder="Ingrese su usuario"
                 required // Campo obligatorio.
               />
@@ -72,12 +72,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => { // Componente fun
               Contraseña
             </label>
             <div className="relative">
-              <Lock className="absolute left-4 top-4 h-5 w-5 text-amber-600" /> {/* Ícono de candado */}
+              <Lock className="absolute left-4 top-4 h-5 w-5 text-[#192d71]" /> {/* Ícono de candado */}
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)} // Actualiza el estado password al escribir.
-                className="w-full pl-12 pr-4 py-4 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900 placeholder-amber-500"
+                className="w-full pl-12 pr-4 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60"
                 placeholder="Ingrese su contraseña"
                 required // Campo obligatorio.
               />
@@ -92,13 +92,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => { // Componente fun
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            className="w-full bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
             Iniciar Sesión {/* Botón para enviar el formulario */}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-amber-600 bg-amber-50 rounded-lg py-2 px-4">
+        <div className="mt-8 text-center text-sm text-[#192d71] bg-[#192d71]/5 rounded-lg py-2 px-4">
           <p>Demo: admin / museo2024</p> {/* Mensaje informativo para pruebas */}
         </div>
       </div>

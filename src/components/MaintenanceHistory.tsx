@@ -357,14 +357,14 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
   // Renderizado principal del componente
   return (
-    <div className="p-8 space-y-8 bg-gradient-to-br from-blue-50 to-white min-h-screen">
+    <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       {/* Encabezado principal con título y botones de acción */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-800 to-blue-900 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-3">
             Historial de Mantenimiento
           </h1>
-          <p className="text-blue-700 text-lg">Gestione el mantenimiento y conservación de las obras</p>
+          <p className="text-[#192d71] text-lg">Gestione el mantenimiento y conservación de las obras</p>
         </div>
         
         {/* Botones de acción principales */}
@@ -374,8 +374,8 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
               showFilters 
-                ? 'bg-blue-100 border-blue-300 text-blue-800 font-semibold' 
-                : 'bg-white border-blue-300 text-blue-700 hover:bg-blue-50 font-medium'
+                ? 'bg-[#192d71]/10 border-[#192d71]/30 text-[#192d71] font-semibold' 
+                : 'bg-white border-[#192d71]/30 text-[#192d71] hover:bg-[#192d71]/5 font-medium'
             }`}
             title="Consultar historial con filtros"
           >
@@ -391,7 +391,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
               setEditingRecord(null);
               setShowForm(true);
             }}
-            className="flex items-center space-x-3 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+            className="flex items-center space-x-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
             title="Agregar nuevo historial"
           >
             <Plus className="h-6 w-6" />
@@ -402,12 +402,12 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
       {/* Panel de filtros (se muestra condicionalmente) */}
       {showFilters && (
-        <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-8">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-blue-900">Filtros de Consulta</h2>
+            <h2 className="text-xl font-bold text-[#192d71]">Filtros de Consulta</h2>
             <button
               onClick={clearFilters}
-              className="text-blue-700 hover:text-blue-900 text-sm font-semibold"
+              className="text-[#192d71] hover:text-[#1e3a8a] text-sm font-semibold"
             >
               Limpiar filtros
             </button>
@@ -417,11 +417,11 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Filtro por tipo de obra */}
             <div>
-              <label className="block text-sm font-bold text-blue-800 mb-3">Tipo de Obra</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Tipo de Obra</label>
               <select
                 value={workTypeFilter}
                 onChange={(e) => setWorkTypeFilter(e.target.value as any)}
-                className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-blue-50/30 text-blue-900"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
               >
                 <option value="all">Todos los tipos</option>
                 {workTypes.map(type => (
@@ -432,11 +432,11 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
             {/* Filtro por categoría de mantenimiento */}
             <div>
-              <label className="block text-sm font-bold text-blue-800 mb-3">Categoría</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Categoría</label>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as any)}
-                className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-blue-50/30 text-blue-900"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
               >
                 <option value="all">Todas las categorías</option>
                 <option value="Conservación preventiva">Conservación preventiva</option>
@@ -446,12 +446,12 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
             {/* Filtro por fecha */}
             <div>
-              <label className="block text-sm font-bold text-blue-800 mb-3">Fecha</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Fecha</label>
               <input
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-blue-50/30 text-blue-900"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
               />
             </div>
           </div>
@@ -460,15 +460,15 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
       {/* Formulario para crear/editar registro (se muestra condicionalmente) */}
       {showForm && (
-        <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-8">
-          <h2 className="text-2xl font-bold text-blue-900 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-8">
+          <h2 className="text-2xl font-bold text-[#192d71] mb-6">
             {editingRecord ? 'Modificar Registro de Mantenimiento' : 'Nuevo Registro de Mantenimiento'}
           </h2>
           
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Sección: Tipo de Obra */}
-            <div className="bg-blue-50/30 rounded-xl p-6 border border-blue-200">
-              <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center">
+            <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
+              <h3 className="text-lg font-bold text-[#192d71] mb-4 flex items-center">
                 <Palette className="h-5 w-5 mr-2" />
                 Tipo de Obra
               </h3>
@@ -488,7 +488,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                     year: ''
                   }));
                 }}
-                className="w-full px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-blue-900"
+                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
                 required
               >
                 {workTypes.map(type => (
@@ -498,15 +498,15 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
             </div>
 
             {/* Sección: Selección de Pieza */}
-            <div className="bg-blue-50/30 rounded-xl p-6 border border-blue-200">
-              <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center">
+            <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
+              <h3 className="text-lg font-bold text-[#192d71] mb-4 flex items-center">
                 <Hammer className="h-5 w-5 mr-2" />
                 Selección de Pieza
               </h3>
               <select
                 value={formData.workId}
                 onChange={(e) => handleWorkSelection(e.target.value)}
-                className="w-full px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-blue-900"
+                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
                 required
               >
                 <option value="">Seleccionar obra...</option>
@@ -520,53 +520,53 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
             {/* Sección: Información Autocompletada de la Obra */}
             {formData.workId && (
-              <div className="bg-blue-50/30 rounded-xl p-6 border border-blue-200">
-                <h3 className="text-lg font-bold text-blue-900 mb-4">Información de la Obra</h3>
+              <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
+                <h3 className="text-lg font-bold text-[#192d71] mb-4">Información de la Obra</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Campos autocompletados (solo lectura) */}
                   <div>
-                    <label className="block text-sm font-bold text-blue-800 mb-2">Autor</label>
+                    <label className="block text-sm font-bold text-[#192d71] mb-2">Autor</label>
                     <input
                       type="text"
                       value={formData.author}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl bg-gray-100 text-blue-900"
+                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-blue-800 mb-2">Nombre</label>
+                    <label className="block text-sm font-bold text-[#192d71] mb-2">Nombre</label>
                     <input
                       type="text"
                       value={formData.workName}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl bg-gray-100 text-blue-900"
+                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-blue-800 mb-2">Medidas</label>
+                    <label className="block text-sm font-bold text-[#192d71] mb-2">Medidas</label>
                     <input
                       type="text"
                       value={formData.dimensions}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl bg-gray-100 text-blue-900"
+                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-blue-800 mb-2">Técnica</label>
+                    <label className="block text-sm font-bold text-[#192d71] mb-2">Técnica</label>
                     <input
                       type="text"
                       value={formData.technique}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl bg-gray-100 text-blue-900"
+                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-blue-800 mb-2">Año</label>
+                    <label className="block text-sm font-bold text-[#192d71] mb-2">Año</label>
                     <input
                       type="text"
                       value={formData.year}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl bg-gray-100 text-blue-900"
+                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
                     />
                   </div>
                 </div>
@@ -574,15 +574,15 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
             )}
 
             {/* Sección: Información del Mantenimiento */}
-            <div className="bg-blue-50/30 rounded-xl p-6 border border-blue-200">
-              <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center">
+            <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
+              <h3 className="text-lg font-bold text-[#192d71] mb-4 flex items-center">
                 <Wrench className="h-5 w-5 mr-2" />
                 Información del Mantenimiento
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Campo para precio actual */}
                 <div>
-                  <label className="block text-sm font-bold text-blue-800 mb-3 flex items-center">
+                  <label className="block text-sm font-bold text-[#192d71] mb-3 flex items-center">
                     <DollarSign className="h-4 w-4 mr-1" />
                     Precio Actual (Bs.) *
                   </label>
@@ -590,7 +590,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                     type="text"
                     value={formData.currentPrice}
                     onChange={(e) => setFormData(prev => ({ ...prev, currentPrice: e.target.value }))}
-                    className="w-full px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-blue-900"
+                    className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
                     placeholder="Ej: Bs. 50.000,00"
                     required
                   />
@@ -598,11 +598,11 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
                 {/* Selector de categoría de mantenimiento */}
                 <div>
-                  <label className="block text-sm font-bold text-blue-800 mb-3">Categoría de Mantenimiento *</label>
+                  <label className="block text-sm font-bold text-[#192d71] mb-3">Categoría de Mantenimiento *</label>
                   <select
                     value={formData.maintenanceCategory}
                     onChange={(e) => setFormData(prev => ({ ...prev, maintenanceCategory: e.target.value as MaintenanceRecord['maintenanceCategory'] }))}
-                    className="w-full px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-blue-900"
+                    className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
                     required
                   >
                     <option value="Conservación preventiva">Conservación preventiva</option>
@@ -612,7 +612,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
                 {/* Campo de fecha */}
                 <div>
-                  <label className="block text-sm font-bold text-blue-800 mb-3 flex items-center">
+                  <label className="block text-sm font-bold text-[#192d71] mb-3 flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
                     Fecha del Mantenimiento *
                   </label>
@@ -620,7 +620,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-blue-900"
+                    className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
                     required
                   />
                 </div>
@@ -628,7 +628,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
               {/* Campo de descripción de la intervención */}
               <div className="mt-6">
-                <label className="block text-sm font-bold text-blue-800 mb-3 flex items-center">
+                <label className="block text-sm font-bold text-[#192d71] mb-3 flex items-center">
                   <FileText className="h-4 w-4 mr-1" />
                   Descripción de la Intervención *
                 </label>
@@ -636,7 +636,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                   value={formData.interventionDescription}
                   onChange={(e) => setFormData(prev => ({ ...prev, interventionDescription: e.target.value }))}
                   rows={6}
-                  className="w-full px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-blue-900 resize-none"
+                  className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] resize-none"
                   placeholder="Describa detalladamente la intervención realizada, materiales utilizados, técnicas aplicadas, resultados obtenidos..."
                   required
                 />
@@ -652,13 +652,13 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                   setEditingRecord(null);
                   resetForm();
                 }}
-                className="px-6 py-3 text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-xl transition-all duration-200 font-semibold"
+                className="px-6 py-3 text-[#192d71] bg-[#192d71]/10 hover:bg-[#192d71]/20 rounded-xl transition-all duration-200 font-semibold"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+                className="px-6 py-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
               >
                 {editingRecord ? 'Actualizar Registro' : 'Guardar Registro'}
               </button>
@@ -673,10 +673,10 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-blue-900">Detalles del Mantenimiento</h2>
+                <h2 className="text-2xl font-bold text-[#192d71]">Detalles del Mantenimiento</h2>
                 <button
                   onClick={() => setViewingRecord(null)}
-                  className="text-blue-700 hover:text-blue-900 text-2xl font-bold"
+                  className="text-[#192d71] hover:text-[#1e3a8a] text-2xl font-bold"
                 >
                   ×
                 </button>
@@ -685,28 +685,28 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
               {/* Información detallada del registro */}
               <div className="space-y-6">
                 {/* Información de la obra */}
-                <div className="bg-blue-50/30 rounded-xl p-6 border border-blue-200">
-                  <h3 className="text-lg font-bold text-blue-900 mb-4">Información de la Obra</h3>
+                <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
+                  <h3 className="text-lg font-bold text-[#192d71] mb-4">Información de la Obra</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><strong className="text-blue-800">Tipo:</strong> {viewingRecord.workType}</div>
-                    <div><strong className="text-blue-800">Nombre:</strong> {viewingRecord.workName}</div>
-                    <div><strong className="text-blue-800">Autor:</strong> {viewingRecord.author}</div>
-                    <div><strong className="text-blue-800">Técnica:</strong> {viewingRecord.technique}</div>
-                    <div><strong className="text-blue-800">Medidas:</strong> {viewingRecord.dimensions}</div>
-                    <div><strong className="text-blue-800">Año:</strong> {viewingRecord.year}</div>
+                    <div><strong className="text-[#192d71]">Tipo:</strong> {viewingRecord.workType}</div>
+                    <div><strong className="text-[#192d71]">Nombre:</strong> {viewingRecord.workName}</div>
+                    <div><strong className="text-[#192d71]">Autor:</strong> {viewingRecord.author}</div>
+                    <div><strong className="text-[#192d71]">Técnica:</strong> {viewingRecord.technique}</div>
+                    <div><strong className="text-[#192d71]">Medidas:</strong> {viewingRecord.dimensions}</div>
+                    <div><strong className="text-[#192d71]">Año:</strong> {viewingRecord.year}</div>
                   </div>
                 </div>
 
                 {/* Información del mantenimiento */}
-                <div className="bg-blue-50/30 rounded-xl p-6 border border-blue-200">
-                  <h3 className="text-lg font-bold text-blue-900 mb-4">Detalles del Mantenimiento</h3>
+                <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
+                  <h3 className="text-lg font-bold text-[#192d71] mb-4">Detalles del Mantenimiento</h3>
                   <div className="space-y-3">
-                    <div><strong className="text-blue-800">Fecha:</strong> {new Date(viewingRecord.date).toLocaleDateString('es-ES')}</div>
-                    <div><strong className="text-blue-800">Precio Actual:</strong> {viewingRecord.currentPrice}</div>
-                    <div><strong className="text-blue-800">Categoría:</strong> {viewingRecord.maintenanceCategory}</div>
+                    <div><strong className="text-[#192d71]">Fecha:</strong> {new Date(viewingRecord.date).toLocaleDateString('es-ES')}</div>
+                    <div><strong className="text-[#192d71]">Precio Actual:</strong> {viewingRecord.currentPrice}</div>
+                    <div><strong className="text-[#192d71]">Categoría:</strong> {viewingRecord.maintenanceCategory}</div>
                     <div>
-                      <strong className="text-blue-800">Descripción de la Intervención:</strong>
-                      <div className="mt-2 p-4 bg-white rounded-lg border border-blue-200 whitespace-pre-wrap">
+                      <strong className="text-[#192d71]">Descripción de la Intervención:</strong>
+                      <div className="mt-2 p-4 bg-white rounded-lg border border-[#192d71]/20 whitespace-pre-wrap">
                         {viewingRecord.interventionDescription}
                       </div>
                     </div>
@@ -728,7 +728,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                 </button>
                 <button
                   onClick={() => generatePDF(viewingRecord)}
-                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all duration-200 font-semibold"
+                  className="flex items-center space-x-2 px-6 py-3 bg-[#192d71] hover:bg-[#1e3a8a] text-white rounded-xl transition-all duration-200 font-semibold"
                 >
                   <FileDown className="h-5 w-5" />
                   <span>Descargar PDF</span>
@@ -740,17 +740,17 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
       )}
 
       {/* Tabla principal de registros */}
-      <div className="bg-white rounded-2xl shadow-lg border border-blue-200">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
         {/* Barra de búsqueda */}
-        <div className="p-8 border-b border-blue-200">
+        <div className="p-8 border-b border-[#192d71]/20">
           <div className="relative">
-            <Search className="absolute left-4 top-4 h-6 w-6 text-blue-600" />
+            <Search className="absolute left-4 top-4 h-6 w-6 text-[#192d71]" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por obra, autor o descripción..."
-              className="w-full pl-14 pr-6 py-4 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-blue-50/30 text-blue-900 placeholder-blue-600 text-lg"
+              className="w-full pl-14 pr-6 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60 text-lg"
             />
           </div>
         </div>
@@ -758,28 +758,28 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
         {/* Tabla de registros */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-blue-100 to-blue-50">
+            <thead className="bg-gradient-to-r from-[#192d71]/10 to-[#192d71]/5">
               <tr>
-                <th className="px-8 py-5 text-left text-sm font-bold text-blue-800 uppercase tracking-wider">Obra</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-blue-800 uppercase tracking-wider">Tipo</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-blue-800 uppercase tracking-wider">Categoría</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-blue-800 uppercase tracking-wider">Fecha</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-blue-800 uppercase tracking-wider">Precio</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-blue-800 uppercase tracking-wider">Acciones</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Obra</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Tipo</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Categoría</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Fecha</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Precio</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-blue-100">
+            <tbody className="divide-y divide-[#192d71]/10">
               {filteredRecords.map((record) => (
-                <tr key={record.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-white transition-all duration-200">
+                <tr key={record.id} className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200">
                   <td className="px-8 py-6">
                     <div>
-                      <p className="font-bold text-blue-900 text-lg">{record.workName}</p>
-                      <p className="text-sm text-blue-600 font-medium">{record.author}</p>
-                      <p className="text-xs text-blue-500 mt-1">{record.technique}</p>
+                      <p className="font-bold text-[#192d71] text-lg">{record.workName}</p>
+                      <p className="text-sm text-[#192d71]/70 font-medium">{record.author}</p>
+                      <p className="text-xs text-[#192d71]/60 mt-1">{record.technique}</p>
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                    <span className="px-3 py-1 bg-[#192d71]/10 text-[#192d71] rounded-full text-sm font-semibold">
                       {record.workType}
                     </span>
                   </td>
@@ -792,10 +792,10 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                       {record.maintenanceCategory}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-blue-700 font-medium">
+                  <td className="px-8 py-6 text-[#192d71]/80 font-medium">
                     {new Date(record.date).toLocaleDateString('es-ES')}
                   </td>
-                  <td className="px-8 py-6 text-blue-900 font-semibold">
+                  <td className="px-8 py-6 text-[#192d71] font-semibold">
                     {record.currentPrice}
                   </td>
                   <td className="px-8 py-6">
@@ -803,7 +803,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                       {/* Botón consultar */}
                       <button
                         onClick={() => setViewingRecord(record)}
-                        className="p-3 text-blue-700 hover:bg-blue-100 rounded-xl transition-all duration-200 hover:scale-110"
+                        className="p-3 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200 hover:scale-110"
                         title="Consultar detalles"
                       >
                         <Eye className="h-5 w-5" />
@@ -827,7 +827,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
                       {/* Botón descargar PDF */}
                       <button
                         onClick={() => generatePDF(record)}
-                        className="p-3 text-blue-700 hover:bg-blue-100 rounded-xl transition-all duration-200 hover:scale-110"
+                        className="p-3 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200 hover:scale-110"
                         title="Descargar PDF"
                       >
                         <FileDown className="h-5 w-5" />
@@ -842,7 +842,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
 
         {/* Mensaje cuando no hay registros */}
         {filteredRecords.length === 0 && (
-          <div className="p-12 text-center text-blue-600 font-medium text-lg">
+          <div className="p-12 text-center text-[#192d71]/60 font-medium text-lg">
             {searchTerm || workTypeFilter !== 'all' || categoryFilter !== 'all' || dateFilter 
               ? 'No se encontraron registros que coincidan con los filtros' 
               : 'No hay registros de mantenimiento'}

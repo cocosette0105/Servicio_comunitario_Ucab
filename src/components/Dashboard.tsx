@@ -65,7 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-yellow-50 to-white"> {/* Contenedor principal con estilos de flexbox y fondo degradado. */}
+    <div className="flex h-screen bg-gradient-to-br from-[#192d71]/5 to-white"> {/* Contenedor principal con estilos de flexbox y fondo degradado. */}
       <Sidebar 
         user={user}
         activeView={activeView}

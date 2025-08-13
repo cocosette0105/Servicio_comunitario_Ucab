@@ -142,45 +142,45 @@ const handleExportPDF = () => {
 
     // Dibuja la caja de Estado de Conservación con checkboxes.
    const drawConservationBox = (x: number, y: number, w: number): number => {
-        const TOTAL_HEIGHT = 25; // Esta caja sí tiene un diseño fijo
-        doc.rect(x, y, w, TOTAL_HEIGHT);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.text('ESTADO DE CONSERVACION', x + 3, y + 5);
-        doc.line(x, y + 8, x + w, y + 8);
+        const TOTAL_HEIGHT = 25; // Esta caja sí tiene un diseño fijo
+        doc.rect(x, y, w, TOTAL_HEIGHT);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('ESTADO DE CONSERVACION', x + 3, y + 5);
+        doc.line(x, y + 8, x + w, y + 8);
 
-        const drawCheckbox = (label: string, checked: boolean, chkX: number, chkY: number) => {
-            // Hacemos el checkbox y la fuente un poco más pequeños para que quepa todo
-            doc.rect(chkX, chkY, 3.5, 3.5); 
-            doc.setFontSize(8); // Reducimos el tamaño de la etiqueta
-            doc.text(label, chkX + 5, chkY + 3); // Ajustamos la posición del texto
-            if (checked) {
-                doc.setFont('helvetica', 'bold');
-                doc.text('X', chkX + 0.8, chkY + 3); // Centramos la 'X' en el nuevo checkbox
-                doc.setFont('helvetica', 'normal');
-            }
-        };
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        
-        // Fila de "Condiciones" con nuevo espaciado
-        doc.text('Condiciones:', x + 3, y + 15);
-        const condX1 = x + 24;
-        const condX2 = x + 44;
-        const condX3 = x + 67;
-        drawCheckbox('Bueno', work.conservationState.condition === 'Bueno', condX1, y + 12);
-        drawCheckbox('Regular', work.conservationState.condition === 'Regular', condX2, y + 12);
-        drawCheckbox('Malo', work.conservationState.condition === 'Malo', condX3, y + 12);
-        
-        // Fila de "Integridad" con el mismo espaciado para alinear todo
-        doc.text('Integridad:', x + 3, y + 22);
-        drawCheckbox('Completo', work.conservationState.integrity === 'Completo', condX1, y + 19);
-        drawCheckbox('Incompleto', work.conservationState.integrity === 'Incompleto', condX2, y + 19);
-        drawCheckbox('Fragmento', work.conservationState.integrity === 'Fragmento', condX3, y + 19);
-        
-        return y + TOTAL_HEIGHT;
-    };
+        const drawCheckbox = (label: string, checked: boolean, chkX: number, chkY: number) => {
+            // Hacemos el checkbox y la fuente un poco más pequeños para que quepa todo
+            doc.rect(chkX, chkY, 3.5, 3.5); 
+            doc.setFontSize(8); // Reducimos el tamaño de la etiqueta
+            doc.text(label, chkX + 5, chkY + 3); // Ajustamos la posición del texto
+            if (checked) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('X', chkX + 0.8, chkY + 3); // Centramos la 'X' en el nuevo checkbox
+                doc.setFont('helvetica', 'normal');
+            }
+        };
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        
+        // Fila de "Condiciones" con nuevo espaciado
+        doc.text('Condiciones:', x + 3, y + 15);
+        const condX1 = x + 24;
+        const condX2 = x + 44;
+        const condX3 = x + 67;
+        drawCheckbox('Bueno', work.conservationState.condition === 'Bueno', condX1, y + 12);
+        drawCheckbox('Regular', work.conservationState.condition === 'Regular', condX2, y + 12);
+        drawCheckbox('Malo', work.conservationState.condition === 'Malo', condX3, y + 12);
+        
+        // Fila de "Integridad" con el mismo espaciado para alinear todo
+        doc.text('Integridad:', x + 3, y + 22);
+        drawCheckbox('Completo', work.conservationState.integrity === 'Completo', condX1, y + 19);
+        drawCheckbox('Incompleto', work.conservationState.integrity === 'Incompleto', condX2, y + 19);
+        drawCheckbox('Fragmento', work.conservationState.integrity === 'Fragmento', condX3, y + 19);
+        
+        return y + TOTAL_HEIGHT;
+    };
     
     // --- LÓGICA DE DIBUJO PRINCIPAL ---
     
@@ -280,14 +280,14 @@ const handleExportPDF = () => {
 };
 
   return (
-    <div className="p-4 sm:p-8 bg-gradient-to-br from-amber-50 to-white min-h-screen">
+    <div className="p-4 sm:p-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg border border-amber-200">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
           
           {/* --- ENCABEZADO DE ACCIONES --- */}
-          <div className="p-6 border-b border-amber-200">
+          <div className="p-6 border-b border-[#192d71]/20">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <button onClick={onClose} className="flex items-center space-x-2 text-amber-700 hover:text-amber-900 font-semibold">
+              <button onClick={onClose} className="flex items-center space-x-2 text-[#192d71] hover:text-[#1e3a8a] font-semibold">
                 <ArrowLeft className="h-5 w-5" />
                 <span>Volver al Listado</span>
               </button>
@@ -298,7 +298,7 @@ const handleExportPDF = () => {
                 </button>
 
                 {/* --- NUEVO BOTÓN EXPORTAR PDF --- */}
-                <button onClick={handleExportPDF} className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all">
+                <button onClick={handleExportPDF} className="flex items-center space-x-2 px-5 py-2.5 bg-[#192d71] hover:bg-[#1e3a8a] text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all">
                   <FileDown className="h-5 w-5" />
                   <span>Exportar PDF</span>
                 </button>
@@ -319,11 +319,11 @@ const handleExportPDF = () => {
               <div className="lg:col-span-2 space-y-8">
                 {/* --- SECCIÓN DE IDENTIFICACIÓN PRINCIPAL --- */}
                 <section>
-                  <p className="inline-block bg-amber-100 text-amber-800 font-bold px-4 py-1 rounded-full text-lg mb-4">
+                  <p className="inline-block bg-[#192d71]/10 text-[#192d71] font-bold px-4 py-1 rounded-full text-lg mb-4">
                     {work.inventoryNumber}
                   </p>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-800 to-amber-900 bg-clip-text text-transparent mb-2">{work.name}</h1>
-                  <p className="text-2xl text-amber-700 font-semibold flex items-center gap-2">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-2">{work.name}</h1>
+                  <p className="text-2xl text-[#192d71]/80 font-semibold flex items-center gap-2">
                     <User className="h-6 w-6" /> {work.artist}
                   </p>
                 </section>
@@ -331,7 +331,7 @@ const handleExportPDF = () => {
                 {/* --- FOTO --- */}
                 {work.photoUrl && (
                   <section>
-                    <img src={work.photoUrl} alt={`Fotografía de ${work.name}`} className="w-full max-h-[500px] object-contain rounded-xl border-2 border-amber-200 p-2 bg-gray-50"/>
+                    <img src={work.photoUrl} alt={`Fotografía de ${work.name}`} className="w-full max-h-[500px] object-contain rounded-xl border-2 border-[#192d71]/20 p-2 bg-gray-50"/>
                   </section>
                 )}
                 
@@ -348,7 +348,7 @@ const handleExportPDF = () => {
 
                 {/* --- REFERENCIAS --- */}
                 <section>
-                   <h2 className="text-xl font-bold text-amber-900 mb-4 border-b-2 border-amber-200 pb-2">Referencias</h2>
+                   <h2 className="text-xl font-bold text-[#192d71] mb-4 border-b-2 border-[#192d71]/20 pb-2">Referencias</h2>
                    <div className="space-y-4 pt-2">
                       <DetailItem icon={<Paperclip size={20}/>} label="Documentos">{work.references.documents}</DetailItem>
                       <DetailItem icon={<Book size={20}/>} label="Bibliografía">{work.references.bibliography}</DetailItem>
@@ -360,22 +360,22 @@ const handleExportPDF = () => {
 
               {/* --- COLUMNA DERECHA (Datos rápidos) --- */}
               <div className="space-y-6">
-                <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-5 space-y-4">
-                    <h3 className="font-bold text-amber-900 text-lg flex items-center gap-2"><Palette/>Ficha Técnica</h3>
+                <div className="bg-[#192d71]/5 border border-[#192d71]/20 rounded-xl p-5 space-y-4">
+                    <h3 className="font-bold text-[#192d71] text-lg flex items-center gap-2"><Palette/>Ficha Técnica</h3>
                     <DetailItem icon={<Hash size={16}/>} label="Clasificación Genérica">{work.classification}</DetailItem>
                     <DetailItem icon={<Wrench size={16}/>} label="Técnica y Materiales">{`${work.technique} sobre ${work.materials}`}</DetailItem>
                     <DetailItem icon={<Calendar size={16}/>} label="Año de Realización">{work.realizationDate}</DetailItem>
                     <DetailItem icon={<Ruler size={16}/>} label="Dimensiones">{workDimensions}</DetailItem>
                 </div>
 
-                <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-5 space-y-4">
-                    <h3 className="font-bold text-amber-900 text-lg flex items-center gap-2"><ShieldCheck/>Estado de Conservación</h3>
+                <div className="bg-[#192d71]/5 border border-[#192d71]/20 rounded-xl p-5 space-y-4">
+                    <h3 className="font-bold text-[#192d71] text-lg flex items-center gap-2"><ShieldCheck/>Estado de Conservación</h3>
                     <DetailItem icon={<span className={`h-3 w-3 rounded-full ${work.conservationState.condition === 'Bueno' ? 'bg-green-500' : work.conservationState.condition === 'Regular' ? 'bg-yellow-500' : 'bg-red-500'}`}/>} label="Condiciones">{work.conservationState.condition}</DetailItem>
                     <DetailItem icon={<span className="text-sm">↳</span>} label="Integridad">{work.conservationState.integrity}</DetailItem>
                 </div>
                 
-                <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-5 space-y-4">
-                    <h3 className="font-bold text-amber-900 text-lg flex items-center gap-2"><Landmark/>Datos de Adquisición y Avalúo</h3>
+                <div className="bg-[#192d71]/5 border border-[#192d71]/20 rounded-xl p-5 space-y-4">
+                    <h3 className="font-bold text-[#192d71] text-lg flex items-center gap-2"><Landmark/>Datos de Adquisición y Avalúo</h3>
                     <DetailItem icon={<Archive size={16}/>} label="Forma de Adquisición">{work.collection.acquisitionMethod}</DetailItem>
                     <DetailItem icon={<Calendar size={16}/>} label="Fecha de Ingreso">{formatDate(work.collection.entryDate)}</DetailItem>
                     <DetailItem icon={<User size={16}/>} label="Propietario Original">{work.technicalData.originalOwner}</DetailItem>
@@ -384,8 +384,8 @@ const handleExportPDF = () => {
                     <DetailItem icon={<Calendar size={16}/>} label="Fecha de Avalúo">{formatDate(work.technicalData.appraisalDate)}</DetailItem>
                 </div>
 
-                <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-5 space-y-4">
-                    <h3 className="font-bold text-amber-900 text-lg flex items-center gap-2"><ClipboardCheck/>Inventario y Ubicación</h3>
+                <div className="bg-[#192d71]/5 border border-[#192d71]/20 rounded-xl p-5 space-y-4">
+                    <h3 className="font-bold text-[#192d71] text-lg flex items-center gap-2"><ClipboardCheck/>Inventario y Ubicación</h3>
                     <DetailItem icon={<Building size={16}/>} label="Entidad Responsable">{work.responsibleEntity.name}</DetailItem>
                     <DetailItem icon={<MapPin size={16}/>} label="Ubicación en Depósito">{work.storageLocation}</DetailItem>
                     <DetailItem icon={<User size={16}/>} label="Inventariado por">{work.inventory.responsible}</DetailItem>

@@ -123,19 +123,19 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
 
   // Renderizado principal: tabla de obras y controles
   return (
-    <div className="p-8 space-y-8 bg-gradient-to-br from-amber-50 to-white min-h-screen">
+    <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       {/* Encabezado y botón para agregar obra */}
       <div className="flex items-center justify-between">
         <div>
           {/* Título principal */}
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-800 to-amber-900 bg-clip-text text-transparent mb-3">Gestión de Obras</h1>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-3">Gestión de Obras</h1>
           {/* Descripción */}
-          <p className="text-amber-700 text-lg">Administre las obras de la colección del museo</p>
+          <p className="text-[#192d71] text-lg">Administre las obras de la colección del museo</p>
         </div>
         {/* Botón para mostrar el formulario de agregar obra */}
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center space-x-3 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+          className="flex items-center space-x-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
         >
           <Plus className="h-6 w-6" />
           <span>Agregar Obra</span>
@@ -143,19 +143,19 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
       </div>
 
       {/* Contenedor de la tabla y búsqueda */}
-      <div className="bg-white rounded-2xl shadow-lg border border-amber-200">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
         {/* Barra de búsqueda */}
-        <div className="p-8 border-b border-amber-200">
+        <div className="p-8 border-b border-[#192d71]/20">
           <div className="relative">
             {/* Ícono de búsqueda */}
-            <Search className="absolute left-4 top-4 h-6 w-6 text-amber-600" />
+            <Search className="absolute left-4 top-4 h-6 w-6 text-[#192d71]" />
             {/* Input para buscar obras */}
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre, artista o ubicación..."
-              className="w-full pl-14 pr-6 py-4 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900 placeholder-amber-600 text-lg"
+              className="w-full pl-14 pr-6 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60 text-lg"
             />
           </div>
         </div>
@@ -163,55 +163,55 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
         {/* Tabla de obras */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-amber-100 to-amber-50">
+            <thead className="bg-gradient-to-r from-[#192d71]/10 to-[#192d71]/5">
               <tr>
                 {/* Encabezados de la tabla */}
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   ID
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Obra
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Artista
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Ubicación
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Fecha Ingreso
                 </th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-amber-100">
+            <tbody className="divide-y divide-[#192d71]/10">
               {/* Mapea y muestra cada obra filtrada en una fila */}
               {filteredWorks.map((work) => (
-                <tr key={work.id} className="hover:bg-gradient-to-r hover:from-amber-50 hover:to-white transition-all duration-200">
+                <tr key={work.id} className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200">
                   {/* Columna ID */}
                   <td className="px-8 py-6">
-                    <span className="font-mono text-sm bg-amber-100 px-2 py-1 rounded text-amber-800">
+                    <span className="font-mono text-sm bg-[#192d71]/10 px-2 py-1 rounded text-[#192d71]">
                       #{work.id}
                     </span>
                   </td>
                   {/* Columna nombre de la obra y fecha de realización */}
                   <td className="px-8 py-6">
                     <div>
-                      <p className="font-bold text-amber-900 text-lg">{work.name}</p>
-                      <p className="text-sm text-amber-600 font-medium">
+                      <p className="font-bold text-[#192d71] text-lg">{work.name}</p>
+                      <p className="text-sm text-[#192d71]/70 font-medium">
                         {/* Muestra la fecha de realización formateada */}
                         Realizada: {work.realizationDate ??'Sin fecha' }
                       </p>
                     </div>
                   </td>
                   {/* Columna artista */}
-                  <td className="px-8 py-6 text-amber-900 font-semibold">{work.artist}</td>
+                  <td className="px-8 py-6 text-[#192d71] font-semibold">{work.artist}</td>
                   {/* Columna ubicación física */}
-                  <td className="px-8 py-6 text-amber-700">{work.storageLocation}</td>
+                  <td className="px-8 py-6 text-[#192d71]/80">{work.storageLocation}</td>
                   {/* Columna fecha de ingreso al museo */}
-                  <td className="px-8 py-6 text-amber-700 font-medium">
+                  <td className="px-8 py-6 text-[#192d71]/80 font-medium">
                     {work.collection?.entryDate ?? 'Sin fecha'}
                   </td>
                   {/* Columna de acciones (ver, editar, eliminar) */}
@@ -220,7 +220,7 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
                       {/* Botón para ver detalles de la obra */}
                       <button
                         onClick={() => setViewingWork(work)}
-                        className="p-3 text-amber-700 hover:bg-amber-100 rounded-xl transition-all duration-200 hover:scale-110"
+                        className="p-3 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200 hover:scale-110"
                       >
                         <Eye className="h-5 w-5" />
                       </button>
@@ -248,7 +248,7 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
 
         {/* Mensaje si no hay obras que mostrar */}
         {filteredWorks.length === 0 && (
-          <div className="p-12 text-center text-amber-600 font-medium text-lg">
+          <div className="p-12 text-center text-[#192d71]/60 font-medium text-lg">
             {searchTerm ? 'No se encontraron obras que coincidan con la búsqueda' : 'No hay obras registradas'}
           </div>
         )}

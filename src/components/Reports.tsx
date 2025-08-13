@@ -131,19 +131,19 @@ const Reports: React.FC<ReportsProps> = ({ works }) => {
 
   // Renderizado del componente
   return (
-    <div className="p-8 space-y-8 bg-gradient-to-br from-amber-50 to-white min-h-screen">
+    <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-800 to-amber-900 bg-clip-text text-transparent mb-3">Reportes de Obras</h1>
-          <p className="text-amber-700 text-lg">Genere reportes detallados de las obras del museo</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-3">Reportes de Obras</h1>
+          <p className="text-[#192d71] text-lg">Genere reportes detallados de las obras del museo</p>
         </div>
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
               showFilters
-                ? 'bg-amber-100 border-amber-300 text-amber-800 font-semibold'
-                : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-50 font-medium'
+                ? 'bg-[#192d71]/10 border-[#192d71]/30 text-[#192d71] font-semibold'
+                : 'bg-white border-[#192d71]/30 text-[#192d71] hover:bg-[#192d71]/5 font-medium'
             }`}
           >
             <Filter className="h-5 w-5" />
@@ -159,7 +159,7 @@ const Reports: React.FC<ReportsProps> = ({ works }) => {
           </button>
           <button
             onClick={exportToPDF}
-            className="flex items-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+            className="flex items-center space-x-2 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
           >
             <Download className="h-5 w-5" />
             <span>Exportar PDF</span>
@@ -168,71 +168,71 @@ const Reports: React.FC<ReportsProps> = ({ works }) => {
       </div>
 
       {showFilters && (
-        <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-8">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-amber-900">Filtros de Búsqueda</h2>
+            <h2 className="text-xl font-bold text-[#192d71]">Filtros de Búsqueda</h2>
             <button
               onClick={clearFilters}
-              className="text-amber-700 hover:text-amber-900 text-sm font-semibold"
+              className="text-[#192d71] hover:text-[#1e3a8a] text-sm font-semibold"
             >
               Limpiar filtros
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">Artista</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Artista</label>
               <input
                 type="text"
                 value={filters.artist || ''}
                 onChange={handleFilterChange('artist')}
-                className="w-full px-4 py-3 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900 placeholder-amber-600"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60"
                 placeholder="Buscar por artista..."
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">Ubicación Física</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Ubicación Física</label>
               <input
                 type="text"
                 value={filters.storageLocation || ''}
                 onChange={handleFilterChange('storageLocation')}
-                className="w-full px-4 py-3 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900 placeholder-amber-600"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60"
                 placeholder="Buscar por ubicación..."
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">Realización (Desde)</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Realización (Desde)</label>
               <input
                 type="date"
                 value={filters.realizationDateFrom || ''}
                 onChange={handleFilterChange('realizationDateFrom')}
-                className="w-full px-4 py-3 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">Realización (Hasta)</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Realización (Hasta)</label>
               <input
                 type="date"
                 value={filters.realizationDateTo || ''}
                 onChange={handleFilterChange('realizationDateTo')}
-                className="w-full px-4 py-3 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">Ingreso (Desde)</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Ingreso (Desde)</label>
               <input
                 type="date"
                 value={filters.entryDateFrom || ''}
                 onChange={handleFilterChange('entryDateFrom')}
-                className="w-full px-4 py-3 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-amber-800 mb-3">Ingreso (Hasta)</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Ingreso (Hasta)</label>
               <input
                 type="date"
                 value={filters.entryDateTo || ''}
                 onChange={handleFilterChange('entryDateTo')}
-                className="w-full px-4 py-3 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-amber-50/30 text-amber-900"
+                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
               />
             </div>
           </div>
@@ -240,98 +240,98 @@ const Reports: React.FC<ReportsProps> = ({ works }) => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-[#192d71]/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-amber-700 mb-2">Obras Filtradas</p>
-              <p className="text-3xl font-bold text-amber-900">{stats.totalFiltered}</p>
+              <p className="text-sm font-semibold text-[#192d71] mb-2">Obras Filtradas</p>
+              <p className="text-3xl font-bold text-[#192d71]">{stats.totalFiltered}</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-amber-200 to-amber-300 rounded-2xl flex items-center justify-center shadow-lg">
-              <FileText className="h-7 w-7 text-amber-800" />
+            <div className="w-14 h-14 bg-gradient-to-br from-[#192d71]/20 to-[#192d71]/30 rounded-2xl flex items-center justify-center shadow-lg">
+              <FileText className="h-7 w-7 text-[#192d71]" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-[#192d71]/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-amber-700 mb-2">Artistas</p>
-              <p className="text-3xl font-bold text-amber-900">{stats.artistsCount}</p>
+              <p className="text-sm font-semibold text-[#192d71] mb-2">Artistas</p>
+              <p className="text-3xl font-bold text-[#192d71]">{stats.artistsCount}</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-yellow-200 to-yellow-300 rounded-2xl flex items-center justify-center shadow-lg">
-              <User className="h-7 w-7 text-yellow-800" />
+            <div className="w-14 h-14 bg-gradient-to-br from-[#192d71]/20 to-[#192d71]/30 rounded-2xl flex items-center justify-center shadow-lg">
+              <User className="h-7 w-7 text-[#192d71]" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-[#192d71]/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-amber-700 mb-2">Ubicaciones</p>
-              <p className="text-3xl font-bold text-amber-900">{stats.locationsCount}</p>
+              <p className="text-sm font-semibold text-[#192d71] mb-2">Ubicaciones</p>
+              <p className="text-3xl font-bold text-[#192d71]">{stats.locationsCount}</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-orange-200 to-orange-300 rounded-2xl flex items-center justify-center shadow-lg">
-              <MapPin className="h-7 w-7 text-orange-800" />
+            <div className="w-14 h-14 bg-gradient-to-br from-[#192d71]/20 to-[#192d71]/30 rounded-2xl flex items-center justify-center shadow-lg">
+              <MapPin className="h-7 w-7 text-[#192d71]" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-[#192d71]/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-amber-700 mb-2">Edad Promedio</p>
-              <p className="text-3xl font-bold text-amber-900">{stats.averageAge} años</p>
+              <p className="text-sm font-semibold text-[#192d71] mb-2">Edad Promedio</p>
+              <p className="text-3xl font-bold text-[#192d71]">{stats.averageAge} años</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-red-200 to-red-300 rounded-2xl flex items-center justify-center shadow-lg">
-              <Calendar className="h-7 w-7 text-red-800" />
+            <div className="w-14 h-14 bg-gradient-to-br from-[#192d71]/20 to-[#192d71]/30 rounded-2xl flex items-center justify-center shadow-lg">
+              <Calendar className="h-7 w-7 text-[#192d71]" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg border border-amber-200">
-        <div className="p-8 border-b border-amber-200">
-          <h2 className="text-2xl font-bold text-amber-900">Resultados del Reporte</h2>
-          <p className="text-amber-700 font-medium">Mostrando {filteredWorks.length} obras de {works.length} total</p>
+      <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
+        <div className="p-8 border-b border-[#192d71]/20">
+          <h2 className="text-2xl font-bold text-[#192d71]">Resultados del Reporte</h2>
+          <p className="text-[#192d71]/80 font-medium">Mostrando {filteredWorks.length} obras de {works.length} total</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-amber-100 to-amber-50">
+            <thead className="bg-gradient-to-r from-[#192d71]/10 to-[#192d71]/5">
               <tr>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">ID</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">Obra</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">Artista</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">Fecha Realización</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">Fecha Ingreso</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-amber-800 uppercase tracking-wider">Ubicación</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">ID</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Obra</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Artista</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Fecha Realización</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Fecha Ingreso</th>
+                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Ubicación</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-amber-100">
+            <tbody className="divide-y divide-[#192d71]/10">
               {filteredWorks.map((work) => (
-                <tr key={work.id} className="hover:bg-gradient-to-r hover:from-amber-50 hover:to-white transition-all duration-200">
+                <tr key={work.id} className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200">
                   <td className="px-8 py-6">
-                    <span className="font-mono text-sm bg-amber-100 px-2 py-1 rounded text-amber-800">
+                    <span className="font-mono text-sm bg-[#192d71]/10 px-2 py-1 rounded text-[#192d71]">
                       {work.inventoryNumber}
                     </span>
                   </td>
                   <td className="px-8 py-6">
                     <div>
-                      <p className="font-bold text-amber-900 text-lg">{work.name}</p>
-                      <p className="text-sm text-amber-600 truncate max-w-xs font-medium">{work.description}</p>
+                      <p className="font-bold text-[#192d71] text-lg">{work.name}</p>
+                      <p className="text-sm text-[#192d71]/70 truncate max-w-xs font-medium">{work.description}</p>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-amber-900 font-semibold">{work.artist}</td>
+                  <td className="px-8 py-6 text-[#192d71] font-semibold">{work.artist}</td>
                   <td className="px-8 py-6 text-amber-700 font-medium">
                     {work.realizationDate ? new Date(work.realizationDate).toLocaleDateString('es-ES') : 'N/A'}
                   </td>
-                  <td className="px-8 py-6 text-amber-700 font-medium">
+                  <td className="px-8 py-6 text-[#192d71]/80 font-medium">
                     {work.collection?.entryDate ? new Date(work.collection.entryDate).toLocaleDateString('es-ES') : 'N/A'}
                   </td>
-                  <td className="px-8 py-6 text-amber-700">{work.storageLocation || 'N/A'}</td>
+                  <td className="px-8 py-6 text-[#192d71]/80">{work.storageLocation || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         {filteredWorks.length === 0 && (
-          <div className="p-12 text-center text-amber-600 font-medium text-lg">
+          <div className="p-12 text-center text-[#192d71]/60 font-medium text-lg">
             No hay obras que coincidan con los filtros aplicados
           </div>
         )}
