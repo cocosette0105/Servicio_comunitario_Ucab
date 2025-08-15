@@ -1,13 +1,15 @@
 // Importa React y el hook useState para manejar el estado local del componente
 import React, { useState } from 'react';
 // Importa los íconos que se usarán en los botones de la interfaz
-import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, FileDown } from 'lucide-react';
 // Importa el tipo Work para tipar los datos de las obras
 import { Work } from '../types';
 // Importa el formulario para agregar o editar obras
 import WorkForm from './WorkForm';
 // Importa el componente para ver detalles de una obra
 import WorkDetails from './WorkDetails';
+import jsPDF from 'jspdf'; 
+import logoSrc from '/logoblanco_negro.jpg';
 
 // Define las props que recibe el componente: un arreglo de obras y una función para actualizarlo
 interface WorksManagementProps {
@@ -81,6 +83,230 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
       onUpdateWorks(updatedWorks);
     }
   };
+
+
+// --- NUEVA FUNCIÓN PARA EXPORTAR PDF (COPIADA Y ADAPTADA DE WORKDETAILS) ---
+  const handleExportPDF = (work: Work) => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const MARGIN = 15;
+    const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+    let currentY = MARGIN;
+
+    // Función segura para formatear fechas
+    const formatDate = (dateString?: string) => {
+      if (!dateString) return 'No especificado';
+      const date = new Date(dateString.split('T')[0] + 'T00:00:00');
+      return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    };
+
+    // Formateo de dimensiones
+    const workDimensions = [
+      work.dimensions.height && `Alto: ${work.dimensions.height}cm`,
+      work.dimensions.width && `Ancho: ${work.dimensions.width}cm`,
+      work.dimensions.depth && `Prof.: ${work.dimensions.depth}cm`,
+      work.dimensions.diameter && `Diám.: ${work.dimensions.diameter}cm`,
+    ].filter(Boolean).join(' / ');
+
+    // --- FUNCIONES AUXILIARES DE DIBUJO ---
+
+    const drawTextBox = (title: string, value: string, x: number, y: number, w: number): number => {
+        const PADDING = 3;
+        const HEADER_HEIGHT = 8;
+        const FONT_SIZE = 9;
+        const LINE_HEIGHT_FACTOR = 1.4;
+
+        doc.setFontSize(FONT_SIZE);
+        const textLines = doc.splitTextToSize(value || ' ', w - (PADDING * 2));
+        const textHeight = textLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
+        const totalHeight = HEADER_HEIGHT + textHeight + (PADDING * 2);
+
+        doc.rect(x, y, w, totalHeight);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text(title, x + PADDING, y + 5);
+        doc.line(x, y + HEADER_HEIGHT, x + w, y + HEADER_HEIGHT);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(FONT_SIZE);
+        doc.text(textLines, x + PADDING, y + HEADER_HEIGHT + PADDING, { lineHeightFactor: LINE_HEIGHT_FACTOR });
+        
+        return y + totalHeight;
+    };
+
+    const drawSectionBox = (title: string, content: {label: string, value?: string}[], x: number, y: number, w: number): number => {
+        const PADDING = 3;
+        const HEADER_HEIGHT = 8;
+        const LABEL_X_OFFSET = 35;
+        const MIN_ITEM_HEIGHT = 7;
+        const FONT_SIZE = 8;
+        const LINE_HEIGHT_FACTOR = 1.4;
+        
+        let contentAreaHeight = PADDING;
+
+        doc.setFontSize(FONT_SIZE);
+        content.forEach(item => {
+            const valueLines = doc.splitTextToSize(item.value || ' ', w - LABEL_X_OFFSET - (PADDING*2));
+            const itemTextHeight = valueLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
+            contentAreaHeight += Math.max(MIN_ITEM_HEIGHT, itemTextHeight);
+        });
+
+        const totalHeight = HEADER_HEIGHT + contentAreaHeight + PADDING;
+
+        doc.rect(x, y, w, totalHeight);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text(title, x + PADDING, y + 5);
+        doc.line(x, y + HEADER_HEIGHT, x + w, y + HEADER_HEIGHT);
+        
+        let itemY = y + HEADER_HEIGHT + PADDING + 2;
+        doc.setFontSize(FONT_SIZE);
+        content.forEach(item => {
+            const valueLines = doc.splitTextToSize(item.value || ' ', w - LABEL_X_OFFSET - (PADDING*2));
+            const itemTextHeight = valueLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
+            const currentItemHeight = Math.max(MIN_ITEM_HEIGHT, itemTextHeight);
+
+            doc.setFont('helvetica', 'normal');
+            doc.text(item.label, x + PADDING, itemY);
+            doc.setFont('helvetica', 'bold');
+            doc.text(valueLines, x + LABEL_X_OFFSET, itemY, { maxWidth: w - LABEL_X_OFFSET - PADDING, lineHeightFactor: LINE_HEIGHT_FACTOR });
+            
+            itemY += currentItemHeight;
+        });
+
+        return y + totalHeight;
+    };
+
+    const drawConservationBox = (x: number, y: number, w: number): number => {
+        const TOTAL_HEIGHT = 25;
+        doc.rect(x, y, w, TOTAL_HEIGHT);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('ESTADO DE CONSERVACION', x + 3, y + 5);
+        doc.line(x, y + 8, x + w, y + 8);
+
+        const drawCheckbox = (label: string, checked: boolean, chkX: number, chkY: number) => {
+            doc.rect(chkX, chkY, 3.5, 3.5); 
+            doc.setFontSize(8);
+            doc.text(label, chkX + 5, chkY + 3);
+            if (checked) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('X', chkX + 0.8, chkY + 3);
+                doc.setFont('helvetica', 'normal');
+            }
+        };
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        
+        doc.text('Condiciones:', x + 3, y + 15);
+        const condX1 = x + 24;
+        const condX2 = x + 44;
+        const condX3 = x + 67;
+        drawCheckbox('Bueno', work.conservationState.condition === 'Bueno', condX1, y + 12);
+        drawCheckbox('Regular', work.conservationState.condition === 'Regular', condX2, y + 12);
+        drawCheckbox('Malo', work.conservationState.condition === 'Malo', condX3, y + 12);
+        
+        doc.text('Integridad:', x + 3, y + 22);
+        drawCheckbox('Completo', work.conservationState.integrity === 'Completo', condX1, y + 19);
+        drawCheckbox('Incompleto', work.conservationState.integrity === 'Incompleto', condX2, y + 19);
+        drawCheckbox('Fragmento', work.conservationState.integrity === 'Fragmento', condX3, y + 19);
+        
+        return y + TOTAL_HEIGHT;
+    };
+    
+    // --- LÓGICA DE DIBUJO PRINCIPAL ---
+    
+    doc.setFontSize(8);
+    doc.text("República de Venezuela", MARGIN, currentY);
+    doc.text("Estado Yaracuy", MARGIN, currentY + 3);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text("VENEZUELA", PAGE_WIDTH / 2, currentY + 8, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text("Consejo Nacional de la Cultura (CONAC)", PAGE_WIDTH / 2, currentY + 12, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.text("Dirección General Sectorial de Museos", PAGE_WIDTH / 2, currentY + 15, { align: 'center' });
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.rect(MARGIN, currentY + 20, PAGE_WIDTH - (MARGIN * 2), 10);
+    doc.text("FICHA DE INVENTARIO GENERAL", PAGE_WIDTH / 2, currentY + 26, { align: 'center' });
+    currentY += 35;
+    
+    currentY = drawSectionBox("IDENTIFICACION", [
+        { label: "N° de Identificación:", value: work.inventoryNumber },
+        { label: "N° anteriores:", value: work.previousNumbers }
+    ], MARGIN, currentY, PAGE_WIDTH - (MARGIN * 2));
+    
+    currentY += 2;
+    
+    const columnStartY = currentY;
+    const leftColumnX = MARGIN;
+    const rightColumnX = MARGIN + 95;
+    const leftColumnWidth = 90;
+    const rightColumnWidth = PAGE_WIDTH - rightColumnX - MARGIN;
+
+    let leftColumnEnd_Y = drawSectionBox("DESCRIPCION", [
+        { label: "Clasificación Genérica:", value: work.classification },
+        { label: "Nombre/Título:", value: work.name },
+        { label: "Autor/Taller:", value: work.artist },
+        { label: "Dimensiones (cm):", value: workDimensions },
+        { label: "Técnica:", value: work.technique },
+        { label: "Materiales:", value: work.materials },
+    ], leftColumnX, columnStartY, leftColumnWidth);
+    
+    leftColumnEnd_Y = drawTextBox("Descripción formal", work.description || '', leftColumnX, leftColumnEnd_Y + 2, leftColumnWidth);
+
+    let rightColumnEnd_Y = drawConservationBox(rightColumnX, columnStartY, rightColumnWidth);
+
+    const referencesText = `Documentos:\n${work.references.documents || ''}\n\nBibliografía:\n${work.references.bibliography || ''}\n\nExposiciones:\n${work.references.exhibitions || ''}`;
+    rightColumnEnd_Y = drawTextBox("REFERENCIAS", referencesText, rightColumnX, rightColumnEnd_Y + 2, rightColumnWidth);
+    
+    currentY = Math.max(leftColumnEnd_Y, rightColumnEnd_Y) + 5;
+
+    currentY = drawSectionBox("DATOS TECNICOS", [
+        { label: "Procedencia:", value: work.technicalData.provenance },
+        { label: "Cultura/Tradición:", value: work.technicalData.culture },
+        { label: "Época/Estilo:", value: work.realizationDate },
+        { label: "Valor/Moneda:", value: work.technicalData.value },
+        { label: "Responsable Avalúo:", value: work.technicalData.appraiser },
+        { label: "Fecha Avalúo:", value: formatDate(work.technicalData.appraisalDate) },
+        { label: "Propietario Original:", value: work.technicalData.originalOwner },
+    ], MARGIN, currentY, PAGE_WIDTH - (MARGIN*2));
+
+    doc.addPage();
+    currentY = MARGIN;
+
+    currentY = drawTextBox("OBSERVACIONES", work.observations || '', MARGIN, currentY, PAGE_WIDTH - (MARGIN*2));
+    
+    currentY = drawSectionBox("COLECCION", [
+        { label: "Fuente de Adquisición:", value: work.collection.acquisitionSource },
+        { label: "Forma de Adquisición:", value: work.collection.acquisitionMethod },
+        { label: "Fecha de Ingreso:", value: formatDate(work.collection.entryDate) }
+    ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN*2));
+
+    currentY = drawSectionBox("RESPONSABLE DE LA OBRA", [
+        { label: "Nombre:", value: work.responsibleEntity.name },
+        { label: "Dirección:", value: work.responsibleEntity.address }
+    ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN*2));
+
+    currentY = drawSectionBox("INVENTARIO", [
+        { label: "Responsable:", value: work.inventory.responsible },
+        { label: "Fecha:", value: formatDate(work.inventory.date) },
+        { label: "Supervisado por:", value: work.inventory.supervisor },
+        { label: "Fecha:", value: formatDate(work.inventory.supervisorDate) }
+    ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN*2));
+    
+    // Guardar el documento
+    doc.save(`Ficha-${work.inventoryNumber}-${work.name}.pdf`);
+  };
+
+
+
+
+
+
 
   // Si está activo el formulario de agregar obra, lo muestra y retorna
   if (showForm) {
@@ -238,6 +464,16 @@ const WorksManagement: React.FC<WorksManagementProps> = ({ works, onUpdateWorks 
                       >
                         <Trash2 className="h-5 w-5" />
                       </button>
+
+                       <button
+                        onClick={() => handleExportPDF(work)}
+                        className="p-3 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200 hover:scale-110"
+                        title="Descargar Ficha PDF"
+                      >
+                        <FileDown className="h-5 w-5" />
+                      </button>
+
+
                     </div>
                   </td>
                 </tr>

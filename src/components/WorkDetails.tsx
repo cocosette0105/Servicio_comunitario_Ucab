@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Work } from '../types';
 
+
 // INTERFAZ DE PROPS (sin cambios)
 interface WorkDetailsProps {
   work: Work;

@@ -305,7 +305,7 @@ const generatePDF = async (record: MovementRecord) => {
   tempContainer.innerHTML = `
     <div style="font-family: Arial, sans-serif; padding: 40px; font-size: 14px; line-height: 1.6; color: #000;">
       <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-        <img src="/foto logo.jpg" alt="Logo Museo"  style="height: 80px;">
+       <img src="/logoblanco_negro.jpg" alt="Logo Museo"  style="height: 80px;">
         <div>
           
         </div>
