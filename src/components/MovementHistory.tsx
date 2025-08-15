@@ -295,9 +295,6 @@ const MovementHistory: React.FC<MovementHistoryProps> = ({ records, works, onUpd
 
 // Función para generar y descargar PDF real
 const generatePDF = async (record: MovementRecord) => {
-  // Logo en Base64 hay que arreglarlo porque aun no sale
-  const logoBase64 =
-    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wCEAAQEBAQEBAUFBQUHBwYHBwoJCAgJCg8KCwoLCg8WDhAODhAOFhQYExITGBQjHBgYHCMpIiAiKTEsLDE+Oz5RUW0BBAQEBAQEBQUFBQcHBgcHCgkICAkKDwoLCgsKDxYOEA4OEA4WFBgTEhMYF...MUy9/9k=";
 
   // HTML temporal para convertir a imagen
   const tempContainer = document.createElement("div");

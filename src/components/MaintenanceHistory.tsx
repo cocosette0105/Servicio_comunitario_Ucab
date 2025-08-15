@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 // Importa tipos necesarios para el manejo de datos
 import { MaintenanceRecord, Work } from '../types';
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // Define las propiedades que recibe el componente MaintenanceHistory
 interface MaintenanceHistoryProps {
@@ -231,129 +233,104 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
     setSearchTerm('');
   };
 
-  /**
-   * Genera y descarga un reporte PDF de un registro específico
-   * @param record - Registro del cual generar el PDF
-   */
-  const generatePDF = (record: MaintenanceRecord) => {
-    // Crea el contenido HTML del reporte con estructura profesional
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Reporte de Mantenimiento - ${record.workName}</title>
-        <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            line-height: 1.6; 
-            color: #1e40af; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 20px;
-            background: white;
-          }
-          .header { 
-            text-align: center; 
-            border-bottom: 3px solid #1e40af; 
-            padding-bottom: 20px; 
-            margin-bottom: 30px; 
-          }
-          .header h1 { 
-            color: #1e40af; 
-            margin: 0; 
-            font-size: 24px; 
-          }
-          .header h2 { 
-            color: #3b82f6; 
-            margin: 5px 0; 
-            font-size: 18px; 
-          }
-          .section { 
-            margin-bottom: 25px; 
-            padding: 15px; 
-            border: 1px solid #e5e7eb; 
-            border-radius: 8px; 
-            background: #f8fafc;
-          }
-          .section h3 { 
-            color: #1e40af; 
-            margin-top: 0; 
-            border-bottom: 2px solid #3b82f6; 
-            padding-bottom: 8px; 
-          }
-          .field { 
-            margin-bottom: 10px; 
-          }
-          .field strong { 
-            color: #1e40af; 
-            display: inline-block; 
-            width: 150px; 
-          }
-          .description { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 5px; 
-            border-left: 4px solid #3b82f6; 
-            margin-top: 10px;
-            white-space: pre-wrap;
-          }
-          .footer { 
-            text-align: center; 
-            margin-top: 40px; 
-            padding-top: 20px; 
-            border-top: 1px solid #e5e7eb; 
-            color: #6b7280; 
-            font-size: 12px; 
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>MUSEO CARMELO FERNÁNDEZ</h1>
-          <h2>Reporte de Mantenimiento</h2>
-          <p>Sistema de Gestión de Bóveda</p>
-        </div>
+  // Generar y descargar un reporte PDF real ya listo con formato
+   const generatePDF = async (record: MaintenanceRecord) => {
 
-        <div class="section">
-          <h3>Información de la Obra</h3>
-          <div class="field"><strong>Tipo de Obra:</strong> ${record.workType}</div>
-          <div class="field"><strong>Nombre:</strong> ${record.workName}</div>
-          <div class="field"><strong>Autor:</strong> ${record.author}</div>
-          <div class="field"><strong>Técnica:</strong> ${record.technique}</div>
-          <div class="field"><strong>Medidas:</strong> ${record.dimensions}</div>
-          <div class="field"><strong>Año:</strong> ${record.year}</div>
-          <div class="field"><strong>Precio Actual:</strong> ${record.currentPrice}</div>
-        </div>
+  // Funciones para marcar con X
+  const checkType = (type) =>
+    record.workType?.toLowerCase() === type.toLowerCase() ? "X" : " ";
+  const checkConservation = (type) =>
+    record.maintenanceCategory?.toLowerCase() === type.toLowerCase()
+      ? "X"
+      : " ";
 
-        <div class="section">
-          <h3>Detalles del Mantenimiento</h3>
-          <div class="field"><strong>Fecha:</strong> ${new Date(record.date).toLocaleDateString('es-ES')}</div>
-          <div class="field"><strong>Categoría:</strong> ${record.maintenanceCategory}</div>
-          <div class="field"><strong>Descripción de la Intervención:</strong></div>
-          <div class="description">${record.interventionDescription}</div>
+  // HTML temporal con el formato
+  const tempContainer = document.createElement("div");
+  tempContainer.style.width = "800px";
+  tempContainer.innerHTML = `
+    <div style="font-family: Arial, sans-serif; padding: 20px; font-size: 12px; line-height: 1.4; color: #000;">
+      
+      <div style="display: flex; align-items: center; margin-bottom: 5px;">
+       <img src="/foto logo.jpg" alt="Logo Museo" style="width: 80px; height: auto; margin-right: 15px;">
+        <div style="flex: 1; text-align: center;">
+          
         </div>
+      </div>
 
-        <div class="footer">
-          <p>Documento generado el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}</p>
-          <p>Sistema de Gestión de Bóveda - Museo Carmelo Fernández</p>
-        </div>
-      </body>
-      </html>
-    `;
+      <div style="text-align: center; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;">
+        TALLER DE CONSERVACIÓN Y RESTAURACIÓN
+      </div>
 
-    // Crea un blob con el contenido HTML y lo descarga
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Mantenimiento-${record.workName}-${record.date}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+      <div style="text-align: center; font-weight: bold; margin-bottom: 10px;">
+        INFORME
+      </div>
+
+      <div style="border: 1px solid #000; padding: 4px; font-size: 11px;">
+        Pintura (${checkType("Pintura")})  
+        Escultura (${checkType("Escultura")})  
+        Instalación (${checkType("Instalación")})  
+        Cerámica (${checkType("Cerámica")})  
+        Fotografía (${checkType("Fotografía")})  
+        Artes Gráficas (${checkType("Artes Gráficas")})  
+        Otros (${checkType("Otros")})<br>
+        N° de la obra: _______  Precio de la obra en Bs.: ${record.currentPrice}
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 5px;">
+        <tr>
+          <td style="border: 1px solid #000; padding: 4px;"><b>Autor:</b> ${record.author}</td>
+          <td style="border: 1px solid #000; padding: 4px;"><b>Título:</b> ${record.workName}</td>
+          <td style="border: 1px solid #000; padding: 4px;"><b>Medidas:</b> ${record.dimensions}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 4px;"><b>Técnica:</b> ${record.technique}</td>
+          <td style="border: 1px solid #000; padding: 4px;"><b>Año:</b> ${record.year}</td>
+          <td style="border: 1px solid #000; padding: 4px;"><b>Precio Actual:</b> ${record.currentPrice}</td>
+        </tr>
+      </table>
+
+      <div style="border: 1px solid #000; padding: 4px; margin-top: 5px; min-height: 60px;">
+        Conservación preventiva (${checkConservation("Conservación preventiva")})   
+        Conservación curativa (${checkConservation("Conservación curativa")})
+      </div>
+
+      <div style="border: 1px solid #000; padding: 4px; margin-top: 5px; min-height: 80px;">
+        <b>Intervención de la obra:</b><br>
+        ${record.interventionDescription}
+      </div>
+
+      <div style="margin-top: 40px; font-size: 11px;">
+        Lcdo. Ramón Caracas<br>
+        Lcdo. Juan Carlos Martínez<br>
+        Conservador y restaurador<br>
+        Director del MUCAF
+      </div>
+
+      <div style="margin-top: 20px; font-size: 9px; border-top: 1px solid #000; padding-top: 5px; text-align: center;">
+        Calle de servicio del Complejo Cultural Andrés Bello, 2da Av. Entre calles 13 y 14, San Felipe, Estado Yaracuy. 
+        0254 - 232.57.91 / 0412 - 519.85.45<br>
+        www.museocarmelofernandez.weebly.com / museocarmelofernandez@gmail.com
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(tempContainer);
+
+  // Convertir a imagen
+  const canvas = await html2canvas(tempContainer, { scale: 2 });
+  const imgData = canvas.toDataURL("image/png");
+
+  // Crear PDF real
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+  pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+  pdf.save(`mantenimiento_${record.workName}_${record.date}.pdf`);
+
+  // Limpiar el HTML temporal
+  document.body.removeChild(tempContainer);
+};
 
   // Renderizado principal del componente
   return (
