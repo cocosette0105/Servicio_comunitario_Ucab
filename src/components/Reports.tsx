@@ -3,6 +3,7 @@ import { FileText, Download, Filter, Calendar, User, MapPin, ChevronDown } from 
 import { Work, ReportFilters } from '../types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoSrc from '/logoblanco_negro.jpg';
 
 // Define las props que recibe el componente Reports
 interface ReportsProps {
@@ -62,27 +63,50 @@ const Reports: React.FC<ReportsProps> = ({ works }) => {
 
   const exportToPDF = () => {
     const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text('Reporte de Obras del Museo', 14, 15);
+    const MARGIN = 14; // Margen para el contenido
 
-    const headers = [['ID', 'Nombre', 'Artista', 'Fecha Realización', 'Fecha Ingreso', 'Ubicación', 'Descripción']];
+    // Se eliminó el título de aquí, porque ahora irá en el encabezado de cada página.
+    // doc.text('Reporte de Obras del Museo', 14, 15); 
 
+    const headers = [['ID', 'Nombre', 'Artista', 'Fecha Realización', 'Fecha Ingreso', 'Ubicación']];
+
+    // Se quita la descripción para que la tabla no sea demasiado ancha
     const data = filteredWorks.map(work => [
-      work.inventoryNumber, // Usamos un ID más visible para el reporte
+      work.inventoryNumber,
       work.name,
       work.artist,
       work.realizationDate ? new Date(work.realizationDate).toLocaleDateString('es-ES') : 'N/A',
       work.collection?.entryDate ? new Date(work.collection.entryDate).toLocaleDateString('es-ES') : 'N/A',
       work.storageLocation || 'N/A',
-      work.description.replace(/\n/g, ' ') // quita saltos de línea
     ]);
 
     autoTable(doc, {
-      startY: 20,
+      // 1. Se aumenta el startY para dejar espacio al nuevo encabezado.
+      startY: 30, 
       head: headers,
       body: data,
       styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [12, 57, 102], textColor: 255, fontStyle: 'bold' }, // Color institucional
+      headStyles: { fillColor: [12, 57, 102], textColor: 255, fontStyle: 'bold' },
+
+      // 2. Se añade el hook didDrawPage para dibujar el encabezado en CADA PÁGINA.
+      didDrawPage: (data) => {
+        // --- Encabezado ---
+        const LOGO_WIDTH = 30;
+        const LOGO_HEIGHT = 12;
+
+        // Añadir logo en la esquina superior izquierda
+        doc.addImage(logoSrc, 'JPEG', MARGIN, MARGIN - 5, LOGO_WIDTH, LOGO_HEIGHT);
+
+        // Añadir título del reporte
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Reporte de Obras del Museo', MARGIN + LOGO_WIDTH + 5, MARGIN + 2);
+
+        // Añadir fecha de generación
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, doc.internal.pageSize.getWidth() - MARGIN, MARGIN + 2, { align: 'right' });
+      },
     });
 
     doc.save(`reporte_obras_${new Date().toISOString().split('T')[0]}.pdf`);

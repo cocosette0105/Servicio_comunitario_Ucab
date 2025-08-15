@@ -237,12 +237,13 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
    const generatePDF = async (record: MaintenanceRecord) => {
 
   // Funciones para marcar con X
-  const checkType = (type) =>
-    record.workType?.toLowerCase() === type.toLowerCase() ? "X" : " ";
-  const checkConservation = (type) =>
-    record.maintenanceCategory?.toLowerCase() === type.toLowerCase()
-      ? "X"
-      : " ";
+  // CÓDIGO CORREGIDO
+const checkType = (type: MaintenanceRecord['workType']) =>
+  record.workType?.toLowerCase() === type.toLowerCase() ? "X" : " ";
+const checkConservation = (type: MaintenanceRecord['maintenanceCategory']) =>
+  record.maintenanceCategory?.toLowerCase() === type.toLowerCase()
+    ? "X"
+    : " ";
 
   // HTML temporal con el formato
   const tempContainer = document.createElement("div");
@@ -251,7 +252,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
     <div style="font-family: Arial, sans-serif; padding: 20px; font-size: 12px; line-height: 1.4; color: #000;">
       
       <div style="display: flex; align-items: center; margin-bottom: 5px;">
-       <img src="/foto logo.jpg" alt="Logo Museo" style="width: 80px; height: auto; margin-right: 15px;">
+       <img src="/logoblanco_negro.jpg" alt="Logo Museo" style="width: 80px; height: auto; margin-right: 15px;">
         <div style="flex: 1; text-align: center;">
           
         </div>
@@ -271,7 +272,7 @@ const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ records, works,
         Instalación (${checkType("Instalación")})  
         Cerámica (${checkType("Cerámica")})  
         Fotografía (${checkType("Fotografía")})  
-        Artes Gráficas (${checkType("Artes Gráficas")})  
+        Artes Gráficas (${checkType("Artes gráficas")})  
         Otros (${checkType("Otros")})<br>
         N° de la obra: _______  Precio de la obra en Bs.: ${record.currentPrice}
       </div>
