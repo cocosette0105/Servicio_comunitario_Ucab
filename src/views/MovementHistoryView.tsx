@@ -1,4 +1,4 @@
-// VISTA DE HISTORIAL DE MOVIMIENTOS
+// VISTA DE HISTORIAL DE MOVIMIENTOS hola probando
 // Vista de presentación para la gestión de movimientos de obras (entradas y salidas)
 // Permite registrar, consultar, editar y generar reportes de movimientos
 
