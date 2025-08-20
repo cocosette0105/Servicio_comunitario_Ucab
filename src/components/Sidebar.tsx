@@ -1,6 +1,6 @@
 import React from 'react'; // Importa React para crear componentes funcionales.
 import { Home, Package, FileText, LogOut, User as UserIcon, Users, ArrowUpDown, Wrench } from 'lucide-react'; // Importa íconos para el menú lateral.
-import { User } from '../types'; // Importa el tipo User para tipar las props.
+import { User } from '../models'; // Importa el tipo User desde los modelos.
 
 interface SidebarProps { // Define las propiedades que recibe el componente Sidebar.
   user: User; // Usuario actual.

@@ -4,8 +4,8 @@ import React, { useState, ChangeEvent, FormEvent } from 'react';
 // CORRECTO: Combina todos los íconos de 'lucide-react' en una sola línea
 import { Save, X, UploadCloud } from 'lucide-react';
 
-// CORRECTO: Importa la interfaz 'Work' desde tu archivo de tipos
-import { Work } from '../types';
+// CORRECTO: Importa la interfaz 'Work' desde los modelos
+import { Work } from '../models';
 
 
 

@@ -1,0 +1,492 @@
+{
+  "nota_importante": "NO OLVIDAR INSTALAR: npm install jspdf html2canvas Y npm install",
+  "proyecto": "Sistema de Gestión de Bóveda - Museo Carmelo Fernández",
+  "descripcion": "Sistema completo para la administración de obras de arte, usuarios, movimientos y mantenimiento del museo",
+  "arquitectura": "MVC (Modelo-Vista-Controlador) Puro",
+  "tecnologias": ["React", "TypeScript", "Tailwind CSS", "Vite", "jsPDF"],
+  
+  "estructura": {
+    "src/": {
+      "descripcion": "Directorio principal del código fuente",
+      "contenido": {
+        
+
+
+        "models/": {
+          "descripcion": "MODELOS - Definiciones de tipos y estructuras de datos",
+          "proposito": "Centralizar todas las interfaces y tipos TypeScript utilizados en la aplicación",
+          "archivos": {
+            "index.ts": {
+              "descripcion": "Exporta todos los tipos y interfaces utilizados en la aplicación",
+              "contenido": [
+                "User: Interface para usuarios autenticados del sistema",
+                "Work: Interface completa para obras de arte con todos sus campos",
+                "SystemUser: Interface para usuarios del sistema con roles y permisos",
+                "MovementRecord: Interface para registros de entrada/salida de obras",
+                "MaintenanceRecord: Interface para registros de mantenimiento",
+                "ReportFilters: Interface para filtros de reportes"
+              ],
+              "responsabilidad": "Definir la estructura de datos sin lógica de negocio"
+            }
+          }
+        },
+
+
+
+
+
+
+        "controllers/": {
+          "descripcion": "CONTROLADORES - Lógica de negocio y gestión de datos",
+          "proposito": "Manejar toda la lógica de negocio, validaciones, y operaciones CRUD",
+          "archivos": {
+            "AuthController.ts": {
+              "descripcion": "Controlador de autenticación y gestión de sesiones",
+              "funciones": [
+                "validateCredentials(): Valida credenciales de usuario",
+                "saveUserSession(): Guarda sesión en localStorage",
+                "getUserSession(): Recupera sesión guardada",
+                "clearUserSession(): Elimina sesión del usuario"
+              ],
+              "responsabilidad": "Gestionar autenticación, login, logout y persistencia de sesiones"
+            },
+            "WorkController.ts": {
+              "descripcion": "Controlador para gestión de obras de arte",
+              "funciones": [
+                "getAllWorks(): Obtiene todas las obras del localStorage",
+                "saveWorks(): Guarda obras en localStorage",
+                "findWorkById(): Busca obra por ID",
+                "findWorkByInventoryNumber(): Busca obra por número de inventario",
+                "addWork(): Agrega nueva obra",
+                "updateWork(): Actualiza obra existente",
+                "deleteWork(): Elimina obra",
+                "filterWorks(): Filtra obras según criterios",
+                "initializeSampleData(): Inicializa datos de ejemplo"
+              ],
+              "responsabilidad": "Todas las operaciones CRUD de obras y gestión de datos"
+            },
+            "UserController.ts": {
+              "descripcion": "Controlador para gestión de usuarios del sistema",
+              "funciones": [
+                "getAllUsers(): Obtiene todos los usuarios",
+                "saveUsers(): Guarda usuarios en localStorage",
+                "findUserById(): Busca usuario por ID",
+                "findUserByUsername(): Busca usuario por nombre",
+                "addUser(): Agrega nuevo usuario",
+                "updateUser(): Actualiza usuario existente",
+                "deleteUser(): Elimina usuario",
+                "toggleUserStatus(): Activa/desactiva usuario",
+                "filterUsers(): Filtra usuarios según criterios"
+              ],
+              "responsabilidad": "Gestión completa de usuarios del sistema y sus roles"
+            },
+            "MovementController.ts": {
+              "descripcion": "Controlador para registros de movimientos de obras",
+              "funciones": [
+                "getAllMovements(): Obtiene todos los movimientos",
+                "saveMovements(): Guarda movimientos en localStorage",
+                "findMovementById(): Busca movimiento por ID",
+                "addMovement(): Agrega nuevo movimiento",
+                "updateMovement(): Actualiza movimiento existente",
+                "deleteMovement(): Elimina movimiento",
+                "filterMovements(): Filtra movimientos con múltiples criterios"
+              ],
+              "responsabilidad": "Gestión de entradas y salidas de obras del museo"
+            },
+            "MaintenanceController.ts": {
+              "descripcion": "Controlador para registros de mantenimiento y conservación",
+              "funciones": [
+                "getAllMaintenanceRecords(): Obtiene todos los registros",
+                "saveMaintenanceRecords(): Guarda registros en localStorage",
+                "findMaintenanceRecordById(): Busca registro por ID",
+                "addMaintenanceRecord(): Agrega nuevo registro",
+                "updateMaintenanceRecord(): Actualiza registro existente",
+                "deleteMaintenanceRecord(): Elimina registro",
+                "filterMaintenanceRecords(): Filtra con múltiples criterios"
+              ],
+              "responsabilidad": "Gestión de mantenimiento y conservación de obras"
+            },
+            "index.ts": {
+              "descripcion": "Exporta todos los controladores para importación centralizada",
+              "responsabilidad": "Centralizar exportaciones de controladores"
+            }
+          }
+        },
+
+
+
+
+
+
+        "views/": {
+          "descripcion": "VISTAS - Componentes de presentación pura",
+          "proposito": "Componentes que solo reciben props y renderizan UI, sin lógica de negocio",
+          "archivos": {
+            "LoginView.tsx": {
+              "descripcion": "Vista de presentación para el formulario de inicio de sesión",
+              "props": ["onLogin: función callback para manejar login exitoso"],
+              "responsabilidad": "Renderizar formulario de login y manejar eventos de UI",
+              "caracteristicas": [
+                "Formulario de usuario y contraseña",
+                "Validación básica de campos",
+                "Diseño responsive con logo del museo",
+                "Manejo de errores de autenticación"
+              ]
+            },
+            "DashboardView.tsx": {
+              "descripcion": "Vista principal del sistema que contiene el layout general",
+              "props": [
+                "user: Usuario autenticado",
+                "works: Lista de obras",
+                "systemUsers: Lista de usuarios del sistema",
+                "movementRecords: Registros de movimientos",
+                "maintenanceRecords: Registros de mantenimiento",
+                "activeView: Vista activa actual",
+                "onViewChange: Función para cambiar vista",
+                "onLogout: Función para cerrar sesión",
+                "onUpdate*: Funciones para actualizar datos"
+              ],
+              "responsabilidad": "Layout principal con sidebar y área de contenido dinámico",
+              "caracteristicas": [
+                "Sidebar de navegación",
+                "Renderizado condicional de vistas",
+                "Gestión de estado de vista activa"
+              ]
+            },
+            "OverviewView.tsx": {
+              "descripcion": "Vista del panel principal con estadísticas generales",
+              "props": ["works: Lista de obras para calcular estadísticas"],
+              "responsabilidad": "Mostrar estadísticas y obras recientes",
+              "caracteristicas": [
+                "Tarjetas de estadísticas (total obras, artistas, ubicaciones)",
+                "Lista de obras ingresadas recientemente",
+                "Cálculos de estadísticas en tiempo real"
+              ]
+            },
+            "WorksManagementView.tsx": {
+              "descripción": "Vista para administración completa de obras del museo",
+              "props": [
+                "works: Lista de obras",
+                "onUpdateWorks: Función para actualizar obras"
+              ],
+              "responsabilidad": "Gestión completa de obras (CRUD + visualización)",
+              "caracteristicas": [
+                "Lista/tabla de obras con búsqueda",
+                "Formulario para agregar/editar obras",
+                "Vista detallada de obras",
+                "Funciones de eliminar con confirmación"
+              ]
+            },
+            "ReportsView.tsx": {
+              "descripcion": "Vista para generación y visualización de reportes",
+              "props": ["works: Lista de obras para generar reportes"],
+              "responsabilidad": "Filtrado, estadísticas y exportación de reportes",
+              "caracteristicas": [
+                "Panel de filtros avanzados",
+                "Estadísticas calculadas dinámicamente",
+                "Exportación a PDF y CSV",
+                "Tabla de resultados filtrados"
+              ]
+            },
+            "UserManagementView.tsx": {
+              "descripcion": "Vista para administración de usuarios del sistema",
+              "props": [
+                "users: Lista de usuarios del sistema",
+                "onUpdateUsers: Función para actualizar usuarios"
+              ],
+              "responsabilidad": "Gestión completa de usuarios y roles",
+              "caracteristicas": [
+                "Formulario para crear/editar usuarios",
+                "Tabla con información de usuarios",
+                "Gestión de roles y estados (activo/inactivo)",
+                "Funciones de eliminar y activar/desactivar"
+              ]
+            },
+            "MovementHistoryView.tsx": {
+              "descripcion": "Vista para gestión de movimientos de obras (entradas/salidas)",
+              "props": [
+                "records: Lista de registros de movimientos",
+                "works: Lista de obras disponibles",
+                "onUpdateRecords: Función para actualizar registros"
+              ],
+              "responsabilidad": "Registro y consulta de movimientos de obras",
+              "caracteristicas": [
+                "Formulario completo para registrar movimientos",
+                "Autocompletado de datos de obras",
+                "Filtros por tipo, fecha, etc.",
+                "Generación de PDFs de movimientos",
+                "Modal de vista detallada"
+              ]
+            },
+            "MaintenanceHistoryView.tsx": {
+              "descripcion": "Vista para gestión de registros de mantenimiento",
+              "props": [
+                "records: Lista de registros de mantenimiento",
+                "works: Lista de obras disponibles",
+                "onUpdateRecords: Función para actualizar registros"
+              ],
+              "responsabilidad": "Registro y consulta de mantenimiento de obras",
+              "caracteristicas": [
+                "Formulario por tipo de obra",
+                "Categorías de mantenimiento (preventivo/curativo)",
+                "Filtros avanzados de consulta",
+                "Generación de informes PDF",
+                "Modal de consulta detallada"
+              ]
+            },
+            "index.ts": {
+              "descripcion": "Exporta todas las vistas para importación centralizada",
+              "responsabilidad": "Centralizar exportaciones de vistas"
+            }
+          }
+        },
+
+
+
+
+
+
+
+
+        "components/": {
+          "descripcion": "COMPONENTES REUTILIZABLES - UI sin lógica de negocio",
+          "proposito": "Componentes de interfaz reutilizables entre diferentes vistas",
+          "archivos": {
+            "Sidebar.tsx": {
+              "descripcion": "Componente de navegación lateral del sistema",
+              "props": [
+                "user: Usuario actual para mostrar información",
+                "activeView: Vista activa para resaltar menú",
+                "onViewChange: Función para cambiar vista",
+                "onLogout: Función para cerrar sesión"
+              ],
+              "responsabilidad": "Navegación principal y información del usuario",
+              "caracteristicas": [
+                "Logo del museo",
+                "Menú de navegación con iconos",
+                "Información del usuario logueado",
+                "Botón de logout",
+                "Indicador visual de vista activa"
+              ]
+            },
+            "WorkForm.tsx": {
+              "descripcion": "Formulario completo para crear/editar obras",
+              "props": [
+                "work: Obra a editar (opcional)",
+                "onSubmit: Función para enviar datos",
+                "onCancel: Función para cancelar"
+              ],
+              "responsabilidad": "Captura y validación de datos de obras",
+              "caracteristicas": [
+                "Formulario multi-sección (identificación, técnica, conservación, etc.)",
+                "Validación de campos requeridos",
+                "Carga de imágenes",
+                "Campos autocompletados y relacionados"
+              ]
+            },
+            "WorkDetails.tsx": {
+              "descripcion": "Vista detallada de una obra específica",
+              "props": [
+                "work: Obra a mostrar",
+                "onClose: Función para cerrar vista",
+                "onEdit: Función para editar obra",
+                "onDelete: Función para eliminar obra"
+              ],
+              "responsabilidad": "Mostrar información completa de una obra",
+              "caracteristicas": [
+                "Información organizada en secciones",
+                "Imagen de la obra",
+                "Botones de acción (editar, eliminar, exportar PDF)",
+                "Diseño responsive y profesional"
+              ]
+            }
+          }
+        },
+
+
+
+
+
+
+        "utils/": {
+          "descripcion": "UTILIDADES - Funciones auxiliares especializadas",
+          "proposito": "Funciones reutilizables para tareas específicas como reportes y PDFs",
+          "archivos": {
+            "reportUtils.ts": {
+              "descripcion": "Utilidades para generación de reportes y exportación de datos",
+              "funciones": [
+                "filterWorksForReport(): Filtra obras según criterios de reporte",
+                "exportToPDF(): Exporta lista de obras a PDF",
+                "exportToCSV(): Exporta lista de obras a CSV",
+                "calculateStats(): Calcula estadísticas de obras"
+              ],
+              "responsabilidad": "Procesamiento de datos para reportes y exportación"
+            },
+            "pdfUtils.ts": {
+              "descripcion": "Utilidades específicas para generación de documentos PDF",
+              "funciones": [
+                "generateMovementPDF(): Genera PDF de registro de movimiento",
+                "generateMaintenancePDF(): Genera PDF de registro de mantenimiento"
+              ],
+              "responsabilidad": "Generación de PDFs con formato específico del museo",
+              "caracteristicas": [
+                "Plantillas profesionales con logo",
+                "Formato oficial del museo",
+                "Conversión HTML a imagen para PDF"
+              ]
+            }
+          }
+        },
+
+
+
+
+
+
+        "App.tsx": {
+          "descripcion": "COMPONENTE PRINCIPAL - Punto de entrada de la aplicación",
+          "responsabilidad": "Gestión de estado global y enrutamiento principal",
+          "funciones": [
+            "Gestión de autenticación (login/logout)",
+            "Carga inicial de datos desde controladores",
+            "Inicialización de datos de ejemplo",
+            "Renderizado condicional (Login vs Dashboard)",
+            "Gestión de estado global de la aplicación"
+          ],
+          "caracteristicas": [
+            "useEffect para carga inicial",
+            "Estados para todos los datos principales",
+            "Funciones de actualización que usan controladores",
+            "Lógica de persistencia de sesión"
+          ]
+        },
+
+
+
+
+
+
+        "main.tsx": {
+          "descripcion": "Punto de entrada de React - Renderiza la aplicación",
+          "responsabilidad": "Inicialización de React y renderizado del componente App"
+        },
+
+
+
+
+
+        "index.css": {
+          "descripcion": "Estilos globales con Tailwind CSS",
+          "responsabilidad": "Configuración de Tailwind y estilos base"
+        }
+      }
+    },
+
+
+
+
+
+
+
+    "public/": {
+      "descripcion": "Archivos públicos estáticos",
+      "archivos": {
+        "foto logo.jpg": {
+          "descripcion": "Logo principal del Museo Carmelo Fernández",
+          "uso": "Login, encabezados, documentos PDF"
+        },
+        "foto logo2.jpg": {
+          "descripcion": "Logo secundario/alternativo del museo",
+          "uso": "Sidebar, elementos de navegación"
+        }
+      }
+    },
+
+
+
+
+
+
+    "archivos_configuracion": {
+      "package.json": {
+        "descripcion": "Configuración del proyecto y dependencias",
+        "dependencias_principales": [
+          "react: Framework de UI",
+          "typescript: Tipado estático",
+          "tailwindcss: Framework de CSS",
+          "jspdf: Generación de PDFs",
+          "lucide-react: Iconos"
+        ]
+      },
+      "vite.config.ts": {
+        "descripcion": "Configuración del bundler Vite",
+        "optimizaciones": "Exclusión de lucide-react de optimizaciones"
+      },
+      "tailwind.config.js": {
+        "descripcion": "Configuración de Tailwind CSS",
+        "personalizacion": "Colores personalizados del museo"
+      },
+      "tsconfig.json": {
+        "descripcion": "Configuración de TypeScript",
+        "referencias": "Configuración modular con archivos separados"
+      }
+    }
+  },
+
+
+
+
+
+
+  "flujo_de_datos": {
+    "descripcion": "Cómo fluyen los datos en la arquitectura MVC",
+    "pasos": [
+      "1. Usuario interactúa con VISTA (componente React)",
+      "2. Vista llama función del CONTROLADOR",
+      "3. Controlador procesa lógica de negocio",
+      "4. Controlador actualiza/consulta datos (localStorage)",
+      "5. Controlador retorna datos procesados",
+      "6. Vista recibe datos y re-renderiza UI",
+      "7. Usuario ve resultado actualizado"
+    ]
+  },
+
+  "patrones_utilizados": {
+    "MVC": "Separación clara de Modelo, Vista y Controlador",
+    "Single_Responsibility": "Cada archivo tiene una responsabilidad específica",
+    "Dependency_Injection": "Vistas reciben datos via props",
+    "Observer_Pattern": "React hooks para gestión de estado",
+    "Factory_Pattern": "Controladores crean y gestionan objetos",
+    "Singleton_Pattern": "Controladores como clases estáticas"
+  },
+
+  "convenciones_codigo": {
+    "nomenclatura": {
+      "archivos": "PascalCase para componentes, camelCase para utilidades",
+      "funciones": "camelCase con verbos descriptivos",
+      "interfaces": "PascalCase con nombres descriptivos",
+      "constantes": "UPPER_SNAKE_CASE"
+    },
+    "comentarios": {
+      "archivos": "Comentario de encabezado explicando propósito",
+      "funciones": "JSDoc con descripción, parámetros y retorno",
+      "secciones": "Comentarios explicando bloques de código",
+      "idioma": "Español para mejor comprensión del equipo"
+    },
+    "estructura": {
+      "imports": "Agrupados por tipo (React, librerías, internos)",
+      "exports": "Export default para componentes principales",
+      "props": "Interfaces tipadas para todas las props",
+      "estado": "useState para estado local, props para datos globales"
+    }
+  },
+
+  "beneficios_arquitectura": {
+    "mantenibilidad": "Código organizado y fácil de modificar",
+    "escalabilidad": "Fácil agregar nuevas funcionalidades",
+    "testabilidad": "Lógica separada permite testing unitario",
+    "reutilizacion": "Componentes y utilidades reutilizables",
+    "legibilidad": "Código autodocumentado con comentarios",
+    "colaboracion": "Estructura clara para trabajo en equipo"
+  }
+}

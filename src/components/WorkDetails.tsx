@@ -6,8 +6,7 @@ import {
   Image as ImageIcon, Book, Presentation, Wrench, Archive, Landmark,
   ClipboardCheck, Paperclip, DollarSign, FileDown
 } from 'lucide-react';
-import { Work } from '../types';
-
+import { Work } from '../models';
 
 // INTERFAZ DE PROPS (sin cambios)
 interface WorkDetailsProps {
