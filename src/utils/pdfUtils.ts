@@ -120,7 +120,7 @@ export class PDFUtils {
       <div style="font-family: Arial, sans-serif; padding: 20px; font-size: 12px; line-height: 1.4; color: #000;">
         
         <div style="display: flex; align-items: center; margin-bottom: 5px;">
-         <img src="/foto logo.jpg" alt="Logo Museo" style="width: 80px; height: auto; margin-right: 15px;">
+         <img src="/logoblanco_negro.jpg" alt="Logo Museo" style="width: 80px; height: auto; margin-right: 15px;">
           <div style="flex: 1; text-align: center;">
             <h2 style="margin: 0;">INFORME DE CONSERVACIÓN</h2>
           </div>
