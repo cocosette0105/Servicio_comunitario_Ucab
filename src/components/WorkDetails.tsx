@@ -2,8 +2,8 @@ import React from 'react';
 
 import {
   ArrowLeft, Edit, Trash2, Calendar, User, MapPin, Building,
-  Hash, Palette, Ruler, FileText, PenSquare, Eye, ShieldCheck,
-  Image as ImageIcon, Book, Presentation, Wrench, Archive, Landmark,
+  Hash, Palette, Ruler, FileText,  Eye, ShieldCheck,
+  Image as  Book, Presentation, Wrench, Archive, Landmark,
   ClipboardCheck, Paperclip, DollarSign, FileDown
 } from 'lucide-react';
 import { Work } from '../models';

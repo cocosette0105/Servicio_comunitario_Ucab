@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Calendar, ArrowUpCircle, ArrowDownCircle, Filter, ChevronDown, Download, FileText, Edit, Eye, Trash2 } from 'lucide-react';
+import { Plus, Search,  ArrowUpCircle, ArrowDownCircle, Filter, ChevronDown, Download,  Edit, Eye, Trash2 } from 'lucide-react';
 import { MovementRecord, Work } from '../types';
 import jsPDF from "jspdf"; //para el pdf
 import html2canvas from "html2canvas"; //para el pdf no olvidar instalar npm install jspdf html2canvas

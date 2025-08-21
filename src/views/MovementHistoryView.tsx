@@ -3,7 +3,7 @@
 // Permite registrar, consultar, editar y generar reportes de movimientos
 
 import React, { useState } from 'react';
-import { Plus, Search, Calendar, ArrowUpCircle, ArrowDownCircle, Filter, ChevronDown, Download, FileText, Edit, Eye, Trash2 } from 'lucide-react';
+import { Plus, Search, ArrowUpCircle, ArrowDownCircle, Filter, ChevronDown, Download, Edit, Eye, Trash2 } from 'lucide-react';
 import { MovementRecord, Work } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
 

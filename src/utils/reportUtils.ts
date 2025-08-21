@@ -4,7 +4,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Work, ReportFilters } from '../models';
-
+import logoSrc from '/logoblanco_negro.jpg';
 export class ReportUtils {
   /**
    * Filtra obras según los criterios especificados
@@ -47,34 +47,48 @@ export class ReportUtils {
    * Exporta obras a PDF
    * @param works - Array de obras a exportar
    */
-  static exportToPDF(works: Work[]): void {
+   static exportToPDF(works: Work[]): void {
     const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text('Reporte de Obras del Museo', 14, 15);
+    const MARGIN = 14;
 
-    const headers = [['ID', 'Nombre', 'Artista', 'Fecha Realización', 'Fecha Ingreso', 'Ubicación', 'Descripción']];
+    const headers = [['ID', 'Nombre', 'Artista', 'Fecha Realización', 'Fecha Ingreso', 'Ubicación']];
 
-    const data = works.map(work => [
+    // CAMBIO 1: Usamos 'works' en lugar de 'filteredWorks'.
+    // CAMBIO 2: Añadimos el tipo (work: Work) al parámetro del map.
+    const data = works.map((work: Work) => [
       work.inventoryNumber,
       work.name,
       work.artist,
       work.realizationDate ? new Date(work.realizationDate).toLocaleDateString('es-ES') : 'N/A',
       work.collection?.entryDate ? new Date(work.collection.entryDate).toLocaleDateString('es-ES') : 'N/A',
       work.storageLocation || 'N/A',
-      work.description.replace(/\n/g, ' ')
     ]);
 
     autoTable(doc, {
-      startY: 20,
+      startY: 30, 
       head: headers,
       body: data,
       styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [25, 45, 113], textColor: 255, fontStyle: 'bold' },
+      headStyles: { fillColor: [12, 57, 102], textColor: 255, fontStyle: 'bold' },
+
+      // CAMBIO 3: Renombramos 'data' a '_data' para indicar que no se usa.
+      didDrawPage: (_data) => {
+        // --- Encabezado ---
+        const LOGO_WIDTH = 30;
+        const LOGO_HEIGHT = 12;
+
+        doc.addImage(logoSrc, 'JPEG', MARGIN, MARGIN - 5, LOGO_WIDTH, LOGO_HEIGHT);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Reporte de Obras del Museo', MARGIN + LOGO_WIDTH + 5, MARGIN + 2);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, doc.internal.pageSize.getWidth() - MARGIN, MARGIN + 2, { align: 'right' });
+      },
     });
 
     doc.save(`reporte_obras_${new Date().toISOString().split('T')[0]}.pdf`);
-  }
-
+  };
   /**
    * Exporta obras a CSV
    * @param works - Array de obras a exportar
