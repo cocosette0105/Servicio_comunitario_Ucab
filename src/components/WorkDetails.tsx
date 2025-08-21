@@ -1,5 +1,5 @@
 import React from 'react';
-import jsPDF from 'jspdf';
+
 import {
   ArrowLeft, Edit, Trash2, Calendar, User, MapPin, Building,
   Hash, Palette, Ruler, FileText, PenSquare, Eye, ShieldCheck,
@@ -7,6 +7,7 @@ import {
   ClipboardCheck, Paperclip, DollarSign, FileDown
 } from 'lucide-react';
 import { Work } from '../models';
+import { PDFUtils } from '../utils/pdfUtils';
 
 // INTERFAZ DE PROPS (sin cambios)
 interface WorkDetailsProps {
@@ -57,228 +58,10 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
 
   // --- NUEVA FUNCIÓN PARA EXPORTAR A PDF ---
   // --- NUEVA FUNCIÓN PARA EXPORTAR A PDF ---
-const handleExportPDF = () => {
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const MARGIN = 15;
-    const PAGE_WIDTH = doc.internal.pageSize.getWidth();
-    let currentY = MARGIN;
-
-    // --- FUNCIONES AUXILIARES DE DIBUJO (MEJORADAS) ---
-
-    // Dibuja una caja con título y contenido de texto. Retorna la posición Y final.
-    const drawTextBox = (title: string, value: string, x: number, y: number, w: number): number => {
-        const PADDING = 3;
-        const HEADER_HEIGHT = 8;
-        const FONT_SIZE = 9;
-        const LINE_HEIGHT_FACTOR = 1.4; // Espaciado entre líneas
-
-        doc.setFontSize(FONT_SIZE);
-        const textLines = doc.splitTextToSize(value || ' ', w - (PADDING * 2));
-        // Calcula la altura del texto. Una buena aproximación es: pt * 0.3527 = mm
-        const textHeight = textLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
-        const totalHeight = HEADER_HEIGHT + textHeight + (PADDING * 2);
-
-        // Dibuja el contenedor y el encabezado
-        doc.rect(x, y, w, totalHeight);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.text(title, x + PADDING, y + 5);
-        doc.line(x, y + HEADER_HEIGHT, x + w, y + HEADER_HEIGHT);
-        
-        // Dibuja el texto del contenido
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(FONT_SIZE);
-        doc.text(textLines, x + PADDING, y + HEADER_HEIGHT + PADDING, { lineHeightFactor: LINE_HEIGHT_FACTOR });
-        
-        return y + totalHeight; // Retorna la nueva posición Y para el siguiente elemento
-    };
-
-    // Dibuja una caja con pares de "etiqueta: valor". Retorna la posición Y final.
-    const drawSectionBox = (title: string, content: {label: string, value?: string}[], x: number, y: number, w: number): number => {
-        const PADDING = 3;
-        const HEADER_HEIGHT = 8;
-        const LABEL_X_OFFSET = 35; // Distancia desde la izquierda para el valor
-        const MIN_ITEM_HEIGHT = 7; // Altura mínima para cada par etiqueta/valor
-        const FONT_SIZE = 8;
-        const LINE_HEIGHT_FACTOR = 1.4;
-        
-        let contentAreaHeight = PADDING; // Padding superior dentro del área de contenido
-
-        // 1. Calcular la altura total requerida por el contenido
-        doc.setFontSize(FONT_SIZE);
-        content.forEach(item => {
-            const valueLines = doc.splitTextToSize(item.value || ' ', w - LABEL_X_OFFSET - (PADDING*2));
-            const itemTextHeight = valueLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
-            contentAreaHeight += Math.max(MIN_ITEM_HEIGHT, itemTextHeight);
-        });
-
-        const totalHeight = HEADER_HEIGHT + contentAreaHeight + PADDING;
-
-        // 2. Dibujar el contenedor y el encabezado
-        doc.rect(x, y, w, totalHeight);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.text(title, x + PADDING, y + 5);
-        doc.line(x, y + HEADER_HEIGHT, x + w, y + HEADER_HEIGHT);
-        
-        // 3. Dibujar los items de contenido
-        let itemY = y + HEADER_HEIGHT + PADDING + 2; // Posición Y inicial para el primer item
-        doc.setFontSize(FONT_SIZE);
-        content.forEach(item => {
-            const valueLines = doc.splitTextToSize(item.value || ' ', w - LABEL_X_OFFSET - (PADDING*2));
-            const itemTextHeight = valueLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
-            const currentItemHeight = Math.max(MIN_ITEM_HEIGHT, itemTextHeight);
-
-            doc.setFont('helvetica', 'normal');
-            doc.text(item.label, x + PADDING, itemY);
-            doc.setFont('helvetica', 'bold');
-            doc.text(valueLines, x + LABEL_X_OFFSET, itemY, { maxWidth: w - LABEL_X_OFFSET - PADDING, lineHeightFactor: LINE_HEIGHT_FACTOR });
-            
-            itemY += currentItemHeight; // Mover la Y para el siguiente item
-        });
-
-        return y + totalHeight;
-    };
-
-    // Dibuja la caja de Estado de Conservación con checkboxes.
-   const drawConservationBox = (x: number, y: number, w: number): number => {
-        const TOTAL_HEIGHT = 25; // Esta caja sí tiene un diseño fijo
-        doc.rect(x, y, w, TOTAL_HEIGHT);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.text('ESTADO DE CONSERVACION', x + 3, y + 5);
-        doc.line(x, y + 8, x + w, y + 8);
-
-        const drawCheckbox = (label: string, checked: boolean, chkX: number, chkY: number) => {
-            // Hacemos el checkbox y la fuente un poco más pequeños para que quepa todo
-            doc.rect(chkX, chkY, 3.5, 3.5); 
-            doc.setFontSize(8); // Reducimos el tamaño de la etiqueta
-            doc.text(label, chkX + 5, chkY + 3); // Ajustamos la posición del texto
-            if (checked) {
-                doc.setFont('helvetica', 'bold');
-                doc.text('X', chkX + 0.8, chkY + 3); // Centramos la 'X' en el nuevo checkbox
-                doc.setFont('helvetica', 'normal');
-            }
-        };
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        
-        // Fila de "Condiciones" con nuevo espaciado
-        doc.text('Condiciones:', x + 3, y + 15);
-        const condX1 = x + 24;
-        const condX2 = x + 44;
-        const condX3 = x + 67;
-        drawCheckbox('Bueno', work.conservationState.condition === 'Bueno', condX1, y + 12);
-        drawCheckbox('Regular', work.conservationState.condition === 'Regular', condX2, y + 12);
-        drawCheckbox('Malo', work.conservationState.condition === 'Malo', condX3, y + 12);
-        
-        // Fila de "Integridad" con el mismo espaciado para alinear todo
-        doc.text('Integridad:', x + 3, y + 22);
-        drawCheckbox('Completo', work.conservationState.integrity === 'Completo', condX1, y + 19);
-        drawCheckbox('Incompleto', work.conservationState.integrity === 'Incompleto', condX2, y + 19);
-        drawCheckbox('Fragmento', work.conservationState.integrity === 'Fragmento', condX3, y + 19);
-        
-        return y + TOTAL_HEIGHT;
-    };
-    
-    // --- LÓGICA DE DIBUJO PRINCIPAL ---
-    
-    // Encabezado del documento
-    doc.setFontSize(8);
-    doc.text("República de Venezuela", MARGIN, currentY);
-    doc.text("Estado Yaracuy", MARGIN, currentY + 3);
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text("VENEZUELA", PAGE_WIDTH / 2, currentY + 8, { align: 'center' });
-    doc.setFontSize(10);
-    doc.text("Consejo Nacional de la Cultura (CONAC)", PAGE_WIDTH / 2, currentY + 12, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.text("Dirección General Sectorial de Museos", PAGE_WIDTH / 2, currentY + 15, { align: 'center' });
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.rect(MARGIN, currentY + 20, PAGE_WIDTH - (MARGIN * 2), 10);
-    doc.text("FICHA DE INVENTARIO GENERAL", PAGE_WIDTH / 2, currentY + 26, { align: 'center' });
-    currentY += 35;
-    
-    // --- PÁGINA 1 ---
-    currentY = drawSectionBox("IDENTIFICACION", [
-        { label: "N° de Identificación:", value: work.inventoryNumber },
-        { label: "N° anteriores:", value: work.previousNumbers }
-    ], MARGIN, currentY, PAGE_WIDTH - (MARGIN * 2));
-    
-    currentY += 2; // Pequeño espacio
-    
-    // --- INICIO DE DOS COLUMNAS ---
-    const columnStartY = currentY;
-    const leftColumnX = MARGIN;
-    const rightColumnX = MARGIN + 95;
-    const leftColumnWidth = 90;
-    const rightColumnWidth = PAGE_WIDTH - rightColumnX - MARGIN;
-
-    // Dibujar columna izquierda
-    let leftColumnEnd_Y = drawSectionBox("DESCRIPCION", [
-        { label: "Clasificación Genérica:", value: work.classification },
-        { label: "Nombre/Título:", value: work.name },
-        { label: "Autor/Taller:", value: work.artist },
-        { label: "Dimensiones (cm):", value: workDimensions },
-        { label: "Técnica:", value: work.technique },
-        { label: "Materiales:", value: work.materials },
-    ], leftColumnX, columnStartY, leftColumnWidth);
-    
-    leftColumnEnd_Y = drawTextBox("Descripción formal", work.description || '', leftColumnX, leftColumnEnd_Y + 2, leftColumnWidth);
-
-    // Dibujar columna derecha
-    let rightColumnEnd_Y = drawConservationBox(rightColumnX, columnStartY, rightColumnWidth);
-
-    const referencesText = `Documentos:\n${work.references.documents || ''}\n\nBibliografía:\n${work.references.bibliography || ''}\n\nExposiciones:\n${work.references.exhibitions || ''}`;
-    rightColumnEnd_Y = drawTextBox("REFERENCIAS", referencesText, rightColumnX, rightColumnEnd_Y + 2, rightColumnWidth);
-    
-    // Sincronizar 'currentY' al final de la columna más larga
-    currentY = Math.max(leftColumnEnd_Y, rightColumnEnd_Y) + 5;
-
-    // --- FIN DE DOS COLUMNAS ---
-    
-    currentY = drawSectionBox("DATOS TECNICOS", [
-        { label: "Procedencia:", value: work.technicalData.provenance },
-        { label: "Cultura/Tradición:", value: work.technicalData.culture },
-        { label: "Época/Estilo:", value: work.realizationDate },
-        { label: "Valor/Moneda:", value: work.technicalData.value },
-        { label: "Responsable Avalúo:", value: work.technicalData.appraiser },
-        { label: "Fecha Avalúo:", value: formatDate(work.technicalData.appraisalDate) },
-        { label: "Propietario Original:", value: work.technicalData.originalOwner },
-    ], MARGIN, currentY, PAGE_WIDTH - (MARGIN*2));
-
-    // --- PÁGINA 2 ---
-    doc.addPage();
-    currentY = MARGIN;
-
-    currentY = drawTextBox("OBSERVACIONES", work.observations || '', MARGIN, currentY, PAGE_WIDTH - (MARGIN*2));
-    
-    currentY = drawSectionBox("COLECCION", [
-        { label: "Fuente de Adquisición:", value: work.collection.acquisitionSource },
-        { label: "Forma de Adquisición:", value: work.collection.acquisitionMethod },
-        { label: "Fecha de Ingreso:", value: formatDate(work.collection.entryDate) }
-    ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN*2));
-
-    currentY = drawSectionBox("RESPONSABLE DE LA OBRA", [
-        { label: "Nombre:", value: work.responsibleEntity.name },
-        { label: "Dirección:", value: work.responsibleEntity.address }
-    ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN*2));
-
-    currentY = drawSectionBox("INVENTARIO", [
-        { label: "Responsable:", value: work.inventory.responsible },
-        { label: "Fecha:", value: formatDate(work.inventory.date) },
-        { label: "Supervisado por:", value: work.inventory.supervisor },
-        { label: "Fecha:", value: formatDate(work.inventory.supervisorDate) }
-    ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN*2));
-    
-    // Guardar el documento
-    doc.save(`Ficha-${work.inventoryNumber}-${work.name}.pdf`);
+//pdf 
+    const handleExportPDF = (work: Work) => {
+  PDFUtils.generateWorkInventoryPDF(work);
 };
-
   return (
     <div className="p-4 sm:p-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -298,7 +81,7 @@ const handleExportPDF = () => {
                 </button>
 
                 {/* --- NUEVO BOTÓN EXPORTAR PDF --- */}
-                <button onClick={handleExportPDF} className="flex items-center space-x-2 px-5 py-2.5 bg-[#192d71] hover:bg-[#1e3a8a] text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all">
+                <button onClick={() => handleExportPDF(work)} className="flex items-center space-x-2 px-5 py-2.5 bg-[#192d71] hover:bg-[#1e3a8a] text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all">
                   <FileDown className="h-5 w-5" />
                   <span>Exportar PDF</span>
                 </button>

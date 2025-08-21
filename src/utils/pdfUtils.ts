@@ -203,7 +203,7 @@ export class PDFUtils {
     document.body.removeChild(tempContainer);
   }
 
-  export class PDFUtils {
+  
   /**
    * Genera la ficha de inventario en PDF para una obra
    * @param work - Obra del museo

@@ -5,11 +5,10 @@
 import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, FileDown } from 'lucide-react';
 import { Work } from '../models';
-import { PDFUtils } from '../utils/pdfutils';
+import { PDFUtils } from '../utils/pdfUtils';
 import WorkForm from '../components/WorkForm';
 import WorkDetails from '../components/WorkDetails';
-import jsPDF from 'jspdf'; 
-import logoSrc from '/logoblanco_negro.jpg';
+
 
 // Define las propiedades que recibe la vista de gestión de obras
 interface WorksManagementViewProps {
