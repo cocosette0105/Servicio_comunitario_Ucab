@@ -4,7 +4,12 @@ dotenv.config();
 
 export const env = {
   PORT: process.env.PORT || 5000,
- CORS_ORIGINS: ["http://localhost:5173", "http://localhost:5174"],
+ CORS_ORIGINS: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://192.168.2.33:5173", // <-- agrega la IP de tu PC con el frontend
+    "http://192.168.2.33:5174"
+  ],
   DBHOST: process.env.DB_HOST,
   DBPORT: Number(process.env.DB_PORT),
   DBNAME: process.env.DB_NAME,

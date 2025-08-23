@@ -7,7 +7,6 @@ import WorkForm from '../components/WorkForm';
 import WorkDetails from '../components/WorkDetails';
 import { getWorks, createWork, updateWork, deleteWork } from '../services/workService';
 
-
 const WorksManagementView: React.FC = () => {
   const [works, setWorks] = useState<Work[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -60,45 +59,46 @@ const WorksManagementView: React.FC = () => {
     (work.storageLocation ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-   // ==========================
+  // ==========================
   // Manejo de creación de obra
   // ==========================
   const handleAddWork = async (workData: Partial<Work>) => {
+    console.log('llegoona');
+     console.log('Llego al componente padre con:', workData);
     try {
-      // Mapear los campos del frontend al backend
       const payload = {
-  obr_mcf: workData.inventoryNumber ?? '',
-  obr_numeros_anteriores: workData.previousNumbers ?? '',
-  obr_titulo: workData.name ?? '',
-  obr_fecha_realizacion: workData.realizationDate ?? '',   // string vacío en vez de null
-  obr_alto_cm: workData.dimensions?.height ?? '',
-  obr_ancho_cm: workData.dimensions?.width ?? '',
-  obr_profundidad_cm: workData.dimensions?.depth ?? '',
-  obr_diametro_cm: workData.dimensions?.diameter ?? '',
-  obr_valor_avaluo: workData.technicalData?.value ?? '',
-  obr_descripcion_formal: workData.description ?? '',
-  obr_detalles_firma: workData.signatureDetails ?? '',
-  obr_observaciones: workData.observations ?? '',
-  obr_url_foto: workData.photoUrl ?? '',
-  obr_estado_condicion: workData.conservationState?.condition ?? '',
-  obr_estado_integridad: workData.conservationState?.integrity ?? '',
-  obr_procedencia: workData.technicalData?.provenance ?? '',
-  obr_cultura_tradicion: workData.technicalData?.culture ?? '',
-  obr_epoca_estilo: workData.technicalData?.eraStyle ?? '',
-  obr_moneda_avaluo: workData.technicalData?.currency ?? '',
-  obr_responsable_avaluo: workData.technicalData?.appraiser ?? '',
-  obr_fecha_avaluo: workData.technicalData?.appraisalDate ?? '',
-  obr_propietario_original: workData.technicalData?.originalOwner ?? '',
-  obr_documentos_relacionados: workData.references?.documents ?? '',
-  obr_bibliografia: workData.references?.bibliography ?? '',
-  obr_fecha_ingreso: workData.collection?.entryDate ?? '',
-  obr_fuente_adquisicion: workData.collection?.acquisitionSource ?? '',
-  obr_metodo_adquisicion: workData.collection?.acquisitionMethod ?? '',
-  obr_entidad_responsable: workData.responsibleEntity?.name ?? '',
-};
+        obr_mcf: workData.inventoryNumber ?? '',
+        obr_numeros_anteriores: workData.previousNumbers ?? '',
+        obr_titulo: workData.name ?? '',
+        obr_fecha_realizacion: workData.realizationDate ?? '',
+        obr_alto_cm: workData.dimensions?.height ?? '',
+        obr_ancho_cm: workData.dimensions?.width ?? '',
+        obr_profundidad_cm: workData.dimensions?.depth ?? '',
+        obr_diametro_cm: workData.dimensions?.diameter ?? '',
+        obr_valor_avaluo: workData.technicalData?.value ?? '',
+        obr_descripcion_formal: workData.description ?? '',
+        obr_detalles_firma: workData.signatureDetails ?? '',
+        obr_observaciones: workData.observations ?? '',
+        obr_url_foto: workData.photoUrl ?? '',
+        obr_estado_condicion: workData.conservationState?.condition ?? '',
+        obr_estado_integridad: workData.conservationState?.integrity ?? '',
+        obr_procedencia: workData.technicalData?.provenance ?? '',
+        obr_cultura_tradicion: workData.technicalData?.culture ?? '',
+        obr_epoca_estilo: workData.technicalData?.eraStyle ?? '',
+        obr_moneda_avaluo: workData.technicalData?.currency ?? '',
+        obr_responsable_avaluo: workData.technicalData?.appraiser ?? '',
+        obr_fecha_avaluo: workData.technicalData?.appraisalDate ?? '',
+        obr_propietario_original: workData.technicalData?.originalOwner ?? '',
+        obr_documentos_relacionados: workData.references?.documents ?? '',
+        obr_bibliografia: workData.references?.bibliography ?? '',
+        obr_fecha_ingreso: workData.collection?.entryDate ?? '',
+        obr_fuente_adquisicion: workData.collection?.acquisitionSource ?? '',
+        obr_metodo_adquisicion: workData.collection?.acquisitionMethod ?? '',
+        obr_entidad_responsable: workData.responsibleEntity?.name ?? '',
+      };
 
-
-console.log("Pasando a create work");  // <- línea de depuración
+      console.log("Pasando a create work kakaka");
+      console.log("Pasando a create work22");
       const newWork = await createWork(payload);
       setWorks([...works, newWork]);
       setShowForm(false);
@@ -132,24 +132,35 @@ console.log("Pasando a create work");  // <- línea de depuración
     PDFUtils.generateWorkInventoryPDF(work);
   };
 
-  if (showForm)
-    return <WorkForm onSubmit={handleAddWork} onCancel={() => setShowForm(false)} />;
-
-  if (editingWork)
-    return <WorkForm work={editingWork} onSubmit={handleEditWork} onCancel={() => setEditingWork(null)} />;
-
-  if (viewingWork)
-    return (
-      <WorkDetails
-        work={viewingWork}
-        onClose={() => setViewingWork(null)}
-        onEdit={() => { setEditingWork(viewingWork); setViewingWork(null); }}
-        onDelete={() => { handleDeleteWork(viewingWork.id); setViewingWork(null); }}
-      />
-    );
-
   return (
     <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
+      
+      {/* FORMULARIO Y DETALLES */}
+      {showForm && (
+        <WorkForm
+          onSubmit={handleAddWork}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {editingWork && (
+        <WorkForm
+          work={editingWork}
+          onSubmit={handleEditWork}
+          onCancel={() => setEditingWork(null)}
+        />
+      )}
+
+      {viewingWork && (
+        <WorkDetails
+          work={viewingWork}
+          onClose={() => setViewingWork(null)}
+          onEdit={() => { setEditingWork(viewingWork); setViewingWork(null); }}
+          onDelete={() => { handleDeleteWork(viewingWork.id); setViewingWork(null); }}
+        />
+      )}
+
+      {/* ENCABEZADO Y BOTÓN AGREGAR */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-3">
@@ -166,6 +177,7 @@ console.log("Pasando a create work");  // <- línea de depuración
         </button>
       </div>
 
+      {/* BÚSQUEDA */}
       <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
         <div className="p-8 border-b border-[#192d71]/20">
           <div className="relative">
@@ -180,6 +192,7 @@ console.log("Pasando a create work");  // <- línea de depuración
           </div>
         </div>
 
+        {/* TABLA */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-[#192d71]/10 to-[#192d71]/5">

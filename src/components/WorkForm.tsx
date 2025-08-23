@@ -1,57 +1,62 @@
-// CORRECTO: Combina todo lo de 'react' en una sola línea
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-
-// CORRECTO: Combina todos los íconos de 'lucide-react' en una sola línea
 import { Save, X, UploadCloud } from 'lucide-react';
-
-// CORRECTO: Importa la interfaz 'Work' desde los modelos
 import { Work } from '../models';
 
-
-
-// Define las props que recibe el formulario: la obra a editar (opcional), función para enviar datos y función para cancelar
-// Define las props que recibe el formulario
 interface WorkFormProps {
   work?: Work;
   onSubmit: (workData: Partial<Work>) => void;
   onCancel: () => void;
 }
 
+// Función para formatear fechas a YYYY-MM-DD
+const formatDate = (date?: string | Date) =>
+  date ? new Date(date).toISOString().split('T')[0] : '';
+
 const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
-  
   const [formData, setFormData] = useState<Partial<Work>>({
-    // Campos existentes
     id: work?.id || '',
-    inventoryNumber: work?.inventoryNumber || '', // N° de Identificación
-    previousNumbers: work?.previousNumbers || '', // N°s anteriores
-    name: work?.name || '', // Nombre del Objeto / Título de la Obra
-    artist: work?.artist || '', // Autor/Artesano/Taller
-    classification: work?.classification || '', // Clasificación Genérica
-    realizationDate: work?.realizationDate || '', // Corresponde a "Epoca / Estilo / Movim. / Escuela"
-    technique: work?.technique || '', // Técnica
-    materials: work?.materials || '', // Materiales
-    dimensions: work?.dimensions || { height: '', width: '', depth: '', diameter: '' }, // Dimensiones
-    description: work?.description || '', // Descripción formal
-    signatureDetails: work?.signatureDetails || '', // Ubicación y detalles de la firma
-    observations: work?.observations || '', // Otras observaciones generales
-    conservationState: work?.conservationState || { condition: '', integrity: '' }, // Estado de conservación
+    inventoryNumber: work?.inventoryNumber || '',
+    previousNumbers: work?.previousNumbers || '',
+    name: work?.name || '',
+    artist: work?.artist || '',
+    classification: work?.classification || '',
+    realizationDate: work?.realizationDate || '',
+    technique: work?.technique || '',
+    materials: work?.materials || '',
+    dimensions: work?.dimensions || { height: '', width: '', depth: '', diameter: '' },
+    description: work?.description || '',
+    signatureDetails: work?.signatureDetails || '',
+    observations: work?.observations || '',
+    conservationState: work?.conservationState || { condition: '', integrity: '' },
     photoUrl: work?.photoUrl || '',
-
-    // Campos nuevos/reestructurados
-    technicalData: work?.technicalData || { provenance: '', culture: '', eraStyle: '', value: '', appraiser: '', appraisalDate: '', originalOwner: '' }, // Datos técnicos
-    references: work?.references || { documents: '', bibliography: '', exhibitions: '', treatments: '' }, // Referencias
-    storageLocation: work?.storageLocation || '', // Ubicación en Depósito
-    collection: work?.collection || { acquisitionSource: '', acquisitionMethod: '', entryDate: '' }, // Datos de colección
-    responsibleEntity: work?.responsibleEntity || { name: '', address: '' }, // Entidad responsable
-    inventory: work?.inventory || { responsible: '', date: '', supervisor: '', supervisorDate: '' }, // Inventario
+    technicalData: work?.technicalData || {
+      provenance: '',
+      culture: '',
+      eraStyle: '',
+      value: '',
+      appraiser: '',
+      appraisalDate: work?.technicalData?.appraisalDate ? formatDate(work.technicalData.appraisalDate) : '',
+      originalOwner: ''
+    },
+    references: work?.references || { documents: '', bibliography: '', exhibitions: '', treatments: '' },
+    storageLocation: work?.storageLocation || '',
+    collection: work?.collection || {
+      acquisitionSource: '',
+      acquisitionMethod: '',
+      entryDate: work?.collection?.entryDate ? formatDate(work.collection.entryDate) : ''
+    },
+    responsibleEntity: work?.responsibleEntity || { name: '', address: '' },
+    inventory: work?.inventory || {
+      responsible: '',
+      date: work?.inventory?.date ? formatDate(work.inventory.date) : '',
+      supervisor: '',
+      supervisorDate: work?.inventory?.supervisorDate ? formatDate(work.inventory.supervisorDate) : ''
+    },
   });
-  // Estado para la vista previa de la imagen
-  const [imagePreview, setImagePreview] = useState<string | null>(work?.photoUrl || null);
 
-  /**
-   * Maneja los cambios en los inputs, textareas y selects.
-   * Puede actualizar propiedades anidadas usando la notación 'objeto.propiedad' en el atributo 'name' del input.
-   */
+  const [imagePreview, setImagePreview] = useState<string | null>(work?.photoUrl || null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const keys = name.split('.');
@@ -62,41 +67,61 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
       setFormData(prev => {
         const newState = { ...prev };
         let currentLevel: any = newState;
+
         for (let i = 0; i < keys.length - 1; i++) {
-          currentLevel[keys[i]] = { ...currentLevel[keys[i]] };
+          currentLevel[keys[i]] = { ...(currentLevel[keys[i]] || {}) };
           currentLevel = currentLevel[keys[i]];
         }
+
         currentLevel[keys[keys.length - 1]] = value;
         return newState;
       });
     }
   };
 
-  /**
-   * Maneja la selección de un archivo de imagen.
-   */
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData(prev => ({ ...prev, photo: file }));
+      setImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
+      reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
-  
-  /**
-   * Maneja el envío del formulario.
-   */
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    // Aquí se enviaría `formData` al backend. Si hay una `formData.photo` (File),
-    // se necesitaría un `FormData` para enviarlo como multipart/form-data.
-    onSubmit(formData);
-  };
 
+  const handleSubmit = async (e: FormEvent) => {
+    console.log('chucuchaa');
+
+    e.preventDefault();
+    console.log('Submit disparado');
+
+    let photoUrl = formData.photoUrl || '';
+
+    // Mantener la foto actual si no se selecciona nueva
+    if (imageFile) {
+      // Aquí se puede activar la subida al backend
+      const imageData = new FormData();
+      imageData.append('obr_url_foto', imageFile);
+      try {
+        const res = await fetch('http://localhost:5000/api/upload', {
+          method: 'POST',
+          body: imageData
+        });
+        const data = await res.json();
+        photoUrl = data.url; // backend debe retornar { url: 'ruta' }
+      } catch (err) {
+        console.error('Error al subir imagen:', err);
+      }
+    }
+
+    const submitData: Partial<Work> = {
+      ...formData,
+      photoUrl,
+    };
+
+    console.log('Datos que se envían al backend:', submitData);
+    onSubmit(submitData);
+  };
   // Renderizado del formulario
   return (
     <div className="p-4 sm:p-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
@@ -187,8 +212,8 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
                     placeholder="Anotaciones sobre el tiraje, estado de la obra, u otros detalles relevantes..."
                   ></textarea>
                 </div>
-            </fieldset>
-            {/* --- SECCIÓN 3: FOTOGRAFÍA --- */}
+                </fieldset>
+           {/* --- SECCIÓN 3: FOTOGRAFÍA --- */}
             <fieldset className="border-t-2 border-[#192d71]/20 pt-6">
               <legend className="px-4 text-xl font-semibold text-[#192d71]">Fotografía</legend>
               <div className="mt-4">
@@ -206,6 +231,7 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
                 <input id="photo-upload" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
               </div>
             </fieldset>
+
             
             {/* --- SECCIÓN 4: ESTADO DE CONSERVACIÓN --- */}
             <fieldset className="border-t-2 border-[#192d71]/20 pt-6">

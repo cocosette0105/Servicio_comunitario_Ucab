@@ -1,6 +1,6 @@
 import { Work } from "../models";
 
-const API_URL = "http://localhost:5000/api/obras";
+const API_URL = "http://192.168.2.33:5000/api/obras";
 
 export const getWorks = async (): Promise<Work[]> => {
   const res = await fetch(API_URL);
