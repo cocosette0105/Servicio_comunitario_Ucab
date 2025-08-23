@@ -2,6 +2,7 @@ import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Save, X, UploadCloud } from 'lucide-react';
 import { Work } from '../models';
 
+
 interface WorkFormProps {
   work?: Work;
   onSubmit: (workData: Partial<Work>) => void;
@@ -90,28 +91,34 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
   };
 
   const handleSubmit = async (e: FormEvent) => {
-    console.log('chucuchaa');
-
     e.preventDefault();
-    console.log('Submit disparado');
+    console.log('✅ Formulario enviado');
 
     let photoUrl = formData.photoUrl || '';
 
-    // Mantener la foto actual si no se selecciona nueva
     if (imageFile) {
-      // Aquí se puede activar la subida al backend
+      console.log('📤 Subiendo imagen:', imageFile.name);
       const imageData = new FormData();
-      imageData.append('obr_url_foto', imageFile);
+      imageData.append('image', imageFile); // clave correcta para backend
+
       try {
         const res = await fetch('http://localhost:5000/api/upload', {
           method: 'POST',
           body: imageData
         });
+
+        if (!res.ok) {
+          throw new Error(`Error HTTP: ${res.status}`);
+        }
+
         const data = await res.json();
-        photoUrl = data.url; // backend debe retornar { url: 'ruta' }
+        photoUrl = data.url;
+        console.log('✅ Imagen subida. URL recibida:', photoUrl);
       } catch (err) {
-        console.error('Error al subir imagen:', err);
+        console.error('❌ Error al subir imagen:', err);
       }
+    } else {
+      console.log('ℹ No se seleccionó nueva imagen, se mantiene la actual');
     }
 
     const submitData: Partial<Work> = {
@@ -119,7 +126,7 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
       photoUrl,
     };
 
-    console.log('Datos que se envían al backend:', submitData);
+    console.log('📦 Datos finales que se envían al backend:', submitData);
     onSubmit(submitData);
   };
   // Renderizado del formulario
