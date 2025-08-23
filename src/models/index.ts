@@ -53,6 +53,7 @@ export interface Work {
     appraiser?: string;        // Responsable de avalúo
     appraisalDate?: string;    // Fecha de avalúo
     originalOwner?: string;    // Propietario Original
+    currency?: string;     // menda del avaluo
   };
   
   // SECCIÓN: REFERENCIAS
@@ -85,6 +86,8 @@ export interface Work {
     supervisor?: string; // Supervisor del inventario
     supervisorDate?: string; // Fecha de supervisión
   };
+
+  
 }
 
 export interface ReportFilters {
