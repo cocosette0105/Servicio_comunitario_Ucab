@@ -1,7 +1,7 @@
 // src/controllers/UserController.ts
-import { SystemUser } from '../models';
+import { ApiUser, SystemUser } from '../models/index';
 
-// URL base de la API, asegúrate de que coincida con la de tu backend
+// URL base de la API
 const API_BASE_URL = 'http://localhost:5000/api';
 
 /**
@@ -9,15 +9,13 @@ const API_BASE_URL = 'http://localhost:5000/api';
  * Centraliza la lógica de las llamadas a la red y el manejo de errores.
  */
 export class UserController {
-
   /**
    * Obtiene la lista completa de usuarios del sistema.
    * @param {string} token - El token de autenticación del usuario.
-   * @returns {Promise<SystemUser[]>} Una promesa que resuelve con un array de usuarios.
+   * @returns {Promise<ApiUser[]>} Una promesa que resuelve con un array de usuarios en formato de la API.
    */
-  static async getAllUsers(token: string): Promise<SystemUser[]> {
+  static async getAllUsers(token: string): Promise<ApiUser[]> {
     try {
-      // Se añade el token al encabezado de la solicitud.
       const response = await fetch(`${API_BASE_URL}/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -36,11 +34,11 @@ export class UserController {
 
   /**
    * Crea un nuevo usuario en el sistema.
-   * @param {Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>} userData - Datos del nuevo usuario.
+   * @param {Partial<ApiUser>} userData - Datos del nuevo usuario en formato de la API.
    * @param {string} token - El token de autenticación del usuario.
-   * @returns {Promise<SystemUser>} Una promesa que resuelve con el usuario creado.
+   * @returns {Promise<ApiUser>} Una promesa que resuelve con el usuario creado.
    */
-  static async createUser(userData: Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>, token: string): Promise<SystemUser> {
+  static async createUser(userData: Partial<ApiUser>, token: string): Promise<ApiUser> {
     try {
       const response = await fetch(`${API_BASE_URL}/users`, {
         method: 'POST',
@@ -63,11 +61,11 @@ export class UserController {
   /**
    * Actualiza un usuario existente por su ID.
    * @param {string} userId - El ID del usuario a actualizar.
-   * @param {Partial<Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>>} userData - Los datos a actualizar.
+   * @param {Partial<ApiUser>} userData - Los datos a actualizar en formato de la API.
    * @param {string} token - El token de autenticación del usuario.
-   * @returns {Promise<SystemUser>} Una promesa que resuelve con el usuario actualizado.
+   * @returns {Promise<ApiUser>} Una promesa que resuelve con el usuario actualizado.
    */
-  static async updateUser(userId: string, userData: Partial<Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>>, token: string): Promise<SystemUser> {
+  static async updateUser(userId: string, userData: Partial<ApiUser>, token: string): Promise<ApiUser> {
     try {
       const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
         method: 'PUT',
@@ -113,19 +111,20 @@ export class UserController {
   /**
    * Alterna el estado activo/inactivo de un usuario.
    * @param {string} userId - El ID del usuario.
-   * @param {boolean} isActive - El nuevo estado activo/inactivo.
+   * @param {boolean} usu_activo - El nuevo estado activo/inactivo en formato de la API.
    * @param {string} token - El token de autenticación del usuario.
-   * @returns {Promise<SystemUser>} Una promesa que resuelve con el usuario actualizado.
+   * @returns {Promise<ApiUser>} Una promesa que resuelve con el usuario actualizado.
    */
-  static async toggleUserStatus(userId: string, isActive: boolean, token: string): Promise<SystemUser> {
+  static async toggleUserStatus(userId: string, usu_activo: boolean, token: string): Promise<ApiUser> {
     try {
-      const response = await fetch(`${API_BASE_URL}/users/toggle-status/${userId}`, {
+      // Se corrige la URL para que coincida con la ruta del backend
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/status`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ isActive }),
+        body: JSON.stringify({ isActive: usu_activo }),
       });
       if (!response.ok) {
         throw new Error('Error al cambiar el estado del usuario en el servidor.');

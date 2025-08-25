@@ -7,7 +7,7 @@ import bcrypt from 'bcrypt';
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
         const users = await pool.query(
-            `SELECT u.usu_id, u.usu_nombre_completo, u.usu_nombre_usuario, u.usu_fecha_creacion, u.usu_esta_activo, r.rol_nombre AS usu_rol
+            `SELECT u.usu_id, u.usu_nombre_completo, u.usu_nombre_usuario, u.usu_fecha_creacion, u.usu_activo, r.rol_nombre AS usu_rol
              FROM Usuario u
              JOIN Rol r ON u.usu_rol_id_fk = r.rol_id
              ORDER BY u.usu_fecha_creacion DESC`
@@ -82,7 +82,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
         const updatedUser = await pool.query(
             `UPDATE Usuario
-             SET usu_nombre_completo = $1, usu_nombre_usuario = $2, usu_contraseña = COALESCE($3, usu_contraseña), usu_rol_id_fk = $4, usu_esta_activo = $5
+             SET usu_nombre_completo = $1, usu_nombre_usuario = $2, usu_contraseña = COALESCE($3, usu_contraseña), usu_rol_id_fk = $4, usu_activo = $5
              WHERE usu_id = $6
              RETURNING *`,
             [fullName, username, updatePassword || null, roleId, isActive, id]
@@ -131,12 +131,16 @@ export const toggleUserStatus = async (req: Request, res: Response) => {
     const { isActive } = req.body;
 
     try {
+        // Aseguramos que isActive sea un valor booleano
+        // Esto previene errores si el valor llega como un string ("true" o "false")
+        const newStatus = typeof isActive === 'string' ? isActive === 'true' : isActive;
+
         const updatedUser = await pool.query(
             `UPDATE Usuario
-             SET usu_esta_activo = $1
+             SET usu_activo = $1
              WHERE usu_id = $2
              RETURNING *`,
-            [isActive, id]
+            [newStatus, id]
         );
 
         if (updatedUser.rowCount === 0) {

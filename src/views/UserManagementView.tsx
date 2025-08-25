@@ -1,18 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, UserCheck, UserX, EyeOff } from 'lucide-react';
-import { toast, Toaster } from 'react-hot-toast'; // Asegúrate de tener instalado 'react-hot-toast'
+import { Plus, Search, Edit, Trash2, UserCheck, UserX, Eye, EyeOff } from 'lucide-react';
+import { toast, Toaster } from 'react-hot-toast';
 import { UserController } from '../controllers/UserController';
-import { SystemUser } from '../models'; // Importa SystemUser desde el modelo
+import { AuthController } from '../controllers/AuthController';
+import { User } from '../models';
 
-// Estructura de datos para el formulario de usuario
+// ---------------------- Tipos ----------------------
+
+interface SystemUser {
+  id: string | number;
+  fullName: string;
+  username: string;
+  createdAt: string;
+  isActive: boolean;
+  role: 'administrador' | 'supervisor' | 'colaborador' | 'desarrollador';
+}
+
+interface ApiUser {
+  usu_id: string | number;
+  usu_nombre_completo: string;
+  usu_nombre_usuario: string;
+  usu_fecha_creacion: string;
+  usu_activo: boolean;
+  usu_rol: string;
+  fullName?: string;
+  username?: string;
+  password?: string;
+  role?: string;
+}
+
 interface UserFormData {
   fullName: string;
   username: string;
   password?: string;
-  role: SystemUser['role'];
+  role: 'administrador' | 'supervisor' | 'colaborador' | 'desarrollador';
 }
 
-// Función para mostrar mensajes de confirmación personalizados (sin usar confirm())
+interface UserManagementViewProps {
+  user: User;
+  users: SystemUser[];
+  onUpdateUsers: (users: SystemUser[]) => void;
+}
+
+// ---------------------- Funciones de mapeo ----------------------
+const mapToSystemUser = (apiUser: ApiUser): SystemUser => ({
+  id: apiUser.usu_id,
+  fullName: apiUser.usu_nombre_completo,
+  username: apiUser.usu_nombre_usuario,
+  createdAt: apiUser.usu_fecha_creacion,
+  isActive: apiUser.usu_activo,
+  role: apiUser.usu_rol as SystemUser['role'],
+});
+
+const mapToApiData = (formData: UserFormData) => {
+  const apiData: Partial<ApiUser> = {
+    fullName: formData.fullName,
+    username: formData.username,
+    role: formData.role,
+  };
+  // Solo incluye la contraseña si está presente en el formulario
+  if (formData.password) {
+    apiData.password = formData.password;
+  }
+  return apiData;
+};
+
+// ---------------------- Confirmación custom ----------------------
 const showConfirmation = (message: string) => {
   return new Promise<boolean>((resolve) => {
     const customConfirm = (
@@ -20,13 +73,19 @@ const showConfirmation = (message: string) => {
         <p className="text-gray-800 mb-4">{message}</p>
         <div className="flex justify-end space-x-2">
           <button
-            onClick={() => resolve(false)}
+            onClick={() => {
+              toast.dismiss();
+              resolve(false);
+            }}
             className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
             Cancelar
           </button>
           <button
-            onClick={() => resolve(true)}
+            onClick={() => {
+              toast.dismiss();
+              resolve(true);
+            }}
             className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
           >
             Confirmar
@@ -38,36 +97,34 @@ const showConfirmation = (message: string) => {
   });
 };
 
-// Componente principal de la vista de gestión de usuarios
-const UserManagementView: React.FC = () => {
-  // Estados para la gestión de la interfaz y los datos
-  const [users, setUsers] = useState<SystemUser[]>([]);
+// ---------------------- Componente principal ----------------------
+
+const UserManagementView: React.FC<UserManagementViewProps> = ({ user, users, onUpdateUsers }) => {
+  const [localUsers, setLocalUsers] = useState<SystemUser[]>(users);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showPasswords, setShowPasswords] = useState<{[key: string]: boolean}>({});
   const [formData, setFormData] = useState<UserFormData>({
     fullName: '',
     username: '',
     password: '',
-    role: 'colaborador'
+    role: 'colaborador',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Nuevo estado para alternar visibilidad de contraseña
 
-  // Maneja la visibilidad de las contraseñas
-  const togglePasswordVisibility = (userId: string) => {
-    setShowPasswords(prev => ({
-      ...prev,
-      [userId]: !prev[userId]
-    }));
-  };
+  useEffect(() => {
+    setLocalUsers(users);
+  }, [users]);
 
-  // Función para obtener los usuarios desde el controlador
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const data = await UserController.getAllUsers();
-      setUsers(data);
+      const token = AuthController.getToken();
+      if (!token) throw new Error('No se encontró el token de autenticación.');
+      const data: ApiUser[] = await UserController.getAllUsers(token);
+      const mappedUsers = data.map(mapToSystemUser);
+      onUpdateUsers(mappedUsers);
     } catch (error: any) {
       toast.error('Error: ' + error.message);
     } finally {
@@ -75,33 +132,44 @@ const UserManagementView: React.FC = () => {
     }
   };
 
-  // Carga los usuarios al montar el componente
   useEffect(() => {
-    fetchUsers();
+    if (users.length === 0) {
+      fetchUsers();
+    }
   }, []);
 
-  // Maneja el envío del formulario (crear o editar usuario)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      const token = AuthController.getToken();
+      if (!token) throw new Error('No se encontró el token de autenticación.');
+
+      const apiData = mapToApiData(formData);
+
       if (editingUser) {
-        await UserController.updateUser(editingUser.id, formData);
+        // Validación de permisos para editar
+        // Un administrador no puede editar a un desarrollador. Solo el desarrollador puede editar a otros desarrolladores.
+        if (editingUser.role === 'desarrollador' && user.role !== 'desarrollador') {
+          throw new Error('Solo los desarrolladores pueden editar a otros desarrolladores.');
+        }
+        await UserController.updateUser(String(editingUser.id), apiData, token);
         toast.success('Usuario actualizado con éxito!');
       } else {
-        // Corrección del tipo de dato para createUser, omitiendo los campos generados por el backend.
-        // Además, asegúrate de que 'password' no sea undefined antes de pasarlo al controlador si es un campo obligatorio.
         if (!formData.password) {
-            toast.error('La contraseña es obligatoria para nuevos usuarios.');
-            setIsLoading(false);
-            return;
+          toast.error('La contraseña es obligatoria para nuevos usuarios.');
+          setIsLoading(false);
+          return;
         }
-        
-        await UserController.createUser(formData as Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>);
+        // Validación de permisos para crear
+        // Un administrador no puede crear un desarrollador.
+        if (formData.role === 'desarrollador' && user.role !== 'desarrollador') {
+          throw new Error('Solo los desarrolladores pueden crear otros desarrolladores.');
+        }
+        await UserController.createUser(apiData, token);
         toast.success('Usuario creado con éxito!');
       }
-      
-      // Resetea el formulario y actualiza la lista
+
       setFormData({ fullName: '', username: '', password: '', role: 'colaborador' });
       setShowForm(false);
       setEditingUser(null);
@@ -113,26 +181,37 @@ const UserManagementView: React.FC = () => {
     }
   };
 
-  // Prepara el formulario para editar un usuario existente
-  const handleEdit = (user: SystemUser) => {
+  const handleEdit = (selectedUser: SystemUser) => {
+    // Si el usuario a editar es un desarrollador y el usuario actual no lo es, se deniega el permiso
+    if (selectedUser.role === 'desarrollador' && user.role !== 'desarrollador') {
+      toast.error('No tiene permiso para editar a este usuario.');
+      return;
+    }
     setFormData({
-      fullName: user.fullName,
-      username: user.username,
-      password: '', // No cargamos la contraseña para editar
-      role: user.role
+      fullName: selectedUser.fullName,
+      username: selectedUser.username,
+      // La contraseña se deja vacía para que el usuario pueda escribir una nueva si lo desea
+      password: '',
+      role: selectedUser.role as UserFormData['role'],
     });
-    setEditingUser(user);
+    setEditingUser(selectedUser);
     setShowForm(true);
   };
 
-  // Maneja la eliminación de un usuario con confirmación
-  const handleDelete = async (userId: string) => {
+  const handleDelete = async (selectedUser: SystemUser) => {
+    // Si el usuario a eliminar es un desarrollador y el usuario actual no lo es, se deniega el permiso
+    if (selectedUser.role === 'desarrollador' && user.role !== 'desarrollador') {
+      toast.error('No tiene permiso para eliminar a este usuario.');
+      return;
+    }
+
     const isConfirmed = await showConfirmation('¿Está seguro de que desea eliminar este usuario?');
     if (!isConfirmed) return;
-
     setIsLoading(true);
     try {
-      await UserController.deleteUser(userId);
+      const token = AuthController.getToken();
+      if (!token) throw new Error('No se encontró el token de autenticación.');
+      await UserController.deleteUser(String(selectedUser.id), token);
       toast.success('Usuario eliminado con éxito!');
       fetchUsers();
     } catch (error: any) {
@@ -142,12 +221,18 @@ const UserManagementView: React.FC = () => {
     }
   };
 
-  // Alterna el estado activo/inactivo de un usuario
-  const toggleUserStatus = async (userId: string, isActive: boolean) => {
+  const toggleUserStatus = async (selectedUser: SystemUser) => {
+    // Si el usuario a editar es un desarrollador y el usuario actual no lo es, se deniega el permiso
+    if (selectedUser.role === 'desarrollador' && user.role !== 'desarrollador') {
+      toast.error('No tiene permiso para modificar el estado de este usuario.');
+      return;
+    }
     setIsLoading(true);
     try {
-      await UserController.toggleUserStatus(userId, !isActive);
-      toast.success(`Usuario ${isActive ? 'desactivado' : 'activado'} con éxito!`);
+      const token = AuthController.getToken();
+      if (!token) throw new Error('No se encontró el token de autenticación.');
+      await UserController.toggleUserStatus(String(selectedUser.id), !selectedUser.isActive, token);
+      toast.success(`Usuario ${selectedUser.isActive ? 'desactivado' : 'activado'} con éxito!`);
       fetchUsers();
     } catch (error: any) {
       toast.error('Error: ' + error.message);
@@ -156,30 +241,29 @@ const UserManagementView: React.FC = () => {
     }
   };
 
-  // Filtra los usuarios según el término de búsqueda
-  const filteredUsers = users.filter(user =>
-    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = localUsers.filter(u =>
+    (u.fullName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (u.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (u.role?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
-  // Configuración de etiquetas y colores para roles
   const roleLabels = {
+    desarrollador: 'Desarrollador',
     administrador: 'Administrador',
     supervisor: 'Supervisor',
-    colaborador: 'Colaborador'
+    colaborador: 'Colaborador',
   };
 
   const roleColors = {
+    desarrollador: 'bg-blue-100 text-blue-800',
     administrador: 'bg-red-100 text-red-800',
     supervisor: 'bg-yellow-100 text-yellow-800',
-    colaborador: 'bg-green-100 text-green-800'
+    colaborador: 'bg-green-100 text-green-800',
   };
 
   return (
     <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       <Toaster position="top-center" reverseOrder={false} />
-      {/* Encabezado con título y botón de agregar */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-3">
@@ -187,27 +271,28 @@ const UserManagementView: React.FC = () => {
           </h1>
           <p className="text-[#192d71] text-lg">Administre los usuarios del sistema del museo</p>
         </div>
-        <button
-          onClick={() => {
-            setFormData({ fullName: '', username: '', password: '', role: 'colaborador' });
-            setEditingUser(null);
-            setShowForm(true);
-          }}
-          className="flex items-center space-x-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
-        >
-          <Plus className="h-6 w-6" />
-          <span>Agregar Usuario</span>
-        </button>
+        {/* Lógica de renderización del botón "Agregar Usuario" */}
+        {(user.role === 'desarrollador' || user.role === 'administrador') && (
+          <button
+            onClick={() => {
+              setFormData({ fullName: '', username: '', password: '', role: 'colaborador' });
+              setEditingUser(null);
+              setShowForm(true);
+            }}
+            className="flex items-center space-x-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+          >
+            <Plus className="h-6 w-6" />
+            <span>Agregar Usuario</span>
+          </button>
+        )}
       </div>
 
-      {/* Formulario para crear o editar usuario (mostrado condicionalmente) */}
       {showForm && (
         <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-8">
           <h2 className="text-2xl font-bold text-[#192d71] mb-6">
             {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
           </h2>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Campo nombre completo */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Nombre Completo *</label>
               <input
@@ -218,7 +303,6 @@ const UserManagementView: React.FC = () => {
                 required
               />
             </div>
-            {/* Campo nombre de usuario */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Nombre de Usuario *</label>
               <input
@@ -229,36 +313,49 @@ const UserManagementView: React.FC = () => {
                 required
               />
             </div>
-            {/* Campo contraseña */}
-            <div>
-              <label className="block text-sm font-bold text-[#192d71] mb-3">Contraseña *</label>
+            <div className="relative">
+              <label className="block text-sm font-bold text-[#192d71] mb-3">Contraseña</label>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
+                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] pr-12"
+                // La contraseña es opcional al editar, pero requerida al crear un nuevo usuario
                 required={!editingUser}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 mt-2 transform -translate-y-1/2 text-[#192d71]/60 hover:text-[#192d71]"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
-            {/* Campo rol */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Rol *</label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as SystemUser['role'] }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as UserFormData['role'] }))}
                 className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
                 required
               >
-                {Object.entries(roleLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
+                {/* Lógica para restringir la selección del rol 'desarrollador' */}
+                {Object.entries(roleLabels).map(([value, label]) => {
+                  if (value === 'desarrollador' && user.role !== 'desarrollador') {
+                    return null;
+                  }
+                  return <option key={value} value={value}>{label}</option>;
+                })}
               </select>
             </div>
-            {/* Botones de acción del formulario */}
             <div className="md:col-span-2 flex justify-end space-x-4">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingUser(null);
+                  setFormData({ fullName: '', username: '', password: '', role: 'colaborador' });
+                }}
                 className="px-6 py-3 text-[#192d71] bg-[#192d71]/10 hover:bg-[#192d71]/20 rounded-xl transition-all duration-200 font-semibold"
               >
                 Cancelar
@@ -275,9 +372,7 @@ const UserManagementView: React.FC = () => {
         </div>
       )}
 
-      {/* Tabla de usuarios */}
       <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
-        {/* Barra de búsqueda */}
         <div className="p-8 border-b border-[#192d71]/20">
           <div className="relative">
             <Search className="absolute left-4 top-4 h-6 w-6 text-[#192d71]" />
@@ -291,13 +386,11 @@ const UserManagementView: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabla de usuarios */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-[#192d71]/10 to-[#192d71]/5">
               <tr>
                 <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Usuario</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Contraseña</th>
                 <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Rol</th>
                 <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Estado</th>
                 <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Fecha Creación</th>
@@ -305,68 +398,64 @@ const UserManagementView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#192d71]/10">
-              {/* Mapea cada usuario filtrado */}
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200">
+              {filteredUsers.map((u, index) => (
+                <tr
+                  key={u.id || `user-${index}`}
+                  className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200"
+                >
                   <td className="px-8 py-6">
                     <div>
-                      <p className="font-bold text-[#192d71] text-lg">{user.fullName}</p>
-                      <p className="text-sm text-[#192d71]/70 font-medium">@{user.username}</p>
+                      <p className="font-bold text-[#192d71] text-lg">{u.fullName}</p>
+                      <p className="text-sm text-[#192d71]/70 font-medium">@{u.username}</p>
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono text-sm">
-                        {showPasswords[user.id] ? user.password || 'N/A' : '••••••••'}
-                      </span>
-                      <button
-                        onClick={() => togglePasswordVisibility(user.id)}
-                        className="p-1 text-[#192d71] hover:text-[#1e3a8a] transition-colors"
-                      >
-                        {showPasswords[user.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${roleColors[user.role]}`}>
-                      {roleLabels[user.role]}
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${roleColors[u.role]}`}>
+                      {roleLabels[u.role]}
                     </span>
                   </td>
                   <td className="px-8 py-6">
                     <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      u.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {user.isActive ? 'Activo' : 'Inactivo'}
+                      {u.isActive ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td className="px-8 py-6 text-[#192d71]/80 font-medium">
-                    {new Date(user.createdAt).toLocaleDateString('es-ES')}
+                    {new Date(u.createdAt).toLocaleDateString('es-ES')}
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center space-x-3">
-                      {/* Botón activar/desactivar */}
-                      <button
-                        onClick={() => toggleUserStatus(user.id, user.isActive)}
-                        className={`p-3 rounded-xl transition-all duration-200 hover:scale-110 ${
-                          user.isActive ? 'text-red-700 hover:bg-red-100' : 'text-green-700 hover:bg-green-100'
-                        }`}
-                      >
-                        {user.isActive ? <UserX className="h-5 w-5" /> : <UserCheck className="h-5 w-5" />}
-                      </button>
-                      {/* Botón editar */}
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="p-3 text-green-700 hover:bg-green-100 rounded-xl transition-all duration-200 hover:scale-110"
-                      >
-                        <Edit className="h-5 w-5" />
-                      </button>
-                      {/* Botón eliminar */}
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="p-3 text-red-700 hover:bg-red-100 rounded-xl transition-all duration-200 hover:scale-110"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
+                      {/* Lógica de renderización de botones */}
+                      {user.role === 'desarrollador' || (user.role === 'administrador' && u.role !== 'desarrollador') ? (
+                        <>
+                          <button
+                            onClick={() => toggleUserStatus(u)}
+                            className={`p-3 rounded-xl transition-all duration-200 hover:scale-110 ${
+                              u.isActive ? 'text-red-700 hover:bg-red-100' : 'text-green-700 hover:bg-green-100'
+                            }`}
+                            title={u.isActive ? "Desactivar usuario" : "Activar usuario"}
+                          >
+                            {u.isActive ? <UserX className="h-5 w-5" /> : <UserCheck className="h-5 w-5" />}
+                          </button>
+                          <button
+                            onClick={() => handleEdit(u)}
+                            className="p-3 text-green-700 hover:bg-green-100 rounded-xl transition-all duration-200 hover:scale-110"
+                            title="Editar usuario"
+                          >
+                            <Edit className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(u)}
+                            className="p-3 text-red-700 hover:bg-red-100 rounded-xl transition-all duration-200 hover:scale-110"
+                            title="Eliminar usuario"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-gray-500 text-sm">Sin permisos</span>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -375,7 +464,6 @@ const UserManagementView: React.FC = () => {
           </table>
         </div>
 
-        {/* Mensaje cuando no hay usuarios */}
         {filteredUsers.length === 0 && (
           <div className="p-12 text-center text-[#192d71]/60 font-medium text-lg">
             {isLoading ? 'Cargando usuarios...' : searchTerm ? 'No se encontraron usuarios que coincidan con la búsqueda' : 'No hay usuarios registrados'}

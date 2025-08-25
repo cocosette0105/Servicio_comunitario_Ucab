@@ -1,7 +1,3 @@
-// VISTA DEL DASHBOARD PRINCIPAL
-// Vista de presentación pura que renderiza el layout principal del sistema
-// Recibe props del controlador y delega la renderización a componentes específicos
-
 import React from 'react';
 import Sidebar from '../components/Sidebar';
 import WorksManagementView from './WorksManagementView';
@@ -30,7 +26,7 @@ interface DashboardViewProps {
 
 // Componente de vista pura para el dashboard principal
 const DashboardView: React.FC<DashboardViewProps> = ({ 
-  user, 
+  user,
   works, 
   onLogout, 
   onUpdateWorks,
@@ -45,23 +41,36 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   // Función que renderiza la vista activa según la selección del usuario
   const renderActiveView = () => {
+    // Lógica para redirigir si el usuario no tiene permisos para la vista de usuarios.
+    // Solo los roles 'administrador' y 'desarrollador' pueden acceder.
+    const allowedUserManagementRoles = ['administrador', 'desarrollador'];
+    if (activeView === 'users' && !allowedUserManagementRoles.includes(user.role)) {
+      return (
+        <div className="p-8 text-center text-red-500 font-bold">
+          No tienes permisos para acceder a la gestión de usuarios.
+        </div>
+      );
+    }
+
     switch (activeView) {
       case 'overview':
         return <OverviewView works={works} />;
       case 'works':
-        return <WorksManagementView works={works} onUpdateWorks={onUpdateWorks} />;
+        return <WorksManagementView user={user} works={works} onUpdateWorks={onUpdateWorks} />;
       case 'reports':
         return <ReportsView works={works} />;
       case 'users':
-        return <UserManagementView users={systemUsers} onUpdateUsers={onUpdateSystemUsers} />;
+        return <UserManagementView user={user} users={systemUsers} onUpdateUsers={onUpdateSystemUsers} />;
       case 'movements':
         return <MovementHistoryView 
+          user={user}
           records={movementRecords} 
           works={works}
           onUpdateRecords={onUpdateMovementRecords} 
         />;
       case 'maintenance':
         return <MaintenanceHistoryView 
+          user={user}
           records={maintenanceRecords} 
           works={works}
           onUpdateRecords={onUpdateMaintenanceRecords} 

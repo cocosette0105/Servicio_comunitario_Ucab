@@ -24,21 +24,19 @@ export class AuthController {
       });
 
       if (!response.ok) {
-        // Si la respuesta no es 2xx, lanza un error con el mensaje del servidor
         const errorData = await response.json();
         throw new Error(errorData.message || 'Error de autenticación');
       }
 
       const data = await response.json();
 
-      // Guarda el token en localStorage para futuras peticiones
+      // Guarda el token y el objeto de usuario en localStorage
       localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('museum_user', JSON.stringify(data.user)); // Guardamos el usuario completo
 
-      // Retorna el objeto de usuario recibido del backend
       return data.user;
     } catch (error) {
       console.error('Error durante el login:', error);
-      // Retorna null si hay algún error
       return null;
     }
   }
@@ -56,7 +54,7 @@ export class AuthController {
    */
   static logout(): void {
     localStorage.removeItem('auth_token');
-    localStorage.removeItem('museum_user'); // Opcional: si también guardas el usuario
+    localStorage.removeItem('museum_user');
   }
 
   /**
@@ -69,13 +67,5 @@ export class AuthController {
       return JSON.parse(savedUser);
     }
     return null;
-  }
-
-  /**
-   * Guarda la sesión del usuario en localStorage.
-   * @param user - Objeto de usuario.
-   */
-  static saveUserSession(user: User): void {
-    localStorage.setItem('museum_user', JSON.stringify(user));
   }
 }

@@ -4,14 +4,15 @@
 
 import React, { useState } from 'react';
 import { Plus, Search, ArrowUpCircle, ArrowDownCircle, Filter, ChevronDown, Download, Edit, Eye, Trash2 } from 'lucide-react';
-import { MovementRecord, Work } from '../models';
+import { MovementRecord, Work, User } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
 
 // Define las propiedades que recibe la vista de historial de movimientos
 interface MovementHistoryViewProps {
-  records: MovementRecord[]; // Lista de registros de movimientos
-  works: Work[]; // Lista de obras disponibles
-  onUpdateRecords: (records: MovementRecord[]) => void; // Función para actualizar registros
+  user: User; // Agrega esta línea
+  records: MovementRecord[];
+  works: Work[];
+  onUpdateRecords: (records: MovementRecord[]) => void;
 }
 
 // Define la estructura de datos para el formulario de movimiento

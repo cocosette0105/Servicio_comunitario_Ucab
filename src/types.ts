@@ -98,8 +98,7 @@ export interface SystemUser {
   fullName: string;
   username: string;
   password: string;
-  role: 'administrador' | 'supervisor' | 'colaborador'; // Roles actualizados
-  createdAt: string;
+  role: 'administrador' | 'supervisor' | 'colaborador' | 'desarrollador'; 
   isActive: boolean;
 }
 

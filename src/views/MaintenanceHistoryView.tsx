@@ -9,14 +9,15 @@ import {
   Plus, Search, Filter, ChevronDown, Eye, Edit, Trash2, FileDown,
   Palette, Hammer, Calendar, DollarSign, FileText, Wrench
 } from 'lucide-react';
-import { MaintenanceRecord, Work } from '../models';
+import { MaintenanceRecord, Work, User } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
 
 // Define las propiedades que recibe la vista de historial de mantenimiento
 interface MaintenanceHistoryViewProps {
-  records: MaintenanceRecord[]; // Lista de registros de mantenimiento
-  works: Work[]; // Lista de obras disponibles
-  onUpdateRecords: (records: MaintenanceRecord[]) => void; // Función para actualizar registros
+  user: User; // Agrega esta línea
+  records: MaintenanceRecord[];
+  works: Work[];
+  onUpdateRecords: (records: MaintenanceRecord[]) => void;
 }
 
 // Define la estructura de datos para el formulario de mantenimiento

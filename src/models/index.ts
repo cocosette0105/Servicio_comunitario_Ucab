@@ -2,10 +2,12 @@
 // Exporta todos los tipos y interfaces utilizados en la aplicación
 
 export interface User {
-  id: string;
+  id: number;
   username: string;
   name: string;
   role: string;
+  // AÑADIMOS LA PROPIEDAD DE PRIVILEGIOS
+  privileges: string[]; 
 }
 
 export interface Work {
@@ -100,13 +102,32 @@ export interface ReportFilters {
 }
 
 export interface SystemUser {
-  id: string;
+  id: string | number;
   fullName: string;
   username: string;
-  password: string;
-  role: 'administrador' | 'supervisor' | 'colaborador'; // Roles actualizados
   createdAt: string;
   isActive: boolean;
+  role: 'administrador' | 'supervisor' | 'colaborador' | 'desarrollador';
+  password?: string;
+}
+
+// Formato API (backend)
+export interface ApiUser {
+  usu_id: string | number;
+  usu_nombre_completo: string;
+  usu_nombre_usuario: string;
+  usu_fecha_creacion: string;
+  usu_activo: boolean;
+  usu_rol: string;
+  usu_contrasena?: string;
+}
+
+// Datos del formulario
+export interface UserFormData {
+  fullName: string;
+  username: string;
+  password?: string;
+  role: 'administrador' | 'supervisor' | 'colaborador' | 'desarrollador';
 }
 
 export interface MovementRecord {

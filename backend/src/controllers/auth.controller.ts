@@ -8,24 +8,24 @@ import { env } from '../config/env';
 
 // Verificamos que JWT_SECRET esté definido
 if (!env.JWT_SECRET) {
-  throw new Error('JWT_SECRET no está definido en las variables de entorno.');
+    throw new Error('JWT_SECRET no está definido en las variables de entorno.');
 }
 
 // Define la interfaz para el payload del JWT
 interface UserPayload {
-  id: number;
-  username: string;
-  roleId: number;
+    id: number;
+    username: string;
+    roleId: number;
 }
 
 // Extiende la interfaz de Request de Express para agregar la propiedad 'user'.
 // Esto resuelve los errores de tipado en los middlewares.
 declare global {
-  namespace Express {
-    interface Request {
-      user?: UserPayload;
+    namespace Express {
+        interface Request {
+            user?: UserPayload;
+        }
     }
-  }
 }
 
 /**
@@ -58,14 +58,24 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Credenciales incorrectas.' });
         }
 
+        // NUEVO: Consulta para obtener todos los privilegios del rol
+        const privilegesResult = await pool.query(
+            `SELECT p.priv_nombre
+             FROM Rol_Privilegio rp
+             JOIN Privilegios p ON rp.priv_id_fk = p.priv_id
+             WHERE rp.rol_id_fk = $1`,
+            [user.rol_id]
+        );
+
+        // Mapeamos los resultados a un array de strings
+        const privileges = privilegesResult.rows.map(row => row.priv_nombre);
+
         const payload: UserPayload = {
             id: user.usu_id,
             username: user.usu_nombre_usuario,
             roleId: user.rol_id,
         };
 
-        // Pasamos env.JWT_SECRET con una aserción de no-nulo (!)
-        // porque ya verificamos que existe al inicio del archivo.
         const token = jwt.sign(payload, env.JWT_SECRET!, { expiresIn: '1h' });
 
         res.status(200).json({
@@ -75,7 +85,9 @@ export const login = async (req: Request, res: Response) => {
                 id: user.usu_id,
                 username: user.usu_nombre_usuario,
                 name: user.usu_nombre_completo,
-                role: user.rol_nombre
+                role: user.rol_nombre,
+                // AÑADIMOS la lista de privilegios al objeto de usuario
+                privileges: privileges
             }
         });
 
@@ -91,6 +103,9 @@ export const login = async (req: Request, res: Response) => {
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
+    
+    // Aquí se ve si el token llega
+    console.log('Token recibido:', token ? 'Sí' : 'No');
 
     if (token == null) {
         return res.status(401).json({ message: 'Token no proporcionado.' });
@@ -99,6 +114,8 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // Usamos una aserción de no-nulo para JWT_SECRET
     jwt.verify(token, env.JWT_SECRET!, (err: any, user: any) => {
         if (err) {
+            // Aquí se ve si el token es válido
+            console.log('Error de token:', err.message);
             return res.status(403).json({ message: 'Token inválido o expirado.' });
         }
         req.user = user as UserPayload;
