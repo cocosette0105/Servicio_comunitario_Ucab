@@ -1,75 +1,116 @@
-// VISTA DE GESTIÓN DE USUARIOS
-// Vista de presentación para la administración de usuarios del sistema
-// Permite crear, editar, eliminar y gestionar usuarios con diferentes roles
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, UserCheck, UserX, EyeOff } from 'lucide-react';
-import { SystemUser } from '../models';
+import { toast, Toaster } from 'react-hot-toast'; // Asegúrate de tener instalado 'react-hot-toast'
+import { UserController } from '../controllers/UserController';
+import { SystemUser } from '../models'; // Importa SystemUser desde el modelo
 
-// Define las propiedades que recibe la vista de gestión de usuarios
-interface UserManagementViewProps {
-  users: SystemUser[]; // Lista de usuarios del sistema
-  onUpdateUsers: (users: SystemUser[]) => void; // Función para actualizar la lista de usuarios
-}
-
-// Define la estructura de datos para el formulario de usuario
+// Estructura de datos para el formulario de usuario
 interface UserFormData {
-  fullName: string; // Nombre completo del usuario
-  username: string; // Nombre de usuario único
-  password: string; // Contraseña del usuario
-  role: SystemUser['role']; // Rol asignado al usuario
+  fullName: string;
+  username: string;
+  password?: string;
+  role: SystemUser['role'];
 }
 
-// Componente de vista para la gestión de usuarios
-const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdateUsers }) => {
-  // Estados locales para controlar la interfaz de usuario
-  const [showForm, setShowForm] = useState(false); // Controla la visibilidad del formulario
-  const [editingUser, setEditingUser] = useState<SystemUser | null>(null); // Usuario en modo edición
-  const [searchTerm, setSearchTerm] = useState(''); // Término de búsqueda
-  const [showPasswords, setShowPasswords] = useState<{[key: string]: boolean}>({}); // Control de visibilidad de contraseñas
-  
-  // Estado para los datos del formulario
+// Función para mostrar mensajes de confirmación personalizados (sin usar confirm())
+const showConfirmation = (message: string) => {
+  return new Promise<boolean>((resolve) => {
+    const customConfirm = (
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <p className="text-gray-800 mb-4">{message}</p>
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={() => resolve(false)}
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => resolve(true)}
+            className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Confirmar
+          </button>
+        </div>
+      </div>
+    );
+    toast.custom(customConfirm);
+  });
+};
+
+// Componente principal de la vista de gestión de usuarios
+const UserManagementView: React.FC = () => {
+  // Estados para la gestión de la interfaz y los datos
+  const [users, setUsers] = useState<SystemUser[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showPasswords, setShowPasswords] = useState<{[key: string]: boolean}>({});
   const [formData, setFormData] = useState<UserFormData>({
     fullName: '',
     username: '',
     password: '',
     role: 'colaborador'
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Filtra los usuarios según el término de búsqueda
-  const filteredUsers = users.filter(user =>
-    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Maneja la visibilidad de las contraseñas
+  const togglePasswordVisibility = (userId: string) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+  };
+
+  // Función para obtener los usuarios desde el controlador
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const data = await UserController.getAllUsers();
+      setUsers(data);
+    } catch (error: any) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Carga los usuarios al montar el componente
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   // Maneja el envío del formulario (crear o editar usuario)
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingUser) {
-      // Modo edición: actualiza el usuario existente
-      const updatedUsers = users.map(user =>
-        user.id === editingUser.id
-          ? { ...user, ...formData }
-          : user
-      );
-      onUpdateUsers(updatedUsers);
+    setIsLoading(true);
+    try {
+      if (editingUser) {
+        await UserController.updateUser(editingUser.id, formData);
+        toast.success('Usuario actualizado con éxito!');
+      } else {
+        // Corrección del tipo de dato para createUser, omitiendo los campos generados por el backend.
+        // Además, asegúrate de que 'password' no sea undefined antes de pasarlo al controlador si es un campo obligatorio.
+        if (!formData.password) {
+            toast.error('La contraseña es obligatoria para nuevos usuarios.');
+            setIsLoading(false);
+            return;
+        }
+        
+        await UserController.createUser(formData as Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>);
+        toast.success('Usuario creado con éxito!');
+      }
+      
+      // Resetea el formulario y actualiza la lista
+      setFormData({ fullName: '', username: '', password: '', role: 'colaborador' });
+      setShowForm(false);
       setEditingUser(null);
-    } else {
-      // Modo creación: crea un nuevo usuario
-      const newUser: SystemUser = {
-        ...formData,
-        id: Date.now().toString(), // Genera ID único
-        createdAt: new Date().toISOString().split('T')[0], // Fecha actual
-        isActive: true // Usuario activo por defecto
-      };
-      onUpdateUsers([...users, newUser]);
+      fetchUsers();
+    } catch (error: any) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Limpia el formulario y lo oculta
-    setFormData({ fullName: '', username: '', password: '', role: 'colaborador' });
-    setShowForm(false);
   };
 
   // Prepara el formulario para editar un usuario existente
@@ -77,7 +118,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdate
     setFormData({
       fullName: user.fullName,
       username: user.username,
-      password: user.password,
+      password: '', // No cargamos la contraseña para editar
       role: user.role
     });
     setEditingUser(user);
@@ -85,30 +126,42 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdate
   };
 
   // Maneja la eliminación de un usuario con confirmación
-  const handleDelete = (userId: string) => {
-    if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
-      const updatedUsers = users.filter(user => user.id !== userId);
-      onUpdateUsers(updatedUsers);
+  const handleDelete = async (userId: string) => {
+    const isConfirmed = await showConfirmation('¿Está seguro de que desea eliminar este usuario?');
+    if (!isConfirmed) return;
+
+    setIsLoading(true);
+    try {
+      await UserController.deleteUser(userId);
+      toast.success('Usuario eliminado con éxito!');
+      fetchUsers();
+    } catch (error: any) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Alterna el estado activo/inactivo de un usuario
-  const toggleUserStatus = (userId: string) => {
-    const updatedUsers = users.map(user =>
-      user.id === userId
-        ? { ...user, isActive: !user.isActive }
-        : user
-    );
-    onUpdateUsers(updatedUsers);
+  const toggleUserStatus = async (userId: string, isActive: boolean) => {
+    setIsLoading(true);
+    try {
+      await UserController.toggleUserStatus(userId, !isActive);
+      toast.success(`Usuario ${isActive ? 'desactivado' : 'activado'} con éxito!`);
+      fetchUsers();
+    } catch (error: any) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Alterna la visibilidad de la contraseña de un usuario específico
-  const togglePasswordVisibility = (userId: string) => {
-    setShowPasswords(prev => ({
-      ...prev,
-      [userId]: !prev[userId]
-    }));
-  };
+  // Filtra los usuarios según el término de búsqueda
+  const filteredUsers = users.filter(user =>
+    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.role.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Configuración de etiquetas y colores para roles
   const roleLabels = {
@@ -123,9 +176,9 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdate
     colaborador: 'bg-green-100 text-green-800'
   };
 
-  // Renderizado de la vista de gestión de usuarios
   return (
     <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
+      <Toaster position="top-center" reverseOrder={false} />
       {/* Encabezado con título y botón de agregar */}
       <div className="flex items-center justify-between">
         <div>
@@ -184,7 +237,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdate
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                 className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
-                required
+                required={!editingUser}
               />
             </div>
             {/* Campo rol */}
@@ -213,8 +266,9 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdate
               <button
                 type="submit"
                 className="px-6 py-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+                disabled={isLoading}
               >
-                {editingUser ? 'Actualizar' : 'Crear'} Usuario
+                {isLoading ? 'Cargando...' : editingUser ? 'Actualizar' : 'Crear'} Usuario
               </button>
             </div>
           </form>
@@ -263,7 +317,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdate
                   <td className="px-8 py-6">
                     <div className="flex items-center space-x-2">
                       <span className="font-mono text-sm">
-                        {showPasswords[user.id] ? user.password : '••••••••'}
+                        {showPasswords[user.id] ? user.password || 'N/A' : '••••••••'}
                       </span>
                       <button
                         onClick={() => togglePasswordVisibility(user.id)}
@@ -292,7 +346,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdate
                     <div className="flex items-center space-x-3">
                       {/* Botón activar/desactivar */}
                       <button
-                        onClick={() => toggleUserStatus(user.id)}
+                        onClick={() => toggleUserStatus(user.id, user.isActive)}
                         className={`p-3 rounded-xl transition-all duration-200 hover:scale-110 ${
                           user.isActive ? 'text-red-700 hover:bg-red-100' : 'text-green-700 hover:bg-green-100'
                         }`}
@@ -324,7 +378,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ users, onUpdate
         {/* Mensaje cuando no hay usuarios */}
         {filteredUsers.length === 0 && (
           <div className="p-12 text-center text-[#192d71]/60 font-medium text-lg">
-            {searchTerm ? 'No se encontraron usuarios que coincidan con la búsqueda' : 'No hay usuarios registrados'}
+            {isLoading ? 'Cargando usuarios...' : searchTerm ? 'No se encontraron usuarios que coincidan con la búsqueda' : 'No hay usuarios registrados'}
           </div>
         )}
       </div>

@@ -1,26 +1,13 @@
-// Importa funciones esenciales de React
+// src/App.tsx
 import { useState, useEffect } from 'react';
-
-// Importa las vistas desde la nueva estructura MVC
 import { LoginView, DashboardView } from './views';
-
-// Importa los modelos desde la nueva estructura MVC
 import { User, Work, SystemUser, MovementRecord, MaintenanceRecord } from './models';
-
-// Importa los controladores para manejar la lógica de negocio
 import { AuthController, WorkController, UserController, MovementController, MaintenanceController } from './controllers';
-
-// Importa controladores individuales
-import { AuthController as Auth } from './controllers/AuthController';
-import { WorkController as Works } from './controllers/WorkController';
-import { UserController as Users } from './controllers/UserController';
-import { MovementController as Movements } from './controllers/MovementController';
-import { MaintenanceController as Maintenance } from './controllers/MaintenanceController';
 
 function App() {
   // Estado para el usuario autenticado (null si no ha iniciado sesión)
   const [user, setUser] = useState<User | null>(null);
-  
+   
   // Estado para controlar la vista activa del dashboard
   const [activeView, setActiveView] = useState<'overview' | 'works' | 'reports' | 'users' | 'movements' | 'maintenance'>('overview');
 
@@ -39,58 +26,49 @@ function App() {
   // useEffect con dependencias vacías → se ejecuta una única vez al montar el componente
   useEffect(() => {
     // Utiliza el controlador de autenticación para recuperar la sesión
-    const savedUser = Auth.getUserSession();
+    const savedUser = AuthController.getUserSession();
     if (savedUser) {
       setUser(savedUser);
     }
-
-    // Inicializa datos de ejemplo utilizando los controladores
-    Works.initializeSampleData();
-    Users.initializeSampleData();
-    Movements.initializeSampleData();
-    Maintenance.initializeSampleData();
-
-    // Carga los datos desde los controladores
-    setWorks(Works.getAllWorks());
-    setSystemUsers(Users.getAllUsers());
-    setMovementRecords(Movements.getAllMovements());
-    setMaintenanceRecords(Maintenance.getAllMaintenanceRecords());
   }, []);
 
   // Función que gestiona el login utilizando el controlador de autenticación
   const handleLogin = (userData: User) => {
     setUser(userData);
-    Auth.saveUserSession(userData);
+    AuthController.saveUserSession(userData);
   };
 
   // Función para cerrar sesión utilizando el controlador de autenticación
   const handleLogout = () => {
     setUser(null);
-    Auth.clearUserSession();
+    AuthController.logout();
   };
 
   // Función para actualizar obras utilizando el controlador
   const updateWorks = (newWorks: Work[]) => {
     setWorks(newWorks);
-    Works.saveWorks(newWorks);
+    WorkController.saveWorks(newWorks);
   };
 
   // Función para actualizar usuarios utilizando el controlador
   const updateSystemUsers = (newUsers: SystemUser[]) => {
     setSystemUsers(newUsers);
-    Users.saveUsers(newUsers);
+    // La siguiente línea causaba el error y se ha eliminado,
+    // ya que la responsabilidad de guardar los datos recae en las
+    // funciones asíncronas de la API en el UserController.
+    // UserController.saveUsers(newUsers);
   };
 
   // Función para actualizar movimientos utilizando el controlador
   const updateMovementRecords = (newRecords: MovementRecord[]) => {
     setMovementRecords(newRecords);
-    Movements.saveMovements(newRecords);
+    MovementController.saveMovements(newRecords);
   };
 
   // Función para actualizar mantenimiento utilizando el controlador
   const updateMaintenanceRecords = (newRecords: MaintenanceRecord[]) => {
     setMaintenanceRecords(newRecords);
-    Maintenance.saveMaintenanceRecords(newRecords);
+    MaintenanceController.saveMaintenanceRecords(newRecords);
   };
 
   // Si no hay usuario autenticado, se renderiza la vista de login

@@ -1,45 +1,40 @@
-// VISTA DE LOGIN
-// Componente de presentación para el formulario de inicio de sesión
-
 import React, { useState } from 'react';
 import { Lock, User as UserIcon } from 'lucide-react';
 import { User } from '../models';
-import { AuthController } from '../controllers/AuthController';
+import { AuthController } from '../controllers/AuthController'; // Usamos el controlador actualizado
 
 interface LoginViewProps {
   onLogin: (user: User) => void;
 }
 
 const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
-  // Estados locales para el formulario
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // Maneja el envío del formulario utilizando el controlador de autenticación
-  const handleSubmit = (e: React.FormEvent) => {
+  // Cambiamos handleSubmit a async para poder usar await
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(''); // Limpiamos el error previo
     
-    // Utiliza el controlador para validar credenciales
-    const user = AuthController.validateCredentials(username, password);
-    
+    // Llamamos al método login asincrónico del nuevo controlador
+    const user = await AuthController.login(username, password);
+
     if (user) {
-      // Guarda la sesión y ejecuta callback de login
+      // Si el login es exitoso, guardamos la sesión y llamamos al callback
       AuthController.saveUserSession(user);
       onLogin(user);
     } else {
-      setError('Credenciales incorrectas. Use admin/museo2024');
+      // Si el login falla, mostramos un mensaje de error
+      setError('Credenciales incorrectas. Verifique su usuario y contraseña.');
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#192d71] via-[#1e3a8a] to-[#192d71] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Fondo decorativo con patrón de círculos */}
       <div className={`absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20`}></div>
       
-      {/* Tarjeta blanca con borde, sombra y padding */}
       <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-md relative z-10 border border-[#192d71]/20">
-        {/* Encabezado del formulario */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg border-2 border-[#192d71]/20">
@@ -50,7 +45,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
           <p className="text-[#192d71] font-medium">Sistema de Gestión de Bóveda</p>
         </div>
 
-        {/* Formulario de login */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-semibold text-amber-800 mb-3">
@@ -101,7 +95,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
         </form>
 
         <div className="mt-8 text-center text-sm text-[#192d71] bg-[#192d71]/5 rounded-lg py-2 px-4">
-          <p>Demo: admin / museo2024</p>
+          <p>Demo: Josue / fefy1234</p>
         </div>
       </div>
     </div>

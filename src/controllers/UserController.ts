@@ -1,174 +1,139 @@
-// CONTROLADOR DE USUARIOS DEL SISTEMA
-// Maneja toda la lógica de negocio relacionada con los usuarios del sistema
-
+// src/controllers/UserController.ts
 import { SystemUser } from '../models';
 
+// URL base de la API, asegúrate de que coincida con la de tu backend
+const API_BASE_URL = 'http://localhost:5000/api';
+
+/**
+ * Clase para manejar todas las operaciones de la API relacionadas con los usuarios.
+ * Centraliza la lógica de las llamadas a la red y el manejo de errores.
+ */
 export class UserController {
-  /**
-   * Obtiene todos los usuarios del localStorage
-   * @returns Array de usuarios del sistema
-   */
-  static getAllUsers(): SystemUser[] {
-    const savedUsers = localStorage.getItem('museum_system_users');
-    if (savedUsers) {
-      return JSON.parse(savedUsers);
-    }
-    return [];
-  }
 
   /**
-   * Guarda los usuarios en localStorage
-   * @param users - Array de usuarios a guardar
+   * Obtiene la lista completa de usuarios del sistema.
+   * @param {string} token - El token de autenticación del usuario.
+   * @returns {Promise<SystemUser[]>} Una promesa que resuelve con un array de usuarios.
    */
-  static saveUsers(users: SystemUser[]): void {
-    localStorage.setItem('museum_system_users', JSON.stringify(users));
-  }
-
-  /**
-   * Busca un usuario por su ID
-   * @param id - ID del usuario
-   * @returns Usuario encontrado o undefined
-   */
-  static findUserById(id: string): SystemUser | undefined {
-    const users = this.getAllUsers();
-    return users.find(user => user.id === id);
-  }
-
-  /**
-   * Busca un usuario por su nombre de usuario
-   * @param username - Nombre de usuario
-   * @returns Usuario encontrado o undefined
-   */
-  static findUserByUsername(username: string): SystemUser | undefined {
-    const users = this.getAllUsers();
-    return users.find(user => user.username === username);
-  }
-
-  /**
-   * Agrega un nuevo usuario
-   * @param user - Usuario a agregar
-   * @returns true si se agregó exitosamente, false si ya existe
-   */
-  static addUser(user: SystemUser): boolean {
-    const users = this.getAllUsers();
-    const existingUser = users.find(u => u.id === user.id || u.username === user.username);
-    
-    if (existingUser) {
-      return false; // Ya existe un usuario con este ID o username
-    }
-    
-    users.push(user);
-    this.saveUsers(users);
-    return true;
-  }
-
-  /**
-   * Actualiza un usuario existente
-   * @param updatedUser - Usuario con los datos actualizados
-   * @returns true si se actualizó exitosamente, false si no se encontró
-   */
-  static updateUser(updatedUser: SystemUser): boolean {
-    const users = this.getAllUsers();
-    const index = users.findIndex(user => user.id === updatedUser.id);
-    
-    if (index === -1) {
-      return false; // No se encontró el usuario
-    }
-    
-    users[index] = updatedUser;
-    this.saveUsers(users);
-    return true;
-  }
-
-  /**
-   * Elimina un usuario por su ID
-   * @param id - ID del usuario a eliminar
-   * @returns true si se eliminó exitosamente, false si no se encontró
-   */
-  static deleteUser(id: string): boolean {
-    const users = this.getAllUsers();
-    const filteredUsers = users.filter(user => user.id !== id);
-    
-    if (filteredUsers.length === users.length) {
-      return false; // No se encontró el usuario
-    }
-    
-    this.saveUsers(filteredUsers);
-    return true;
-  }
-
-  /**
-   * Alterna el estado activo/inactivo de un usuario
-   * @param id - ID del usuario
-   * @returns true si se actualizó exitosamente, false si no se encontró
-   */
-  static toggleUserStatus(id: string): boolean {
-    const users = this.getAllUsers();
-    const user = users.find(u => u.id === id);
-    
-    if (!user) {
-      return false; // No se encontró el usuario
-    }
-    
-    user.isActive = !user.isActive;
-    this.saveUsers(users);
-    return true;
-  }
-
-  /**
-   * Filtra usuarios según criterios de búsqueda
-   * @param users - Array de usuarios a filtrar
-   * @param searchTerm - Término de búsqueda
-   * @returns Array de usuarios filtrados
-   */
-  static filterUsers(users: SystemUser[], searchTerm: string): SystemUser[] {
-    if (!searchTerm) return users;
-    
-    const term = searchTerm.toLowerCase();
-    return users.filter(user =>
-      user.fullName.toLowerCase().includes(term) ||
-      user.username.toLowerCase().includes(term) ||
-      user.role.toLowerCase().includes(term)
-    );
-  }
-
-  /**
-   * Inicializa datos de ejemplo si no existen usuarios
-   */
-  static initializeSampleData(): void {
-    const existingUsers = this.getAllUsers();
-    if (existingUsers.length === 0) {
-      const sampleUsers: SystemUser[] = [
-        {
-          id: '1',
-          fullName: 'María González',
-          username: 'mgonzalez',
-          password: 'curador123',
-          role: 'administrador',
-          createdAt: '2024-01-15',
-          isActive: true
+  static async getAllUsers(token: string): Promise<SystemUser[]> {
+    try {
+      // Se añade el token al encabezado de la solicitud.
+      const response = await fetch(`${API_BASE_URL}/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        {
-          id: '2',
-          fullName: 'Carlos Mendoza',
-          username: 'cmendoza',
-          password: 'mant456',
-          role: 'colaborador',
-          createdAt: '2024-02-10',
-          isActive: true
+      });
+      if (!response.ok) {
+        throw new Error('Error al obtener los usuarios del servidor.');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error en getAllUsers:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Crea un nuevo usuario en el sistema.
+   * @param {Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>} userData - Datos del nuevo usuario.
+   * @param {string} token - El token de autenticación del usuario.
+   * @returns {Promise<SystemUser>} Una promesa que resuelve con el usuario creado.
+   */
+  static async createUser(userData: Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>, token: string): Promise<SystemUser> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        {
-          id: '3',
-          fullName: 'Maria Mendoza',
-          username: 'mmendoza',
-          password: 'mant456',
-          role: 'colaborador',
-          createdAt: '2024-02-10',
-          isActive: true
-        }
-      ];
-      
-      this.saveUsers(sampleUsers);
+        body: JSON.stringify(userData),
+      });
+      if (!response.ok) {
+        throw new Error('Error al crear el usuario en el servidor.');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error en createUser:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualiza un usuario existente por su ID.
+   * @param {string} userId - El ID del usuario a actualizar.
+   * @param {Partial<Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>>} userData - Los datos a actualizar.
+   * @param {string} token - El token de autenticación del usuario.
+   * @returns {Promise<SystemUser>} Una promesa que resuelve con el usuario actualizado.
+   */
+  static async updateUser(userId: string, userData: Partial<Omit<SystemUser, 'id' | 'createdAt' | 'isActive'>>, token: string): Promise<SystemUser> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(userData),
+      });
+      if (!response.ok) {
+        throw new Error('Error al actualizar el usuario en el servidor.');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error en updateUser:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Elimina un usuario por su ID.
+   * @param {string} userId - El ID del usuario a eliminar.
+   * @param {string} token - El token de autenticación del usuario.
+   * @returns {Promise<void>} Una promesa que resuelve al completarse la eliminación.
+   */
+  static async deleteUser(userId: string, token: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Error al eliminar el usuario del servidor.');
+      }
+    } catch (error) {
+      console.error('Error en deleteUser:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Alterna el estado activo/inactivo de un usuario.
+   * @param {string} userId - El ID del usuario.
+   * @param {boolean} isActive - El nuevo estado activo/inactivo.
+   * @param {string} token - El token de autenticación del usuario.
+   * @returns {Promise<SystemUser>} Una promesa que resuelve con el usuario actualizado.
+   */
+  static async toggleUserStatus(userId: string, isActive: boolean, token: string): Promise<SystemUser> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/toggle-status/${userId}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isActive }),
+      });
+      if (!response.ok) {
+        throw new Error('Error al cambiar el estado del usuario en el servidor.');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error en toggleUserStatus:', error);
+      throw error;
     }
   }
 }
