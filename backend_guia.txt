@@ -1,5 +1,7 @@
 // Dpendencias principales
 
+**CREAR .env ya que git no deja subirlo porque es un archivo privado el formato de este esta abajo en IMPORTANTE**
+
 
 Solo ejecutar npm install pero si es necesario estas son las dependencias
 
@@ -34,15 +36,16 @@ src/
     .env:
 
     PORT=5000
-    CORS_ORIGINS=http://localhost:5173,http://localhost:5174
-    DB_HOST=localhost
-    DB_PORT=5432
-    DB_NAME=bd_museo  (El nombre de la base de datos )
-    DB_USER=postgres
-    DB_PASSWORD=123456 (tu contraseña de postgress)
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=museo_bd (nombre de tu base de datos)
+DB_USER=postgres
+DB_PASSWORD=123456 (tu contraseña postgres)
+JWT_SECRET=1234 (contraseña ultrasegura esto hay que colocar una contraseña fuerte mientras usamos esta)
 
 
-    esto para generar token e increptamiento 
+    esto para generar token e encriptamiento 
 
     npm install jsonwebtoken bcryptjs
     npm install --save-dev @types/jsonwebtoken @types/bcryptjs
