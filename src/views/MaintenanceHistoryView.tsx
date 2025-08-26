@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { 
   Plus, Search, Filter, ChevronDown, Eye, Edit, Trash2, FileDown,
-  Palette, Hammer, Calendar, DollarSign, FileText, Wrench
+  Palette, Hammer, Calendar, DollarSign, FileText, Wrench, X
 } from 'lucide-react';
 import { MaintenanceRecord, Work, User } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
@@ -52,6 +52,10 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
   const [categoryFilter, setCategoryFilter] = useState<'all' | MaintenanceRecord['maintenanceCategory']>('all'); // Filtro por categoría
   const [dateFilter, setDateFilter] = useState(''); // Filtro por fecha
 
+  // Estados para el buscador de obras en el formulario
+  const [workSearchTerm, setWorkSearchTerm] = useState(''); // Término de búsqueda para obras
+  const [showWorkDropdown, setShowWorkDropdown] = useState(false); // Controla la visibilidad del dropdown
+  const [selectedWorkForSearch, setSelectedWorkForSearch] = useState<Work | null>(null); // Obra seleccionada desde el buscador
   // Estado para los datos del formulario con valores iniciales
   const [formData, setFormData] = useState<MaintenanceFormData>({
     workType: 'Pintura',
@@ -82,6 +86,17 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
     return work.classification.toLowerCase().includes(formData.workType.toLowerCase());
   });
 
+  // Filtra las obras para el buscador basado en el término de búsqueda
+  // Busca coincidencias en nombre, artista y número de inventario
+  const searchFilteredWorks = filteredWorks.filter(work => {
+    if (!workSearchTerm) return true; // Si no hay término de búsqueda, muestra todas las obras filtradas por tipo
+    const searchLower = workSearchTerm.toLowerCase();
+    return (
+      work.name.toLowerCase().includes(searchLower) ||
+      work.artist.toLowerCase().includes(searchLower) ||
+      work.inventoryNumber.toLowerCase().includes(searchLower)
+    );
+  });
   // Filtra los registros según los criterios de búsqueda y filtros
   const filteredRecords = records.filter(record => {
     const matchesSearch = record.workName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -96,7 +111,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
   });
 
   // Implementación del hook de paginación personalizado para registros de mantenimiento
-  // Configurado para mostrar 4 registros por página optimizado para contenido detallado
+  // Configurado para mostrar 6 registros por página optimizado para contenido detallado
   const {
     currentPage,
     totalPages,
@@ -112,7 +127,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
     goToLastPage,
     setItemsPerPage
   } = usePagination(filteredRecords, {
-    itemsPerPage: 4, // Número de registros por página optimizado para información detallada
+    itemsPerPage: 6, // Número de registros por página optimizado para información detallada
     initialPage: 1
   });
   // Maneja la selección de una obra y autocompleta los campos relacionados
@@ -136,6 +151,11 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
         technique: selectedWork.technique || 'No especificado',
         year: selectedWork.realizationDate || 'No especificado'
       }));
+      
+      // Actualiza el estado del buscador con la obra seleccionada
+      setSelectedWorkForSearch(selectedWork);
+      setWorkSearchTerm(`${selectedWork.name} - ${selectedWork.artist}`);
+      setShowWorkDropdown(false);
     } else {
       // Limpia los campos autocompletados si no se encuentra la obra
       setFormData(prev => ({
@@ -147,9 +167,41 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
         technique: '',
         year: ''
       }));
+      
+      // Limpia el estado del buscador
+      setSelectedWorkForSearch(null);
+      setWorkSearchTerm('');
     }
   };
 
+  // Maneja la selección de una obra desde el buscador
+  // Esta función se ejecuta cuando el usuario hace clic en una obra del dropdown
+  const handleWorkSearchSelection = (work: Work) => {
+    handleWorkSelection(work.inventoryNumber);
+  };
+
+  // Maneja el cambio en el campo de búsqueda de obras
+  // Actualiza el término de búsqueda y muestra el dropdown si hay texto
+  const handleWorkSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setWorkSearchTerm(value);
+    setShowWorkDropdown(value.length > 0);
+    
+    // Si el usuario borra el texto, limpia la selección
+    if (value === '') {
+      setSelectedWorkForSearch(null);
+      handleWorkSelection(''); // Limpia el formulario
+    }
+  };
+
+  // Limpia la selección de obra desde el buscador
+  // Resetea todos los campos relacionados con la obra seleccionada
+  const clearWorkSelection = () => {
+    setWorkSearchTerm('');
+    setSelectedWorkForSearch(null);
+    setShowWorkDropdown(false);
+    handleWorkSelection(''); // Limpia el formulario
+  };
   // Maneja el envío del formulario para crear o editar un registro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,6 +251,11 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
       interventionDescription: '',
       date: ''
     });
+    
+    // Reinicia también los estados del buscador de obras
+    setWorkSearchTerm('');
+    setSelectedWorkForSearch(null);
+    setShowWorkDropdown(false);
   };
 
   // Prepara el formulario para editar un registro existente
@@ -216,6 +273,14 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
       interventionDescription: record.interventionDescription,
       date: record.date
     });
+    
+    // Configura el buscador con la obra del registro en edición
+    const workInEdit = works.find(work => work.inventoryNumber === record.workId);
+    if (workInEdit) {
+      setSelectedWorkForSearch(workInEdit);
+      setWorkSearchTerm(`${workInEdit.name} - ${workInEdit.artist}`);
+    }
+    
     setEditingRecord(record);
     setShowForm(true);
   };
@@ -387,6 +452,71 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
                 <Hammer className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Selección de Pieza
               </h3>
+              
+              {/* Buscador de obras con autocompletado */}
+              <div className="mb-4 relative">
+                <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2 sm:mb-3">
+                  Buscar Obra
+                </label>
+                <div className="relative">
+                  {/* Campo de búsqueda con icono de búsqueda */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-[#192d71]/60" />
+                    <input
+                      type="text"
+                      value={workSearchTerm}
+                      onChange={handleWorkSearchChange}
+                      onFocus={() => workSearchTerm && setShowWorkDropdown(true)}
+                      className="w-full pl-10 pr-10 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
+                      placeholder="Buscar por nombre, artista o código..."
+                    />
+                    {/* Botón para limpiar la búsqueda */}
+                    {workSearchTerm && (
+                      <button
+                        type="button"
+                        onClick={clearWorkSelection}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#192d71]/60 hover:text-[#192d71] transition-colors"
+                      >
+                        <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Dropdown con resultados de búsqueda */}
+                  {showWorkDropdown && searchFilteredWorks.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border-2 border-[#192d71]/20 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                      {searchFilteredWorks.slice(0, 10).map(work => (
+                        <button
+                          key={work.inventoryNumber}
+                          type="button"
+                          onClick={() => handleWorkSearchSelection(work)}
+                          className="w-full px-4 py-3 text-left hover:bg-[#192d71]/5 transition-colors border-b border-[#192d71]/10 last:border-b-0"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-[#192d71] text-sm sm:text-base">
+                              {work.name}
+                            </span>
+                            <span className="text-xs sm:text-sm text-[#192d71]/70">
+                              {work.artist} • {work.inventoryNumber}
+                            </span>
+                            <span className="text-xs text-[#192d71]/50">
+                              {work.technique} • {work.realizationDate}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                      {/* Mensaje si no hay resultados */}
+                      {searchFilteredWorks.length === 0 && workSearchTerm && (
+                        <div className="px-4 py-3 text-center text-[#192d71]/60 text-sm">
+                          No se encontraron obras que coincidan con "{workSearchTerm}"
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Selector tradicional (mantiene funcionalidad existente) */}
               <select
                 value={formData.workId}
                 onChange={(e) => handleWorkSelection(e.target.value)}
