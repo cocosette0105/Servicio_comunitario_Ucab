@@ -1,43 +1,46 @@
 import { useState, useEffect } from 'react';
 import { LoginView, DashboardView } from './views';
 import { User, Work, SystemUser, MovementRecord, MaintenanceRecord } from './models';
-import { AuthController, WorkController, UserController, MovementController, MaintenanceController } from './controllers';
+// Se elimina 'UserController' que no se usaba. Se mantiene el resto.
+import { AuthController, WorkController, MovementController, MaintenanceController } from './controllers';
 
 function App() {
-  // Estado para el usuario autenticado (null si no ha iniciado sesión)
+  // Estado para el usuario autenticado
   const [user, setUser] = useState<User | null>(null);
+  
+  // NUEVO: Estado para el token de autenticación
+  const [token, setToken] = useState<string | null>(null);
     
-  // Estado para controlar la vista activa del dashboard
+  // Estado para la vista activa del dashboard
   const [activeView, setActiveView] = useState<'overview' | 'works' | 'reports' | 'users' | 'movements' | 'maintenance'>('overview');
 
-  // Estado que contiene las obras registradas en el museo
+  // Estados para los datos de la aplicación
   const [works, setWorks] = useState<Work[]>([]);
-
-  // Estado que contiene los usuarios registrados en el sistema
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
-
-  // Estado que contiene los registros de movimientos de obras
   const [movementRecords, setMovementRecords] = useState<MovementRecord[]>([]);
-
-  // Estado que contiene los registros de mantenimiento realizados a las obras
   const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
 
-  // useEffect con dependencias vacías → se ejecuta una única vez al montar el componente
+  // Se ejecuta una vez al montar para verificar si hay una sesión guardada
   useEffect(() => {
     const savedUser = AuthController.getUserSession();
-    if (savedUser) {
+    const savedToken = AuthController.getToken(); // Obtenemos el token
+
+    if (savedUser && savedToken) {
       setUser(savedUser);
+      setToken(savedToken);
     }
   }, []);
 
-  const handleLogin = (userData: User) => {
+  // ACTUALIZADO: handleLogin ahora recibe y guarda el token
+  const handleLogin = (userData: User, userToken: string) => {
     setUser(userData);
-    // Ya no necesitas guardar la sesión aquí, el AuthController lo hace por ti
-    // AuthController.saveUserSession(userData);
+    setToken(userToken);
+    // AuthController se encarga de guardar en localStorage
   };
 
   const handleLogout = () => {
     setUser(null);
+    setToken(null); // Limpiamos el token del estado
     AuthController.logout();
   };
 
@@ -50,9 +53,9 @@ function App() {
     setSystemUsers(newUsers);
   };
 
+  // CORREGIDO: Se elimina la llamada a 'saveMovements' que no existe
   const updateMovementRecords = (newRecords: MovementRecord[]) => {
     setMovementRecords(newRecords);
-    MovementController.saveMovements(newRecords);
   };
 
   const updateMaintenanceRecords = (newRecords: MaintenanceRecord[]) => {
@@ -60,13 +63,15 @@ function App() {
     MaintenanceController.saveMaintenanceRecords(newRecords);
   };
 
-  if (!user) {
+  // Si no hay usuario O no hay token, mostramos la vista de login
+  if (!user || !token) {
     return <LoginView onLogin={handleLogin} />;
   }
 
   return (
     <DashboardView 
       user={user} 
+      token={token} // Pasamos el token como prop al Dashboard
       works={works} 
       onLogout={handleLogout}
       onUpdateWorks={updateWorks}

@@ -1,216 +1,213 @@
 // VISTA DE HISTORIAL DE MOVIMIENTOS
 // Vista de presentación para la gestión de movimientos de obras (entradas y salidas)
 // Permite registrar, consultar, editar y generar reportes de movimientos con paginación responsive
-
-import React, { useState } from 'react';
+//frontend/src/views/MovementHistoryView.tsx
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, ArrowUpCircle, ArrowDownCircle, Filter, ChevronDown, Download, Edit, Eye, Trash2 } from 'lucide-react';
-// Importación de componentes de paginación para manejo responsive
 import Pagination from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import { MovementRecord, Work, User } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
+import { MovementController, NewMovementData, UpdateMovementData } from '../controllers/MovementController';
 
-// Define las propiedades que recibe la vista de historial de movimientos
+
 interface MovementHistoryViewProps {
-  user: User; // Usuario actual para validaciones de permisos
-  records: MovementRecord[];
+  user: User;
   works: Work[];
-  onUpdateRecords: (records: MovementRecord[]) => void;
+  token: string;
 }
 
-// Define la estructura de datos para el formulario de movimiento
 interface MovementFormData {
-  workId: string; // ID de la obra seleccionada
-  date: string; // Fecha del movimiento
-  type: 'entrada' | 'salida'; // Tipo de movimiento
-  reason: string; // Motivo del movimiento
-  notes: string; // Notas adicionales
-  workDetails: { // Detalles técnicos de la obra
-    author: string;
-    title: string;
-    technique: string;
-    dimensions: string;
-    collection: string;
-  };
-  conservationState: string; // Estado de conservación
-  receiver: { // Información del receptor
-    name: string;
-    idCard: string;
-    phone: string;
-  };
-  deliverer: { // Información del entregador
-    name: string;
-    idCard: string;
-    phone: string;
-  };
+  workId: string;
+  date: string;
+  type: 'entrada' | 'salida';
+  reason: string;
+  notes: string;
+  workDetails: { author: string; title: string; technique: string; dimensions: string; collection: string; };
+  conservationState: string;
+  receiver: { name: string; idCard: string; phone: string; };
+  deliverer: { name: string; idCard: string; phone: string; };
 }
 
-// Componente de vista para el historial de movimientos
-const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ records, works, onUpdateRecords }) => {
-  // Estados locales para controlar la interfaz de usuario
-  // Estados para controlar la visibilidad de formularios y modales
-  const [showForm, setShowForm] = useState(false); // Controla la visibilidad del formulario
-  const [editingRecord, setEditingRecord] = useState<MovementRecord | null>(null); // Registro en edición
-  const [viewingRecord, setViewingRecord] = useState<MovementRecord | null>(null); // Registro en vista detallada
-  const [searchTerm, setSearchTerm] = useState(''); // Término de búsqueda
-  const [showFilters, setShowFilters] = useState(false); // Visibilidad de filtros
-  const [typeFilter, setTypeFilter] = useState<'all' | 'entrada' | 'salida'>('all'); // Filtro por tipo
-  const [dateFilter, setDateFilter] = useState(''); // Filtro por fecha
-  
-  // Estado para los datos del formulario con estructura completa
-  // Estado para los datos del formulario con valores iniciales
-  const [formData, setFormData] = useState<MovementFormData>({
+const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, token }) => {
+  const [records, setRecords] = useState<MovementRecord[]>([]);
+  const [selectedWorkId, setSelectedWorkId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<MovementRecord | null>(null);
+  const [viewingRecord, setViewingRecord] = useState<MovementRecord | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'entrada' | 'salida'>('all');
+  const [dateFilter, setDateFilter] = useState('');
+
+  const initialFormData: MovementFormData = {
     workId: '',
     date: '',
     type: 'entrada',
     reason: '',
     notes: '',
-    workDetails: {
-      author: '',
-      title: '',
-      technique: '',
-      dimensions: '',
-      collection: ''
-    },
+    workDetails: { author: '', title: '', technique: '', dimensions: '', collection: '' },
     conservationState: '',
-    receiver: {
-      name: '',
-      idCard: '',
-      phone: ''
-    },
-    deliverer: {
-      name: '',
-      idCard: '',
-      phone: ''
-    }
-  });
+    receiver: { name: '', idCard: '', phone: '' },
+    deliverer: { name: '', idCard: '', phone: '' }
+  };
+  
+  const [formData, setFormData] = useState<MovementFormData>(initialFormData);
 
-  // Filtrado avanzado de registros con múltiples criterios de búsqueda
-  // Incluye búsqueda por texto, tipo de movimiento y fecha
-  // Filtra los registros según los criterios de búsqueda y filtros
+  useEffect(() => {
+  const fetchMovements = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      let movements: MovementRecord[] = [];
+
+      if (token) {
+        if (selectedWorkId) {
+          movements = await MovementController.getMovementsByWorkId(selectedWorkId, token);
+        } else {
+          movements = await MovementController.getAllMovements(token);
+        }
+        setRecords(movements);
+      }
+    } catch (err) {
+      setError('No se pudieron cargar los movimientos.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchMovements();
+}, [selectedWorkId, token]);
+
   const filteredRecords = records.filter(record => {
-    const matchesSearch = record.workName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.workDetails.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.receiver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.deliverer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.reason.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const searchString = `${record.workName} ${record.workDetails?.author} ${record.reason}`.toLowerCase();
+    const matchesSearch = searchString.includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'all' || record.type === typeFilter;
-    const matchesDate = !dateFilter || record.date.includes(dateFilter);
-    
+    const matchesDate = !dateFilter || record.date.startsWith(dateFilter);
     return matchesSearch && matchesType && matchesDate;
   });
 
-  // Implementación del hook de paginación personalizado para movimientos
-  // Configurado para mostrar 4 movimientos por página optimizado para diseño responsive
   const {
-    currentPage,
-    totalPages,
-    paginatedItems: paginatedRecords,
-    startIndex,
-    endIndex,
-    hasNextPage,
-    hasPrevPage,
-    goToPage,
-    nextPage,
-    prevPage,
-    goToFirstPage,
-    goToLastPage,
-    setItemsPerPage
-  } = usePagination(filteredRecords, {
-    itemsPerPage: 4, // Número de movimientos por página optimizado para diseño responsive
-    initialPage: 1
-  });
-  
-  // Función para manejar la selección de obra y autocompletar campos relacionados
-  const handleWorkSelection = (workId: string) => {
-    setFormData(prev => ({ ...prev, workId }));
+    currentPage, totalPages, paginatedItems: paginatedRecords,
+    goToPage, nextPage, prevPage
+  } = usePagination(filteredRecords, { itemsPerPage: 4 });
 
-    // Busca la obra seleccionada por su número de inventario
-    const selectedWork = works.find(work => work.inventoryNumber === workId);
+  // --- MANEJADORES DE EVENTOS ---
+
+  const handleWorkSelection = (inventoryNumber: string) => {
+    const selectedWork = works.find(work => work.inventoryNumber === inventoryNumber);
     if (selectedWork) {
-      // Construye las dimensiones combinando las medidas disponibles
-      // Formatea las dimensiones de manera legible
-      const dimensions = [
-        selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm`,
-        selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm`,
-        selectedWork.dimensions.depth && `${selectedWork.dimensions.depth}cm`,
-        selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm`,
-      ].filter(Boolean).join(' x ');
-
-      // Autocompleta los detalles de la obra
-      // Actualiza el estado con la información de la obra seleccionada
-      setFormData(prev => ({
-        ...prev,
-        workDetails: {
-          author: selectedWork.artist,
-          title: selectedWork.name,
-          technique: selectedWork.technique || 'No especificado',
-          dimensions: dimensions || 'No especificado',
-          collection: selectedWork.collection?.acquisitionMethod || 'Colección General'
-        }
-      }));
+        setSelectedWorkId(parseInt(selectedWork.id, 10));
+        const dimensions = [
+            selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm`,
+            selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm`,
+            selectedWork.dimensions.depth && `${selectedWork.dimensions.depth}cm`,
+            selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm`,
+        ].filter(Boolean).join(' x ');
+        setFormData(prev => ({
+            ...prev,
+            workId: inventoryNumber,
+            workDetails: {
+                author: selectedWork.artist,
+                title: selectedWork.name,
+                technique: selectedWork.technique || 'No especificado',
+                dimensions: dimensions || 'No especificado',
+                collection: selectedWork.collection?.acquisitionMethod || 'Colección General'
+            }
+        }));
     } else {
-      // Limpia los detalles si no se encuentra la obra
-      // Resetea los campos autocompletados
-      setFormData(prev => ({
-        ...prev,
-        workDetails: {
-          author: '',
-          title: '',
-          technique: '',
-          dimensions: '',
-          collection: ''
-        }
-      }));
+        setSelectedWorkId(null);
+        setFormData(prev => ({ ...prev, workId: '', workDetails: initialFormData.workDetails }));
     }
   };
 
-  // Función para manejar el envío del formulario con validaciones
-  // Maneja el envío del formulario para crear un nuevo registro
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setFormData(initialFormData);
+    setEditingRecord(null);
+    setSelectedWorkId(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validación: no permitir fechas futuras
-    const today = new Date().toISOString().split('T')[0];
-    if (formData.date > today) {
-      alert('La fecha del movimiento no puede ser posterior a la fecha actual');
+    setError(null);
+
+    // --- ¡CORRECCIÓN CLAVE AQUÍ! ---
+    // Añadimos una validación para asegurarnos de que el token existe antes de usarlo.
+    if (!token) {
+      setError('Error de autenticación. Por favor, inicie sesión de nuevo.');
+      console.error("Intento de envío sin token.");
+      return; // Detenemos la ejecución si no hay token
+    }
+
+    // Validación básica
+    if (!selectedWorkId) {
+      setError('Por favor, seleccione una obra de la lista.');
       return;
     }
-    
-    const selectedWork = works.find(work => work.inventoryNumber === formData.workId);
-    if (!selectedWork) return;
+    if (!formData.reason.trim()) {
+        setError('El motivo del movimiento es obligatorio.');
+        return;
+    }
 
-    // Crea el nuevo registro con ID único basado en timestamp
-    // Crea el nuevo registro de movimiento
-    const newRecord: MovementRecord = {
-      id: Date.now().toString(),
-      workId: formData.workId,
-      workName: selectedWork.name,
-      date: formData.date,
-      type: formData.type,
-      reason: formData.reason,
-      notes: formData.notes,
-      workDetails: formData.workDetails,
-      conservationState: formData.conservationState,
-      receiver: formData.receiver,
-      deliverer: formData.deliverer
+    const movementData: NewMovementData = {
+        his_mov_obr_id_fk: selectedWorkId,
+        his_tip_movimiento: formData.type,
+        his_mov_motiv: formData.reason,
+        his_mov_notas: formData.notes,
+        his_mov_usu_id_fk: user.id,
     };
 
-    onUpdateRecords([...records, newRecord]);
-    
-    // Limpia el formulario y cierra el modal
-    // Reinicia el formulario
-    resetForm();
-    setShowForm(false);
+    setIsLoading(true);
+    try {
+        // Ahora estamos seguros de que 'token' es una cadena válida
+       const newMovement = await MovementController.addMovement(movementData, token);
+
+console.log('probando', newMovement);
+
+const backendMovimiento = newMovement.movimiento;
+
+const newMovementFormatted: MovementRecord = {
+  id: backendMovimiento.his_mov_id.toString(), // ✅ usar el campo real
+  workId: backendMovimiento.his_mov_obr_id_fk.toString(),
+  workName: formData.workDetails?.title || 'Sin título', // porque el backend no manda esto
+  date: backendMovimiento.his_mov_fecha || new Date().toISOString(),
+  type: backendMovimiento.his_tip_movimiento,
+  reason: backendMovimiento.his_mov_motiv,
+  notes: backendMovimiento.his_mov_notas,
+  workDetails: formData.workDetails || {
+    author: 'Desconocido',
+    title: 'Sin título',
+    technique: '',
+    dimensions: '',
+    collection: ''
+  },
+  conservationState: formData.conservationState || '',
+  receiver: formData.receiver || { name: '', idCard: '', phone: '' },
+  deliverer: formData.deliverer || { name: '', idCard: '', phone: '' }
+};
+
+setRecords(prev => [newMovementFormatted, ...prev]);
+
+        setShowForm(false);
+        resetForm();
+
+    } catch (error: any) {
+        console.error("Error al registrar movimiento:", error);
+        setError(error.message || 'Ocurrió un error inesperado.');
+    } finally {
+        setIsLoading(false);
+    }
   };
 
-  // Función para preparar la edición de un registro existente
-  // Prepara el formulario para editar un registro existente
   const handleEdit = (record: MovementRecord) => {
+    const selectedWork = works.find(work => work.id === record.workId);
     setFormData({
-      workId: record.workId,
-      date: record.date,
+      workId: selectedWork?.inventoryNumber || '',
+      date: record.date.split('T')[0],
       type: record.type,
       reason: record.reason,
       notes: record.notes || '',
@@ -220,101 +217,66 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ records, work
       deliverer: record.deliverer
     });
     setEditingRecord(record);
+    setSelectedWorkId(parseInt(record.workId, 10));
     setShowForm(true);
   };
 
-  // Función para eliminar registro con confirmación del usuario
-  // Maneja la eliminación de un registro con confirmación
-  const handleDelete = (recordId: string) => {
-    if (confirm('¿Está seguro de que desea eliminar este registro de movimiento?')) {
-      const updatedRecords = records.filter(record => record.id !== recordId);
-      onUpdateRecords(updatedRecords);
-    }
-  };
-
-  // Función para actualizar un registro existente con validaciones
-  // Maneja la actualización de un registro existente
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validación de fecha
-    const today = new Date().toISOString().split('T')[0];
-    if (formData.date > today) {
-      alert('La fecha del movimiento no puede ser posterior a la fecha actual');
-      return;
-    }
-    
-    const selectedWork = works.find(work => work.inventoryNumber === formData.workId);
-    if (!selectedWork) return;
+    if (!editingRecord || !selectedWorkId) return;
 
-    if (editingRecord) {
-      // Actualiza el registro manteniendo el ID original
-      // Actualiza el registro existente
-      const updatedRecord: MovementRecord = {
-        ...editingRecord,
-        workId: formData.workId,
-        workName: selectedWork.name,
-        date: formData.date,
-        type: formData.type,
-        reason: formData.reason,
-        notes: formData.notes,
-        workDetails: formData.workDetails,
-        conservationState: formData.conservationState,
-        receiver: formData.receiver,
-        deliverer: formData.deliverer
-      };
+    setError(null);
+    setIsLoading(true);
 
-      const updatedRecords = records.map(record =>
-        record.id === editingRecord.id ? updatedRecord : record
-      );
-      onUpdateRecords(updatedRecords);
-      setEditingRecord(null);
+    const movementData: UpdateMovementData = {
+        his_tip_movimiento: formData.type,
+        his_mov_motiv: formData.reason,
+        his_mov_notas: formData.notes,
+    };
+
+    try {
+        // **CORRECCIÓN**: Pasamos el token
+        const updatedMovement = await MovementController.updateMovement(parseInt(editingRecord.id, 10), movementData, token);
+        const updatedRecords = records.map(record =>
+            record.id === editingRecord.id ? { ...record, ...updatedMovement.movimiento } : record
+        );
+        setRecords(updatedRecords);
+        setShowForm(false);
+        resetForm();
+    } catch (error: any) {
+        console.error("Error al actualizar movimiento:", error);
+        setError(error.message || 'Ocurrió un error inesperado.');
+    } finally {
+        setIsLoading(false);
     }
-    
-    // Limpia el formulario y cierra el modal
-    // Reinicia el formulario
-    resetForm();
-    setShowForm(false);
   };
 
-  // Función para resetear todos los campos del formulario
-  // Reinicia todos los campos del formulario a sus valores por defecto
-  const resetForm = () => {
-    setFormData({
-      workId: '',
-      date: '',
-      type: 'entrada',
-      reason: '',
-      notes: '',
-      workDetails: {
-        author: '',
-        title: '',
-        technique: '',
-        dimensions: '',
-        collection: ''
-      },
-      conservationState: '',
-      receiver: {
-        name: '',
-        idCard: '',
-        phone: ''
-      },
-      deliverer: {
-        name: '',
-        idCard: '',
-        phone: ''
-      }
-    });
+  const handleDelete = async (recordId: string) => {
+    if (window.confirm('¿Está seguro de que desea eliminar este registro?')) {
+        setError(null);
+        setIsLoading(true);
+        try {
+            // **CORRECCIÓN**: Pasamos el token
+            const success = await MovementController.deleteMovement(parseInt(recordId, 10), token);
+            if (success) {
+                const updatedRecords = records.filter(record => record.id !== recordId);
+                setRecords(updatedRecords);
+            } else {
+                setError('No se pudo eliminar el registro.');
+            }
+        } catch (error: any) {
+            console.error("Error al eliminar movimiento:", error);
+            setError(error.message || 'Ocurrió un error inesperado.');
+        } finally {
+            setIsLoading(false);
+        }
+    }
   };
 
-  // Función para generar y descargar PDF del registro
-  // Genera y descarga un PDF del registro seleccionado
   const generatePDF = async (record: MovementRecord) => {
     await PDFUtils.generateMovementPDF(record);
   };
 
-  // Función para limpiar todos los filtros aplicados
-  // Limpia todos los filtros aplicados
   const clearFilters = () => {
     setTypeFilter('all');
     setDateFilter('');
@@ -753,9 +715,9 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ records, work
                 <tr key={record.id} className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200">
                   <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
                     <div>
-                      <p className="font-bold text-[#192d71] text-sm sm:text-base lg:text-lg">{record.workDetails.title}</p>
-                      <p className="text-xs sm:text-sm text-[#192d71]/70 font-medium">Por {record.workDetails.author}</p>
-                      <p className="text-xs text-[#192d71]/60 mt-1">{record.workDetails.technique}</p>
+                      <p className="font-bold text-[#192d71] text-sm sm:text-base lg:text-lg">{record.workDetails?.title || 'Sin título'}</p>
+                      <p className="text-xs sm:text-sm text-[#192d71]/70 font-medium">Por {record.workDetails?.author || 'Autor desconocido'}</p>
+                      <p className="text-xs text-[#192d71]/60 mt-1">{record.workDetails?.technique || 'Técnica no especificada'}</p>
                       {/* Información adicional visible solo en móviles */}
                       {/* Información compacta para dispositivos pequeños */}
                       <div className="sm:hidden mt-2 space-y-1">
@@ -931,7 +893,7 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ records, work
               <div className="bg-gradient-to-br from-[#192d71]/10 to-white rounded-2xl p-4 sm:p-6 border border-[#192d71]/30">
                 <h3 className="text-lg sm:text-xl font-bold text-[#192d71] mb-3 sm:mb-4">Detalles de la Obra</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base">
-                  <div><strong className="text-[#192d71]">Título:</strong> {viewingRecord.workDetails.title}</div>
+                 <div><strong className="text-[#192d71]">Título:</strong> {viewingRecord.workDetails?.title || 'Sin título'}</div>
                   <div><strong className="text-[#192d71]">Autor:</strong> {viewingRecord.workDetails.author}</div>
                   <div><strong className="text-[#192d71]">Técnica:</strong> {viewingRecord.workDetails.technique}</div>
                   <div><strong className="text-[#192d71]">Medidas:</strong> {viewingRecord.workDetails.dimensions}</div>

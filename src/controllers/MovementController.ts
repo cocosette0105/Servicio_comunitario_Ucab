@@ -1,153 +1,151 @@
-// CONTROLADOR DE MOVIMIENTOS
-// Maneja toda la lógica de negocio relacionada con los movimientos de obras
+// frontend/src/controllers/MovementController.ts
+import { MovementRecord, User } from '../models';
 
-import { MovementRecord } from '../models';
+// URL base de tu API. Asegúrate de que el puerto sea el correcto.
+const API_URL = 'http://localhost:5000/api/historial-movimiento';
+
+export interface NewMovementData {
+    his_tip_movimiento: 'entrada' | 'salida';
+    his_mov_motiv: string;
+    his_mov_notas?: string;
+    his_mov_obr_id_fk: number;
+    his_mov_usu_id_fk: number;
+    his_mov_recibe_fk?: number;
+    his_mov_envia_fk?: number;
+}
+
+export interface UpdateMovementData {
+    his_tip_movimiento: 'entrada' | 'salida';
+    his_mov_motiv: string;
+    his_mov_notas?: string;
+    his_mov_recibe_fk?: number;
+}
 
 export class MovementController {
-  /**
-   * Obtiene todos los registros de movimiento del localStorage
-   * @returns Array de registros de movimiento
-   */
-  static getAllMovements(): MovementRecord[] {
-    const savedMovements = localStorage.getItem('museum_movements');
-    if (savedMovements) {
-      return JSON.parse(savedMovements);
-    }
-    return [];
-  }
 
-  /**
-   * Guarda los registros de movimiento en localStorage
-   * @param movements - Array de registros a guardar
-   */
-  static saveMovements(movements: MovementRecord[]): void {
-    localStorage.setItem('museum_movements', JSON.stringify(movements));
-  }
+    // --- ¡NUEVA FUNCIÓN! ---
+    static async getAllMovements(token: string): Promise<MovementRecord[]> {
+        try {
+            const response = await fetch(API_URL, { // Llama a la nueva ruta raíz
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error al obtener todos los movimientos.');
+            
+            const rawData: any[] = await response.json();
+            return this.mapData(rawData); // Usamos una función helper para mapear
 
-  /**
-   * Busca un registro de movimiento por su ID
-   * @param id - ID del registro
-   * @returns Registro encontrado o undefined
-   */
-  static findMovementById(id: string): MovementRecord | undefined {
-    const movements = this.getAllMovements();
-    return movements.find(movement => movement.id === id);
-  }
-
-  /**
-   * Agrega un nuevo registro de movimiento
-   * @param movement - Registro a agregar
-   * @returns true si se agregó exitosamente
-   */
-  static addMovement(movement: MovementRecord): boolean {
-    const movements = this.getAllMovements();
-    movements.push(movement);
-    this.saveMovements(movements);
-    return true;
-  }
-
-  /**
-   * Actualiza un registro de movimiento existente
-   * @param updatedMovement - Registro con los datos actualizados
-   * @returns true si se actualizó exitosamente, false si no se encontró
-   */
-  static updateMovement(updatedMovement: MovementRecord): boolean {
-    const movements = this.getAllMovements();
-    const index = movements.findIndex(movement => movement.id === updatedMovement.id);
-    
-    if (index === -1) {
-      return false; // No se encontró el registro
-    }
-    
-    movements[index] = updatedMovement;
-    this.saveMovements(movements);
-    return true;
-  }
-
-  /**
-   * Elimina un registro de movimiento por su ID
-   * @param id - ID del registro a eliminar
-   * @returns true si se eliminó exitosamente, false si no se encontró
-   */
-  static deleteMovement(id: string): boolean {
-    const movements = this.getAllMovements();
-    const filteredMovements = movements.filter(movement => movement.id !== id);
-    
-    if (filteredMovements.length === movements.length) {
-      return false; // No se encontró el registro
-    }
-    
-    this.saveMovements(filteredMovements);
-    return true;
-  }
-
-  /**
-   * Filtra registros de movimiento según criterios
-   * @param movements - Array de registros a filtrar
-   * @param searchTerm - Término de búsqueda
-   * @param typeFilter - Filtro por tipo de movimiento
-   * @param dateFilter - Filtro por fecha
-   * @returns Array de registros filtrados
-   */
-  static filterMovements(
-    movements: MovementRecord[], 
-    searchTerm: string, 
-    typeFilter: 'all' | 'entrada' | 'salida', 
-    dateFilter: string
-  ): MovementRecord[] {
-    return movements.filter(record => {
-      const matchesSearch = !searchTerm || (
-        record.workName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.workDetails.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.receiver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.deliverer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.reason.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      
-      const matchesType = typeFilter === 'all' || record.type === typeFilter;
-      const matchesDate = !dateFilter || record.date.includes(dateFilter);
-      
-      return matchesSearch && matchesType && matchesDate;
-    });
-  }
-
-  /**
-   * Inicializa datos de ejemplo si no existen registros
-   */
-  static initializeSampleData(): void {
-    const existingMovements = this.getAllMovements();
-    if (existingMovements.length === 0) {
-      const sampleMovements: MovementRecord[] = [
-        {
-          id: '1',
-          workId: '1',
-          workName: 'La Dama de Azul',
-          date: '2024-01-20',
-          type: 'salida',
-          reason: 'Exposición temporal en Museo Nacional',
-          notes: 'Préstamo por 3 meses',
-          workDetails: {
-            author: 'Carmen Vásquez',
-            title: 'La Dama de Azul',
-            technique: 'Óleo sobre lienzo',
-            dimensions: '80 x 60 cm',
-            collection: 'Colección Permanente'
-          },
-          conservationState: 'Excelente estado, sin daños visibles',
-          receiver: {
-            name: 'Dr. Carlos Mendoza',
-            idCard: '12.345.678',
-            phone: '+58 212-555-0123'
-          },
-          deliverer: {
-            name: 'María González',
-            idCard: '87.654.321',
-            phone: '+58 212-555-0456'
-          }
+        } catch (error) {
+            console.error('Error en getAllMovements:', error);
+            return [];
         }
-      ];
-      
-      this.saveMovements(sampleMovements);
     }
-  }
+
+    static async getMovementsByWorkId(workId: number, token: string): Promise<MovementRecord[]> {
+        try {
+            const response = await fetch(`${API_URL}/obra/${workId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error al obtener los movimientos.');
+            
+            const rawData: any[] = await response.json();
+            return this.mapData(rawData);
+
+        } catch (error) {
+            console.error('Error en getMovementsByWorkId:', error);
+            return [];
+        }
+    }
+
+    // --- ¡NUEVA FUNCIÓN HELPER! ---
+    // Centralizamos la lógica de mapeo para no repetir código.
+    private static mapData(rawData: any[]): MovementRecord[] {
+        return rawData.map(item => ({
+            id: String(item.his_mov_id || `${item.his_mov_fecha}-${item.his_mov_obr_id_fk}`),
+            workId: String(item.his_mov_obr_id_fk),
+            workName: item.obra_titulo,
+            date: new Date(item.his_mov_fecha).toLocaleDateString('es-VE'),
+            type: item.his_tip_movimiento,
+            reason: item.his_mov_motiv,
+            notes: item.his_mov_notas,
+            workDetails: {
+                author: item.autor_nombre || 'No disponible',
+                title: item.obra_titulo,
+                technique: 'No disponible',
+                dimensions: 'No disponible',
+                collection: 'No disponible',
+            },
+            conservationState: 'No disponible',
+            receiver: { name: item.recibe_nombre || 'N/A', idCard: 'N/A', phone: 'N/A' },
+            deliverer: { name: item.envia_nombre || 'N/A', idCard: 'N/A', phone: 'N/A' },
+        }));
+    }
+
+    static async addMovement(movementData: NewMovementData, token: string): Promise<any> {
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(movementData)
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'No se pudo registrar el movimiento.');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error en addMovement:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Actualiza un registro de movimiento existente.
+     * @param movementId - El ID del movimiento a actualizar.
+     * @param movementData - Los datos actualizados del movimiento.
+     * @param token - El token de autenticación.
+     * @returns Una promesa que se resuelve con los datos del movimiento actualizado.
+     */
+    static async updateMovement(movementId: number, movementData: UpdateMovementData, token: string): Promise<any> {
+        try {
+            const response = await fetch(`${API_URL}/${movementId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(movementData)
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al actualizar el movimiento.');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error en updateMovement:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Elimina un registro de movimiento.
+     * @param movementId - El ID del movimiento a eliminar.
+     * @param token - El token de autenticación.
+     * @returns Una promesa que se resuelve a `true` si la eliminación fue exitosa.
+     */
+    static async deleteMovement(movementId: number, token: string): Promise<boolean> {
+        try {
+            const response = await fetch(`${API_URL}/${movementId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error al eliminar el movimiento.');
+            return true;
+        } catch (error) {
+            console.error('Error en deleteMovement:', error);
+            return false;
+        }
+    }
 }

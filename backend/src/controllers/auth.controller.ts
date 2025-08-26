@@ -6,20 +6,16 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../db/pool';
 import { env } from '../config/env';
 
-// Verificamos que JWT_SECRET esté definido
 if (!env.JWT_SECRET) {
     throw new Error('JWT_SECRET no está definido en las variables de entorno.');
 }
 
-// Define la interfaz para el payload del JWT
 interface UserPayload {
     id: number;
     username: string;
     roleId: number;
 }
 
-// Extiende la interfaz de Request de Express para agregar la propiedad 'user'.
-// Esto resuelve los errores de tipado en los middlewares.
 declare global {
     namespace Express {
         interface Request {
@@ -28,10 +24,8 @@ declare global {
     }
 }
 
-/**
- * Maneja el inicio de sesión de un usuario.
- */
 export const login = async (req: Request, res: Response) => {
+    // ... (Tu función de login no necesita cambios)
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -58,7 +52,6 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Credenciales incorrectas.' });
         }
 
-        // NUEVO: Consulta para obtener todos los privilegios del rol
         const privilegesResult = await pool.query(
             `SELECT p.priv_nombre
              FROM Rol_Privilegio rp
@@ -67,7 +60,6 @@ export const login = async (req: Request, res: Response) => {
             [user.rol_id]
         );
 
-        // Mapeamos los resultados a un array de strings
         const privileges = privilegesResult.rows.map(row => row.priv_nombre);
 
         const payload: UserPayload = {
@@ -86,7 +78,6 @@ export const login = async (req: Request, res: Response) => {
                 username: user.usu_nombre_usuario,
                 name: user.usu_nombre_completo,
                 role: user.rol_nombre,
-                // AÑADIMOS la lista de privilegios al objeto de usuario
                 privileges: privileges
             }
         });
@@ -98,35 +89,44 @@ export const login = async (req: Request, res: Response) => {
 };
 
 /**
- * Middleware para proteger rutas.
+ * Middleware para proteger rutas (VERSIÓN CON DEPURACIÓN AVANZADA).
  */
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    // Aquí se ve si el token llega
-    console.log('Token recibido:', token ? 'Sí' : 'No');
 
-    if (token == null) {
-        return res.status(401).json({ message: 'Token no proporcionado.' });
+    // --- NUEVOS LOGS DE DEPURACIÓN ---
+    console.log('--- [INICIO DEPURACIÓN authenticateToken] ---');
+    console.log(`Ruta solicitada: ${req.method} ${req.originalUrl}`);
+    console.log(`Header [authorization] completo recibido: ${authHeader}`);
+    // --- FIN DEPURACIÓN ---
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('Resultado de la depuración: Header no encontrado o no comienza con "Bearer ".');
+        return res.status(401).json({ message: 'Formato de token inválido o token no proporcionado.' });
     }
 
-    // Usamos una aserción de no-nulo para JWT_SECRET
+    const token = authHeader.split(' ')[1];
+
+    if (!token || token === 'null' || token === 'undefined') {
+        console.log(`Resultado de la depuración: El token extraído es inválido (valor: ${token}).`);
+        return res.status(401).json({ message: 'Token inválido.' });
+    }
+    
+    console.log('Verificando la siguiente cadena de token:', token);
+
     jwt.verify(token, env.JWT_SECRET!, (err: any, user: any) => {
         if (err) {
-            // Aquí se ve si el token es válido
-            console.log('Error de token:', err.message);
+            console.log('Error de verificación de JWT:', err.message);
             return res.status(403).json({ message: 'Token inválido o expirado.' });
         }
         req.user = user as UserPayload;
+        console.log('--- Token verificado exitosamente ---');
         next();
     });
 };
 
-/**
- * Middleware para verificar si el usuario tiene un privilegio específico.
- */
 export const authorize = (privilegeName: string) => {
+    // ... (Tu función de authorize no necesita cambios)
     return async (req: Request, res: Response, next: NextFunction) => {
         const user = req.user;
         if (!user) {
@@ -134,7 +134,6 @@ export const authorize = (privilegeName: string) => {
         }
 
         try {
-            // Añade este log para ver qué valores se están usando
             console.log(`Verificando privilegio: '${privilegeName}' para el usuario con roleId: '${user.roleId}'`);
 
             const result = await pool.query(
@@ -147,7 +146,6 @@ export const authorize = (privilegeName: string) => {
 
             const hasPrivilege = parseInt(result.rows[0].count, 10) > 0;
             
-            // Añade este log para ver el resultado de la consulta
             console.log(`Resultado de la consulta de privilegios: ${result.rows[0].count}`);
 
             if (hasPrivilege) {
