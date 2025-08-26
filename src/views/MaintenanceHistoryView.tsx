@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import { MaintenanceRecord, Work, User } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
+// Importación de componentes de paginación para manejo responsive
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 
 // Define las propiedades que recibe la vista de historial de mantenimiento
 interface MaintenanceHistoryViewProps {
@@ -92,6 +95,26 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
     return matchesSearch && matchesWorkType && matchesCategory && matchesDate;
   });
 
+  // Implementación del hook de paginación personalizado para registros de mantenimiento
+  // Configurado para mostrar 4 registros por página optimizado para contenido detallado
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems: paginatedRecords,
+    startIndex,
+    endIndex,
+    hasNextPage,
+    hasPrevPage,
+    goToPage,
+    nextPage,
+    prevPage,
+    goToFirstPage,
+    goToLastPage,
+    setItemsPerPage
+  } = usePagination(filteredRecords, {
+    itemsPerPage: 4, // Número de registros por página optimizado para información detallada
+    initialPage: 1
+  });
   // Maneja la selección de una obra y autocompleta los campos relacionados
   const handleWorkSelection = (workId: string) => {
     const selectedWork = works.find(work => work.inventoryNumber === workId);
@@ -220,30 +243,30 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
 
   // Renderizado de la vista de historial de mantenimiento
   return (
-    <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       {/* Encabezado con título y botones de acción */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-2 sm:mb-3">
             Historial de Mantenimiento
           </h1>
-          <p className="text-[#192d71] text-lg">Gestione el mantenimiento y conservación de las obras</p>
+          <p className="text-[#192d71] text-sm sm:text-base lg:text-lg">Gestione el mantenimiento y conservación de las obras</p>
         </div>
         
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
           {/* Botón para mostrar/ocultar filtros */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
+            className={`flex items-center justify-center sm:justify-start space-x-2 px-4 py-2 sm:py-2 border rounded-lg transition-colors text-sm sm:text-base ${
               showFilters 
                 ? 'bg-[#192d71]/10 border-[#192d71]/30 text-[#192d71] font-semibold' 
                 : 'bg-white border-[#192d71]/30 text-[#192d71] hover:bg-[#192d71]/5 font-medium'
             }`}
             title="Consultar historial con filtros"
           >
-            <Filter className="h-5 w-5" />
+            <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>Filtros</span>
-            <ChevronDown className={`h-5 w-5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 sm:h-5 sm:w-5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
           
           {/* Botón para agregar nuevo registro */}
@@ -253,10 +276,10 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
               setEditingRecord(null);
               setShowForm(true);
             }}
-            className="flex items-center space-x-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+            className="flex items-center justify-center sm:justify-start space-x-2 sm:space-x-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-sm sm:text-base"
             title="Agregar nuevo historial"
           >
-            <Plus className="h-6 w-6" />
+            <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
             <span>Nuevo Mantenimiento</span>
           </button>
         </div>
@@ -264,25 +287,25 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
 
       {/* Panel de filtros (mostrado condicionalmente) */}
       {showFilters && (
-        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-[#192d71]">Filtros de Consulta</h2>
+        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-[#192d71]">Filtros de Consulta</h2>
             <button
               onClick={clearFilters}
-              className="text-[#192d71] hover:text-[#1e3a8a] text-sm font-semibold"
+              className="text-[#192d71] hover:text-[#1e3a8a] text-sm sm:text-base font-semibold"
             >
               Limpiar filtros
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Filtro por tipo de obra */}
             <div>
-              <label className="block text-sm font-bold text-[#192d71] mb-3">Tipo de Obra</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Tipo de Obra</label>
               <select
                 value={workTypeFilter}
                 onChange={(e) => setWorkTypeFilter(e.target.value as any)}
-                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
               >
                 <option value="all">Todos los tipos</option>
                 {workTypes.map(type => (
@@ -293,11 +316,11 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
 
             {/* Filtro por categoría de mantenimiento */}
             <div>
-              <label className="block text-sm font-bold text-[#192d71] mb-3">Categoría</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Categoría</label>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as any)}
-                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
               >
                 <option value="all">Todas las categorías</option>
                 <option value="Conservación preventiva">Conservación preventiva</option>
@@ -307,12 +330,12 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
 
             {/* Filtro por fecha */}
             <div>
-              <label className="block text-sm font-bold text-[#192d71] mb-3">Fecha</label>
+              <label className="block text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Fecha</label>
               <input
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71]"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
               />
             </div>
           </div>
@@ -321,16 +344,16 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
 
       {/* Formulario para crear/editar registro (mostrado condicionalmente) */}
       {showForm && (
-        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-8">
-          <h2 className="text-2xl font-bold text-[#192d71] mb-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-4 sm:p-6 lg:p-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#192d71] mb-4 sm:mb-6">
             {editingRecord ? 'Modificar Registro de Mantenimiento' : 'Nuevo Registro de Mantenimiento'}
           </h2>
           
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Sección: Tipo de Obra */}
-            <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
-              <h3 className="text-lg font-bold text-[#192d71] mb-4 flex items-center">
-                <Palette className="h-5 w-5 mr-2" />
+            <div className="bg-[#192d71]/5 rounded-xl p-4 sm:p-6 border border-[#192d71]/20">
+              <h3 className="text-base sm:text-lg font-bold text-[#192d71] mb-3 sm:mb-4 flex items-center">
+                <Palette className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Tipo de Obra
               </h3>
               <select
@@ -349,7 +372,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
                     year: ''
                   }));
                 }}
-                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
+                className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
                 required
               >
                 {workTypes.map(type => (
@@ -359,15 +382,15 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
             </div>
 
             {/* Sección: Selección de Pieza */}
-            <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
-              <h3 className="text-lg font-bold text-[#192d71] mb-4 flex items-center">
-                <Hammer className="h-5 w-5 mr-2" />
+            <div className="bg-[#192d71]/5 rounded-xl p-4 sm:p-6 border border-[#192d71]/20">
+              <h3 className="text-base sm:text-lg font-bold text-[#192d71] mb-3 sm:mb-4 flex items-center">
+                <Hammer className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Selección de Pieza
               </h3>
               <select
                 value={formData.workId}
                 onChange={(e) => handleWorkSelection(e.target.value)}
-                className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
+                className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
                 required
               >
                 <option value="">Seleccionar obra...</option>
@@ -381,53 +404,53 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
 
             {/* Sección: Información Autocompletada de la Obra (mostrada condicionalmente) */}
             {formData.workId && (
-              <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
-                <h3 className="text-lg font-bold text-[#192d71] mb-4">Información de la Obra</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#192d71]/5 rounded-xl p-4 sm:p-6 border border-[#192d71]/20">
+                <h3 className="text-base sm:text-lg font-bold text-[#192d71] mb-3 sm:mb-4">Información de la Obra</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Campos autocompletados (solo lectura) */}
                   <div>
-                    <label className="block text-sm font-bold text-[#192d71] mb-2">Autor</label>
+                    <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2">Autor</label>
                     <input
                       type="text"
                       value={formData.author}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71] text-sm sm:text-base"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#192d71] mb-2">Nombre</label>
+                    <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2">Nombre</label>
                     <input
                       type="text"
                       value={formData.workName}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71] text-sm sm:text-base"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#192d71] mb-2">Medidas</label>
+                    <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2">Medidas</label>
                     <input
                       type="text"
                       value={formData.dimensions}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71] text-sm sm:text-base"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#192d71] mb-2">Técnica</label>
+                    <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2">Técnica</label>
                     <input
                       type="text"
                       value={formData.technique}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71] text-sm sm:text-base"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#192d71] mb-2">Año</label>
+                    <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2">Año</label>
                     <input
                       type="text"
                       value={formData.year}
                       readOnly
-                      className="w-full px-4 py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71]"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#192d71]/20 rounded-xl bg-gray-100 text-[#192d71] text-sm sm:text-base"
                     />
                   </div>
                 </div>
@@ -435,23 +458,23 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
             )}
 
             {/* Sección: Información del Mantenimiento */}
-            <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
-              <h3 className="text-lg font-bold text-[#192d71] mb-4 flex items-center">
-                <Wrench className="h-5 w-5 mr-2" />
+            <div className="bg-[#192d71]/5 rounded-xl p-4 sm:p-6 border border-[#192d71]/20">
+              <h3 className="text-base sm:text-lg font-bold text-[#192d71] mb-3 sm:mb-4 flex items-center">
+                <Wrench className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Información del Mantenimiento
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {/* Campo precio actual */}
                 <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-3 flex items-center">
-                    <DollarSign className="h-4 w-4 mr-1" />
+                  <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2 sm:mb-3 flex items-center">
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     Precio Actual (Bs.) *
                   </label>
                   <input
                     type="text"
                     value={formData.currentPrice}
                     onChange={(e) => setFormData(prev => ({ ...prev, currentPrice: e.target.value }))}
-                    className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
+                    className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
                     placeholder="Ej: Bs. 50.000,00"
                     required
                   />
@@ -459,11 +482,11 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
 
                 {/* Selector categoría de mantenimiento */}
                 <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-3">Categoría de Mantenimiento *</label>
+                  <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Categoría de Mantenimiento *</label>
                   <select
                     value={formData.maintenanceCategory}
                     onChange={(e) => setFormData(prev => ({ ...prev, maintenanceCategory: e.target.value as MaintenanceRecord['maintenanceCategory'] }))}
-                    className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
+                    className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
                     required
                   >
                     <option value="Conservación preventiva">Conservación preventiva</option>
@@ -472,32 +495,32 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
                 </div>
 
                 {/* Campo fecha */}
-                <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-3 flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
+                <div className="sm:col-span-2">
+                  <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2 sm:mb-3 flex items-center">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     Fecha del Mantenimiento *
                   </label>
                   <input
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71]"
+                    className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
                     required
                   />
                 </div>
               </div>
 
               {/* Campo descripción de la intervención */}
-              <div className="mt-6">
-                <label className="block text-sm font-bold text-[#192d71] mb-3 flex items-center">
-                  <FileText className="h-4 w-4 mr-1" />
+              <div className="mt-4 sm:mt-6">
+                <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2 sm:mb-3 flex items-center">
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                   Descripción de la Intervención *
                 </label>
                 <textarea
                   value={formData.interventionDescription}
                   onChange={(e) => setFormData(prev => ({ ...prev, interventionDescription: e.target.value }))}
-                  rows={6}
-                  className="w-full px-5 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] resize-none"
+                  rows={4}
+                  className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] resize-none text-sm sm:text-base"
                   placeholder="Describa detalladamente la intervención realizada, materiales utilizados, técnicas aplicadas, resultados obtenidos..."
                   required
                 />
@@ -505,7 +528,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
             </div>
 
             {/* Botones de acción del formulario */}
-            <div className="flex justify-end space-x-4">
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
               <button
                 type="button"
                 onClick={() => {
@@ -513,13 +536,13 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
                   setEditingRecord(null);
                   resetForm();
                 }}
-                className="px-6 py-3 text-[#192d71] bg-[#192d71]/10 hover:bg-[#192d71]/20 rounded-xl transition-all duration-200 font-semibold"
+                className="px-4 sm:px-6 py-2 sm:py-3 text-[#192d71] bg-[#192d71]/10 hover:bg-[#192d71]/20 rounded-xl transition-all duration-200 font-semibold text-sm sm:text-base"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-sm sm:text-base"
               >
                 {editingRecord ? 'Actualizar Registro' : 'Guardar Registro'}
               </button>
@@ -531,42 +554,42 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
       {/* Modal de consulta detallada (mostrado condicionalmente) */}
       {viewingRecord && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-[#192d71]">Detalles del Mantenimiento</h2>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto mx-4">
+            <div className="p-4 sm:p-6 lg:p-8">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#192d71]">Detalles del Mantenimiento</h2>
                 <button
                   onClick={() => setViewingRecord(null)}
-                  className="text-[#192d71] hover:text-[#1e3a8a] text-2xl font-bold"
+                  className="text-[#192d71] hover:text-[#1e3a8a] text-xl sm:text-2xl font-bold"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Información de la obra */}
-                <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
-                  <h3 className="text-lg font-bold text-[#192d71] mb-4">Información de la Obra</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><strong className="text-[#192d71]">Tipo:</strong> {viewingRecord.workType}</div>
-                    <div><strong className="text-[#192d71]">Nombre:</strong> {viewingRecord.workName}</div>
-                    <div><strong className="text-[#192d71]">Autor:</strong> {viewingRecord.author}</div>
-                    <div><strong className="text-[#192d71]">Técnica:</strong> {viewingRecord.technique}</div>
-                    <div><strong className="text-[#192d71]">Medidas:</strong> {viewingRecord.dimensions}</div>
-                    <div><strong className="text-[#192d71]">Año:</strong> {viewingRecord.year}</div>
+                <div className="bg-[#192d71]/5 rounded-xl p-4 sm:p-6 border border-[#192d71]/20">
+                  <h3 className="text-base sm:text-lg font-bold text-[#192d71] mb-3 sm:mb-4">Información de la Obra</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base">
+                    <div><strong className="text-[#192d71]">Tipo:</strong> <span className="ml-1">{viewingRecord.workType}</span></div>
+                    <div><strong className="text-[#192d71]">Nombre:</strong> <span className="ml-1">{viewingRecord.workName}</span></div>
+                    <div><strong className="text-[#192d71]">Autor:</strong> <span className="ml-1">{viewingRecord.author}</span></div>
+                    <div><strong className="text-[#192d71]">Técnica:</strong> <span className="ml-1">{viewingRecord.technique}</span></div>
+                    <div><strong className="text-[#192d71]">Medidas:</strong> <span className="ml-1">{viewingRecord.dimensions}</span></div>
+                    <div><strong className="text-[#192d71]">Año:</strong> <span className="ml-1">{viewingRecord.year}</span></div>
                   </div>
                 </div>
 
                 {/* Información del mantenimiento */}
-                <div className="bg-[#192d71]/5 rounded-xl p-6 border border-[#192d71]/20">
-                  <h3 className="text-lg font-bold text-[#192d71] mb-4">Detalles del Mantenimiento</h3>
-                  <div className="space-y-3">
-                    <div><strong className="text-[#192d71]">Fecha:</strong> {new Date(viewingRecord.date).toLocaleDateString('es-ES')}</div>
-                    <div><strong className="text-[#192d71]">Precio Actual:</strong> {viewingRecord.currentPrice}</div>
-                    <div><strong className="text-[#192d71]">Categoría:</strong> {viewingRecord.maintenanceCategory}</div>
+                <div className="bg-[#192d71]/5 rounded-xl p-4 sm:p-6 border border-[#192d71]/20">
+                  <h3 className="text-base sm:text-lg font-bold text-[#192d71] mb-3 sm:mb-4">Detalles del Mantenimiento</h3>
+                  <div className="space-y-3 text-sm sm:text-base">
+                    <div><strong className="text-[#192d71]">Fecha:</strong> <span className="ml-1">{new Date(viewingRecord.date).toLocaleDateString('es-ES')}</span></div>
+                    <div><strong className="text-[#192d71]">Precio Actual:</strong> <span className="ml-1">{viewingRecord.currentPrice}</span></div>
+                    <div><strong className="text-[#192d71]">Categoría:</strong> <span className="ml-1">{viewingRecord.maintenanceCategory}</span></div>
                     <div>
                       <strong className="text-[#192d71]">Descripción de la Intervención:</strong>
-                      <div className="mt-2 p-4 bg-white rounded-lg border border-[#192d71]/20 whitespace-pre-wrap">
+                      <div className="mt-2 p-3 sm:p-4 bg-white rounded-lg border border-[#192d71]/20 whitespace-pre-wrap text-sm sm:text-base">
                         {viewingRecord.interventionDescription}
                       </div>
                     </div>
@@ -575,22 +598,22 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
               </div>
 
               {/* Botones de acción del modal */}
-              <div className="flex justify-end space-x-4 mt-8">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 mt-6 sm:mt-8">
                 <button
                   onClick={() => {
                     setViewingRecord(null);
                     handleEdit(viewingRecord);
                   }}
-                  className="flex items-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all duration-200 font-semibold"
+                  className="flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all duration-200 font-semibold text-sm sm:text-base"
                 >
-                  <Edit className="h-5 w-5" />
+                  <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>Editar</span>
                 </button>
                 <button
                   onClick={() => generatePDF(viewingRecord)}
-                  className="flex items-center space-x-2 px-6 py-3 bg-[#192d71] hover:bg-[#1e3a8a] text-white rounded-xl transition-all duration-200 font-semibold"
+                  className="flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-[#192d71] hover:bg-[#1e3a8a] text-white rounded-xl transition-all duration-200 font-semibold text-sm sm:text-base"
                 >
-                  <FileDown className="h-5 w-5" />
+                  <FileDown className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>Descargar PDF</span>
                 </button>
               </div>
@@ -602,49 +625,59 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
       {/* Tabla principal de registros */}
       <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
         {/* Barra de búsqueda */}
-        <div className="p-8 border-b border-[#192d71]/20">
+        <div className="p-4 sm:p-6 lg:p-8 border-b border-[#192d71]/20">
           <div className="relative">
-            <Search className="absolute left-4 top-4 h-6 w-6 text-[#192d71]" />
+            <Search className="absolute left-3 sm:left-4 top-3 sm:top-4 h-5 w-5 sm:h-6 sm:w-6 text-[#192d71]" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por obra, autor o descripción..."
-              className="w-full pl-14 pr-6 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60 text-lg"
+              className="w-full pl-10 sm:pl-14 pr-4 sm:pr-6 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60 text-sm sm:text-base lg:text-lg"
             />
           </div>
         </div>
 
         {/* Tabla de registros */}
+        {/* Tabla responsive de registros de mantenimiento */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-[#192d71]/10 to-[#192d71]/5">
               <tr>
-                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Obra</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Tipo</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Categoría</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Fecha</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Precio</th>
-                <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Acciones</th>
+                <th className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 text-left text-xs sm:text-sm font-bold text-[#192d71] uppercase tracking-wider">Obra</th>
+                <th className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 text-left text-xs sm:text-sm font-bold text-[#192d71] uppercase tracking-wider hidden sm:table-cell">Tipo</th>
+                <th className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 text-left text-xs sm:text-sm font-bold text-[#192d71] uppercase tracking-wider hidden md:table-cell">Categoría</th>
+                <th className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 text-left text-xs sm:text-sm font-bold text-[#192d71] uppercase tracking-wider hidden lg:table-cell">Fecha</th>
+                <th className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 text-left text-xs sm:text-sm font-bold text-[#192d71] uppercase tracking-wider hidden lg:table-cell">Precio</th>
+                <th className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 text-left text-xs sm:text-sm font-bold text-[#192d71] uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#192d71]/10">
-              {/* Mapea cada registro filtrado */}
-              {filteredRecords.map((record) => (
+              {/* Renderizado de registros paginados con diseño responsive */}
+              {paginatedRecords.map((record) => (
                 <tr key={record.id} className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200">
-                  <td className="px-8 py-6">
+                  <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
                     <div>
-                      <p className="font-bold text-[#192d71] text-lg">{record.workName}</p>
-                      <p className="text-sm text-[#192d71]/70 font-medium">{record.author}</p>
+                      <p className="font-bold text-[#192d71] text-sm sm:text-base lg:text-lg">{record.workName}</p>
+                      <p className="text-xs sm:text-sm text-[#192d71]/70 font-medium">{record.author}</p>
                       <p className="text-xs text-[#192d71]/60 mt-1">{record.technique}</p>
+                      {/* Información adicional visible solo en móviles */}
+                      <div className="sm:hidden mt-2 space-y-1">
+                        <span className="inline-block px-2 py-1 bg-[#192d71]/10 text-[#192d71] rounded-full text-xs font-semibold">
+                          {record.workType}
+                        </span>
+                        <p className="text-xs text-[#192d71]/60">
+                          {new Date(record.date).toLocaleDateString('es-ES')} - {record.currentPrice}
+                        </p>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 hidden sm:table-cell">
                     <span className="px-3 py-1 bg-[#192d71]/10 text-[#192d71] rounded-full text-sm font-semibold">
                       {record.workType}
                     </span>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 hidden md:table-cell">
                     <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
                       record.maintenanceCategory === 'Conservación preventiva' 
                         ? 'bg-green-100 text-green-800' 
@@ -653,45 +686,46 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
                       {record.maintenanceCategory}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-[#192d71]/80 font-medium">
+                  <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 text-[#192d71]/80 font-medium hidden lg:table-cell">
                     {new Date(record.date).toLocaleDateString('es-ES')}
                   </td>
-                  <td className="px-8 py-6 text-[#192d71] font-semibold">
+                  <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 text-[#192d71] font-semibold hidden lg:table-cell">
                     {record.currentPrice}
                   </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center space-x-3">
+                  <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+                    {/* Botones de acción responsive */}
+                    <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
                       {/* Botón consultar */}
                       <button
                         onClick={() => setViewingRecord(record)}
-                        className="p-3 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200 hover:scale-110"
+                        className="p-2 sm:p-3 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200 hover:scale-110"
                         title="Consultar detalles"
                       >
-                        <Eye className="h-5 w-5" />
+                        <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                       {/* Botón editar */}
                       <button
                         onClick={() => handleEdit(record)}
-                        className="p-3 text-green-700 hover:bg-green-100 rounded-xl transition-all duration-200 hover:scale-110"
+                        className="p-2 sm:p-3 text-green-700 hover:bg-green-100 rounded-xl transition-all duration-200 hover:scale-110"
                         title="Modificar registro"
                       >
-                        <Edit className="h-5 w-5" />
+                        <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                       {/* Botón eliminar */}
                       <button
                         onClick={() => handleDelete(record.id)}
-                        className="p-3 text-red-700 hover:bg-red-100 rounded-xl transition-all duration-200 hover:scale-110"
+                        className="p-2 sm:p-3 text-red-700 hover:bg-red-100 rounded-xl transition-all duration-200 hover:scale-110"
                         title="Eliminar registro"
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                       {/* Botón descargar PDF */}
                       <button
                         onClick={() => generatePDF(record)}
-                        className="p-3 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200 hover:scale-110"
+                        className="p-2 sm:p-3 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200 hover:scale-110"
                         title="Descargar PDF"
                       >
-                        <FileDown className="h-5 w-5" />
+                        <FileDown className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                     </div>
                   </td>
@@ -702,12 +736,25 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
         </div>
 
         {/* Mensaje cuando no hay registros */}
+        {/* Mensaje condicional cuando no hay registros que mostrar */}
         {filteredRecords.length === 0 && (
-          <div className="p-12 text-center text-[#192d71]/60 font-medium text-lg">
+          <div className="p-6 sm:p-8 lg:p-12 text-center text-[#192d71]/60 font-medium text-sm sm:text-base lg:text-lg">
             {searchTerm || workTypeFilter !== 'all' || categoryFilter !== 'all' || dateFilter 
               ? 'No se encontraron registros que coincidan con los filtros' 
               : 'No hay registros de mantenimiento'}
           </div>
+        )}
+
+        {/* Componente de paginación responsive para registros de mantenimiento */}
+        {filteredRecords.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredRecords.length}
+            itemsPerPage={6}
+            onPageChange={goToPage}
+            className="border-t border-[#192d71]/20"
+          />
         )}
       </div>
     </div>

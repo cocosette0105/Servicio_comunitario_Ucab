@@ -1,11 +1,14 @@
 // VISTA DE REPORTES
 // Vista de presentación para la generación y visualización de reportes de obras
-// Permite filtrar, exportar y mostrar estadísticas de la colección
+// Permite filtrar, exportar y mostrar estadísticas de la colección con paginación responsive
 
 import React, { useState, useMemo } from 'react';
 import { FileText, Download, Filter, Calendar, User, MapPin, ChevronDown } from 'lucide-react';
 import { Work, ReportFilters } from '../models';
 import { ReportUtils } from '../utils/reportUtils';
+// Importación de componentes de paginación para manejo responsive
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 
 // Define las propiedades que recibe la vista de reportes
 interface ReportsViewProps {
@@ -15,6 +18,7 @@ interface ReportsViewProps {
 // Componente de vista para la generación de reportes
 const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
   // Estados locales para controlar filtros y interfaz
+  // Estados para controlar filtros y visibilidad del panel
   const [filters, setFilters] = useState<ReportFilters>({}); // Filtros aplicados
   const [showFilters, setShowFilters] = useState(false); // Visibilidad del panel de filtros
 
@@ -23,6 +27,27 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
     return ReportUtils.filterWorksForReport(works, filters);
   }, [works, filters]);
 
+  // Implementación del hook de paginación personalizado para reportes
+  // Configurado para mostrar 8 obras por página optimizado para diseño responsive
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems: paginatedWorks,
+    startIndex,
+    endIndex,
+    hasNextPage,
+    hasPrevPage,
+    goToPage,
+    nextPage,
+    prevPage,
+    goToFirstPage,
+    goToLastPage,
+    setItemsPerPage
+  } = usePagination(filteredWorks, {
+    itemsPerPage: 8, // Número de obras por página optimizado para diseño responsive
+    initialPage: 1
+  });
+
   // Maneja los cambios en los filtros
   const handleFilterChange = (field: keyof ReportFilters) => (
     e: React.ChangeEvent<HTMLInputElement>
@@ -30,6 +55,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
     setFilters(prev => ({ ...prev, [field]: e.target.value }));
   };
 
+  // Función para limpiar todos los filtros aplicados
   // Limpia todos los filtros aplicados
   const clearFilters = () => {
     setFilters({});
@@ -44,15 +70,18 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
     ReportUtils.exportToCSV(filteredWorks);
   };
 
+  // Calcula estadísticas dinámicas de las obras filtradas
   // Calcula estadísticas de las obras filtradas
   const stats = ReportUtils.calculateStats(filteredWorks);
 
+  // Renderizado principal del componente con diseño responsive
   // Renderizado de la vista de reportes
   return (
     <div className="p-8 space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       {/* Encabezado con título y botones de acción */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
+          {/* Título principal con gradiente y descripción */}
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-3">
             Reportes de Obras
           </h1>
@@ -60,6 +89,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
         </div>
         <div className="flex items-center space-x-3">
           {/* Botón para mostrar/ocultar filtros */}
+          {/* Botón de filtros con indicador visual de estado activo */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
@@ -73,6 +103,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
             <ChevronDown className={`h-5 w-5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
           {/* Botón exportar CSV */}
+          {/* Botón para exportar datos en formato CSV */}
           <button
             onClick={exportToCSV}
             className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
@@ -81,6 +112,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
             <span>Exportar CSV</span>
           </button>
           {/* Botón exportar PDF */}
+          {/* Botón para exportar reporte en formato PDF */}
           <button
             onClick={exportToPDF}
             className="flex items-center space-x-2 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
@@ -92,6 +124,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
       </div>
 
       {/* Panel de filtros (mostrado condicionalmente) */}
+      {/* Panel expandible de filtros con múltiples criterios */}
       {showFilters && (
         <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20 p-8">
           <div className="flex items-center justify-between mb-6">
@@ -106,6 +139,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
           {/* Grid de campos de filtro */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Filtro por artista */}
+            {/* Campo de búsqueda por nombre del artista */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Artista</label>
               <input
@@ -117,6 +151,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
               />
             </div>
             {/* Filtro por ubicación */}
+            {/* Campo de búsqueda por ubicación física */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Ubicación Física</label>
               <input
@@ -128,6 +163,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
               />
             </div>
             {/* Filtro por fecha de realización desde */}
+            {/* Campo de fecha para filtrar desde una fecha específica */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Realización (Desde)</label>
               <input
@@ -138,6 +174,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
               />
             </div>
             {/* Filtro por fecha de realización hasta */}
+            {/* Campo de fecha para filtrar hasta una fecha específica */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Realización (Hasta)</label>
               <input
@@ -148,6 +185,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
               />
             </div>
             {/* Filtro por fecha de ingreso desde */}
+            {/* Campo de fecha para filtrar ingresos desde una fecha */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Ingreso (Desde)</label>
               <input
@@ -158,6 +196,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
               />
             </div>
             {/* Filtro por fecha de ingreso hasta */}
+            {/* Campo de fecha para filtrar ingresos hasta una fecha */}
             <div>
               <label className="block text-sm font-bold text-[#192d71] mb-3">Ingreso (Hasta)</label>
               <input
@@ -173,6 +212,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
 
       {/* Grid de tarjetas de estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Tarjetas de estadísticas con iconos y colores distintivos */}
         {/* Tarjeta: Obras filtradas */}
         <div className="bg-white rounded-2xl shadow-lg p-8 border border-[#192d71]/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
@@ -225,6 +265,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
 
       {/* Tabla de resultados del reporte */}
       <div className="bg-white rounded-2xl shadow-lg border border-[#192d71]/20">
+        {/* Encabezado de la tabla con información de resultados */}
         <div className="p-8 border-b border-[#192d71]/20">
           <h2 className="text-2xl font-bold text-[#192d71]">Resultados del Reporte</h2>
           <p className="text-[#192d71]/80 font-medium">Mostrando {filteredWorks.length} obras de {works.length} total</p>
@@ -232,6 +273,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-[#192d71]/10 to-[#192d71]/5">
+              {/* Encabezados de columnas con estilos consistentes */}
               <tr>
                 <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">ID</th>
                 <th className="px-8 py-5 text-left text-sm font-bold text-[#192d71] uppercase tracking-wider">Obra</th>
@@ -243,7 +285,8 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
             </thead>
             <tbody className="divide-y divide-[#192d71]/10">
               {/* Mapea cada obra filtrada */}
-              {filteredWorks.map((work) => (
+              {/* Renderizado de obras paginadas con información detallada */}
+              {paginatedWorks.map((work) => (
                 <tr key={work.id} className="hover:bg-gradient-to-r hover:from-[#192d71]/5 hover:to-white transition-all duration-200">
                   <td className="px-8 py-6">
                     <span className="font-mono text-sm bg-[#192d71]/10 px-2 py-1 rounded text-[#192d71]">
@@ -252,6 +295,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
                   </td>
                   <td className="px-8 py-6">
                     <div>
+                      {/* Información principal de la obra */}
                       <p className="font-bold text-[#192d71] text-lg">{work.name}</p>
                       <p className="text-sm text-[#192d71]/70 truncate max-w-xs font-medium">{work.description}</p>
                     </div>
@@ -269,11 +313,25 @@ const ReportsView: React.FC<ReportsViewProps> = ({ works }) => {
             </tbody>
           </table>
         </div>
+        
         {/* Mensaje cuando no hay resultados */}
+        {/* Mensaje condicional cuando no hay obras que mostrar */}
         {filteredWorks.length === 0 && (
           <div className="p-12 text-center text-[#192d71]/60 font-medium text-lg">
             No hay obras que coincidan con los filtros aplicados
           </div>
+        )}
+        
+        {/* Componente de paginación responsive para reportes */}
+        {filteredWorks.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredWorks.length}
+            itemsPerPage={8}
+            onPageChange={goToPage}
+            className="border-t border-[#192d71]/20"
+          />
         )}
       </div>
     </div>
