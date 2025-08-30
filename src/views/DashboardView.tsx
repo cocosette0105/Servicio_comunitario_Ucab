@@ -70,11 +70,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         );
 
       case 'maintenance':
-        return <MaintenanceHistoryView 
-          user={user}
-          records={maintenanceRecords} 
-          works={works}
-          onUpdateRecords={onUpdateMaintenanceRecords} 
+       return <MaintenanceHistoryView 
+    user={user}
+    token={token} // ✅ Añadir token aquí
+    records={maintenanceRecords} 
+    works={works}
+    onUpdateRecords={onUpdateMaintenanceRecords} 
         />;
       default:
         return <OverviewView works={works} />;

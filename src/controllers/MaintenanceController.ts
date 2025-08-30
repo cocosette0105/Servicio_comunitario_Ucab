@@ -1,141 +1,67 @@
-// CONTROLADOR DE MANTENIMIENTO
-// Maneja toda la lógica de negocio relacionada con el mantenimiento de obras
+// frontend/src/controllers/MaintenanceController.ts
 
 import { MaintenanceRecord } from '../models';
+import { AuthController } from './AuthController'; // Para obtener el token
+
+const API_URL = 'http://localhost:5000/api/maintenance'; // URL base de la API
+
+// Tipo para los datos que se envían al crear/actualizar
+type MaintenanceApiData = Omit<MaintenanceRecord, 'id' | 'workName' | 'userName'>;
 
 export class MaintenanceController {
-  /**
-   * Obtiene todos los registros de mantenimiento del localStorage
-   * @returns Array de registros de mantenimiento
-   */
-  static getAllMaintenanceRecords(): MaintenanceRecord[] {
-    const savedMaintenance = localStorage.getItem('museum_maintenance');
-    if (savedMaintenance) {
-      return JSON.parse(savedMaintenance);
+
+    private static getAuthHeaders() {
+        const token = AuthController.getToken();
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
     }
-    return [];
-  }
 
-  /**
-   * Guarda los registros de mantenimiento en localStorage
-   * @param records - Array de registros a guardar
-   */
-  static saveMaintenanceRecords(records: MaintenanceRecord[]): void {
-    localStorage.setItem('museum_maintenance', JSON.stringify(records));
-  }
-
-  /**
-   * Busca un registro de mantenimiento por su ID
-   * @param id - ID del registro
-   * @returns Registro encontrado o undefined
-   */
-  static findMaintenanceRecordById(id: string): MaintenanceRecord | undefined {
-    const records = this.getAllMaintenanceRecords();
-    return records.find(record => record.id === id);
-  }
-
-  /**
-   * Agrega un nuevo registro de mantenimiento
-   * @param record - Registro a agregar
-   * @returns true si se agregó exitosamente
-   */
-  static addMaintenanceRecord(record: MaintenanceRecord): boolean {
-    const records = this.getAllMaintenanceRecords();
-    records.push(record);
-    this.saveMaintenanceRecords(records);
-    return true;
-  }
-
-  /**
-   * Actualiza un registro de mantenimiento existente
-   * @param updatedRecord - Registro con los datos actualizados
-   * @returns true si se actualizó exitosamente, false si no se encontró
-   */
-  static updateMaintenanceRecord(updatedRecord: MaintenanceRecord): boolean {
-    const records = this.getAllMaintenanceRecords();
-    const index = records.findIndex(record => record.id === updatedRecord.id);
-    
-    if (index === -1) {
-      return false; // No se encontró el registro
-    }
-    
-    records[index] = updatedRecord;
-    this.saveMaintenanceRecords(records);
-    return true;
-  }
-
-  /**
-   * Elimina un registro de mantenimiento por su ID
-   * @param id - ID del registro a eliminar
-   * @returns true si se eliminó exitosamente, false si no se encontró
-   */
-  static deleteMaintenanceRecord(id: string): boolean {
-    const records = this.getAllMaintenanceRecords();
-    const filteredRecords = records.filter(record => record.id !== id);
-    
-    if (filteredRecords.length === records.length) {
-      return false; // No se encontró el registro
-    }
-    
-    this.saveMaintenanceRecords(filteredRecords);
-    return true;
-  }
-
-  /**
-   * Filtra registros de mantenimiento según criterios
-   * @param records - Array de registros a filtrar
-   * @param searchTerm - Término de búsqueda
-   * @param workTypeFilter - Filtro por tipo de obra
-   * @param categoryFilter - Filtro por categoría de mantenimiento
-   * @param dateFilter - Filtro por fecha
-   * @returns Array de registros filtrados
-   */
-  static filterMaintenanceRecords(
-    records: MaintenanceRecord[],
-    searchTerm: string,
-    workTypeFilter: 'all' | MaintenanceRecord['workType'],
-    categoryFilter: 'all' | MaintenanceRecord['maintenanceCategory'],
-    dateFilter: string
-  ): MaintenanceRecord[] {
-    return records.filter(record => {
-      const matchesSearch = !searchTerm || (
-        record.workName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.interventionDescription.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      
-      const matchesWorkType = workTypeFilter === 'all' || record.workType === workTypeFilter;
-      const matchesCategory = categoryFilter === 'all' || record.maintenanceCategory === categoryFilter;
-      const matchesDate = !dateFilter || record.date.includes(dateFilter);
-      
-      return matchesSearch && matchesWorkType && matchesCategory && matchesDate;
-    });
-  }
-
-  /**
-   * Inicializa datos de ejemplo si no existen registros
-   */
-  static initializeSampleData(): void {
-    const existingRecords = this.getAllMaintenanceRecords();
-    if (existingRecords.length === 0) {
-      const sampleMaintenance: MaintenanceRecord[] = [
-        {
-          id: '1',
-          workId: 'INV-001',
-          workName: 'Retrato de Simón Bolívar',
-          workType: 'Pintura',
-          author: 'Martín Tovar y Tovar',
-          dimensions: '120 x 90 cm',
-          technique: 'Óleo sobre lienzo',
-          year: '1883',
-          currentPrice: 'Bs. 150.000,00',
-          maintenanceCategory: 'Conservación preventiva',
-          interventionDescription: 'Se realizó limpieza superficial con técnicas especializadas y aplicación de barniz protector para preservar los colores originales.',
-          date: '2024-01-25'
+    static async getAllMaintenanceRecords(): Promise<MaintenanceRecord[]> {
+        const response = await fetch(API_URL, {
+            headers: this.getAuthHeaders(),
+        });
+        if (!response.ok) {
+            throw new Error('Error al obtener los registros de mantenimiento');
         }
-      ];
-      
-      this.saveMaintenanceRecords(sampleMaintenance);
+        return response.json();
     }
-  }
+
+    static async addMaintenanceRecord(recordData: MaintenanceApiData): Promise<any> {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: this.getAuthHeaders(),
+            body: JSON.stringify(recordData),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al agregar el registro');
+        }
+        return response.json();
+    }
+
+    static async updateMaintenanceRecord(id: string, recordData: MaintenanceApiData): Promise<any> {
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: 'PUT',
+            headers: this.getAuthHeaders(),
+            body: JSON.stringify(recordData),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al actualizar el registro');
+        }
+        return response.json();
+    }
+
+    static async deleteMaintenanceRecord(id: string): Promise<void> {
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: 'DELETE',
+            headers: this.getAuthHeaders(),
+        });
+        if (!response.ok && response.status !== 204) {
+             const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al eliminar el registro');
+        }
+    }
 }

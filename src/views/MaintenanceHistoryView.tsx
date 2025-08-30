@@ -2,7 +2,7 @@
 // Vista de presentación para la gestión de registros de mantenimiento y conservación
 // Permite crear, consultar, editar y generar reportes de intervenciones realizadas
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { 
@@ -14,14 +14,17 @@ import { PDFUtils } from '../utils/pdfUtils';
 // Importación de componentes de paginación para manejo responsive
 import Pagination from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
+import { MaintenanceController } from '../controllers/MaintenanceController';
 
 // Define las propiedades que recibe la vista de historial de mantenimiento
 interface MaintenanceHistoryViewProps {
-  user: User; // Agrega esta línea
+  user: User;
+  token: string;
   records: MaintenanceRecord[];
   works: Work[];
   onUpdateRecords: (records: MaintenanceRecord[]) => void;
 }
+
 
 // Define la estructura de datos para el formulario de mantenimiento
 interface MaintenanceFormData {
@@ -39,24 +42,23 @@ interface MaintenanceFormData {
 }
 
 // Componente de vista para el historial de mantenimiento
-const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records, works, onUpdateRecords }) => {
-  // Estados locales para controlar la interfaz de usuario
-  const [showForm, setShowForm] = useState(false); // Controla la visibilidad del formulario
-  const [showFilters, setShowFilters] = useState(false); // Controla la visibilidad de filtros
-  const [viewingRecord, setViewingRecord] = useState<MaintenanceRecord | null>(null); // Registro en vista detallada
-  const [editingRecord, setEditingRecord] = useState<MaintenanceRecord | null>(null); // Registro en edición
-  
-  // Estados para filtros de búsqueda
-  const [searchTerm, setSearchTerm] = useState(''); // Término de búsqueda general
-  const [workTypeFilter, setWorkTypeFilter] = useState<'all' | MaintenanceRecord['workType']>('all'); // Filtro por tipo
-  const [categoryFilter, setCategoryFilter] = useState<'all' | MaintenanceRecord['maintenanceCategory']>('all'); // Filtro por categoría
-  const [dateFilter, setDateFilter] = useState(''); // Filtro por fecha
+const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, token, records, works, onUpdateRecords }) => {
+  const [showForm, setShowForm] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewingRecord, setViewingRecord] = useState<MaintenanceRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<MaintenanceRecord | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Estados para el buscador de obras en el formulario
-  const [workSearchTerm, setWorkSearchTerm] = useState(''); // Término de búsqueda para obras
-  const [showWorkDropdown, setShowWorkDropdown] = useState(false); // Controla la visibilidad del dropdown
-  const [selectedWorkForSearch, setSelectedWorkForSearch] = useState<Work | null>(null); // Obra seleccionada desde el buscador
-  // Estado para los datos del formulario con valores iniciales
+  // Estados para filtros y búsqueda (igual que antes)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [workTypeFilter, setWorkTypeFilter] = useState<'all' | MaintenanceRecord['workType']>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | MaintenanceRecord['maintenanceCategory']>('all');
+  const [dateFilter, setDateFilter] = useState('');
+
+  // Estados para formulario
+  const [workSearchTerm, setWorkSearchTerm] = useState('');
+  const [showWorkDropdown, setShowWorkDropdown] = useState(false);
+  const [selectedWorkForSearch, setSelectedWorkForSearch] = useState<Work | null>(null);
   const [formData, setFormData] = useState<MaintenanceFormData>({
     workType: 'Pintura',
     workId: '',
@@ -70,6 +72,23 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
     interventionDescription: '',
     date: ''
   });
+
+
+   useEffect(() => {
+    const fetchRecords = async () => {
+      try {
+        setLoading(true);
+        const data = await MaintenanceController.getAllMaintenanceRecords();
+
+        onUpdateRecords(data);
+      } catch (error) {
+        console.error('Error al cargar registros de mantenimiento:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRecords();
+  }, [token]);
 
   // Opciones disponibles para el tipo de obra
   const workTypes: MaintenanceRecord['workType'][] = [
@@ -99,16 +118,19 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
   });
   // Filtra los registros según los criterios de búsqueda y filtros
   const filteredRecords = records.filter(record => {
-    const matchesSearch = record.workName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.interventionDescription.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesWorkType = workTypeFilter === 'all' || record.workType === workTypeFilter;
-    const matchesCategory = categoryFilter === 'all' || record.maintenanceCategory === categoryFilter;
-    const matchesDate = !dateFilter || record.date.includes(dateFilter);
-    
-    return matchesSearch && matchesWorkType && matchesCategory && matchesDate;
-  });
+  const searchLower = searchTerm.toLowerCase();
+  const matchesSearch =
+    (record.workName || '').toLowerCase().includes(searchLower) ||
+    (record.author || '').toLowerCase().includes(searchLower) ||
+    (record.interventionDescription || '').toLowerCase().includes(searchLower);
+
+  const matchesWorkType = workTypeFilter === 'all' || record.workType === workTypeFilter;
+  const matchesCategory = categoryFilter === 'all' || record.maintenanceCategory === categoryFilter;
+  const matchesDate = !dateFilter || record.date.includes(dateFilter);
+
+  return matchesSearch && matchesWorkType && matchesCategory && matchesDate;
+});
+
 
   // Implementación del hook de paginación personalizado para registros de mantenimiento
   // Configurado para mostrar 6 registros por página optimizado para contenido detallado
@@ -131,53 +153,37 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
     initialPage: 1
   });
   // Maneja la selección de una obra y autocompleta los campos relacionados
-  const handleWorkSelection = (workId: string) => {
-    const selectedWork = works.find(work => work.inventoryNumber === workId);
-    
-    if (selectedWork) {
-      // Autocompleta los campos con la información de la obra seleccionada
-      setFormData(prev => ({
-        ...prev,
-        workId: workId,
-        author: selectedWork.artist,
-        workName: selectedWork.name,
-        // Construye las dimensiones combinando las medidas disponibles
-        dimensions: [
-          selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm alto`,
-          selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm ancho`,
-          selectedWork.dimensions.depth && `${selectedWork.dimensions.depth}cm prof.`,
-          selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm diám.`
-        ].filter(Boolean).join(' × ') || 'No especificado',
-        technique: selectedWork.technique || 'No especificado',
-        year: selectedWork.realizationDate || 'No especificado'
-      }));
-      
-      // Actualiza el estado del buscador con la obra seleccionada
-      setSelectedWorkForSearch(selectedWork);
-      setWorkSearchTerm(`${selectedWork.name} - ${selectedWork.artist}`);
-      setShowWorkDropdown(false);
-    } else {
-      // Limpia los campos autocompletados si no se encuentra la obra
-      setFormData(prev => ({
-        ...prev,
-        workId: '',
-        author: '',
-        workName: '',
-        dimensions: '',
-        technique: '',
-        year: ''
-      }));
-      
-      // Limpia el estado del buscador
-      setSelectedWorkForSearch(null);
-      setWorkSearchTerm('');
-    }
-  };
+  const handleWorkSelection = (id: string) => {
+  const selectedWork = works.find(work => String(work.id) === id);
+
+  if (selectedWork) {
+    setFormData(prev => ({
+      ...prev,
+      workId: String(selectedWork.id), // ✅ guarda el ID interno
+      author: selectedWork.artist,
+      workName: selectedWork.name,
+      dimensions: [
+        selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm alto`,
+        selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm ancho`,
+        selectedWork.dimensions.depth && `${selectedWork.dimensions.depth}cm prof.`,
+        selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm diám.`
+      ].filter(Boolean).join(' × ') || 'No especificado',
+      technique: selectedWork.technique || 'No especificado',
+      year: selectedWork.realizationDate || 'No especificado'
+    }));
+
+    setSelectedWorkForSearch(selectedWork);
+    setWorkSearchTerm(`${selectedWork.name} - ${selectedWork.artist}`);
+    setShowWorkDropdown(false);
+  } else {
+    resetForm();
+  }
+};
 
   // Maneja la selección de una obra desde el buscador
   // Esta función se ejecuta cuando el usuario hace clic en una obra del dropdown
   const handleWorkSearchSelection = (work: Work) => {
-    handleWorkSelection(work.inventoryNumber);
+     handleWorkSelection(String(work.id));
   };
 
   // Maneja el cambio en el campo de búsqueda de obras
@@ -203,38 +209,35 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
     handleWorkSelection(''); // Limpia el formulario
   };
   // Maneja el envío del formulario para crear o editar un registro
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validación: no permitir fechas futuras
-    const today = new Date().toISOString().split('T')[0];
-    if (formData.date > today) {
-      alert('La fecha del mantenimiento no puede ser posterior a la fecha actual');
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    setLoading(true);
 
     if (editingRecord) {
-      // Modo edición: actualiza el registro existente
-      const updatedRecords = records.map(record =>
-        record.id === editingRecord.id
-          ? { ...formData, id: editingRecord.id } as MaintenanceRecord
-          : record
-      );
-      onUpdateRecords(updatedRecords);
-      setEditingRecord(null);
+      // Actualizar registro existente
+      await MaintenanceController.updateMaintenanceRecord(editingRecord.id, formData);
     } else {
-      // Modo creación: crea un nuevo registro
-      const newRecord: MaintenanceRecord = {
-        ...formData,
-        id: Date.now().toString()
-      };
-      onUpdateRecords([...records, newRecord]);
+      // Crear nuevo registro
+      await MaintenanceController.addMaintenanceRecord(formData);
     }
 
-    // Reinicia el formulario y lo oculta
+    // 🔄 Vuelvo a cargar todos los registros desde el servidor
+    const freshRecords = await MaintenanceController.getAllMaintenanceRecords();
+    onUpdateRecords(freshRecords);
+
     resetForm();
     setShowForm(false);
-  };
+    setEditingRecord(null);
+  } catch (error) {
+    console.error('Error al guardar registro:', error);
+    alert('No se pudo guardar el registro');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   // Reinicia todos los campos del formulario a sus valores por defecto
   const resetForm = () => {
@@ -260,7 +263,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
 
   // Prepara el formulario para editar un registro existente
   const handleEdit = (record: MaintenanceRecord) => {
-    setFormData({
+     setFormData({
       workType: record.workType,
       workId: record.workId,
       author: record.author,
@@ -268,12 +271,11 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
       dimensions: record.dimensions,
       technique: record.technique,
       year: record.year,
-      currentPrice: record.currentPrice,
+      currentPrice: record.currentPrice, 
       maintenanceCategory: record.maintenanceCategory,
       interventionDescription: record.interventionDescription,
       date: record.date
     });
-    
     // Configura el buscador con la obra del registro en edición
     const workInEdit = works.find(work => work.inventoryNumber === record.workId);
     if (workInEdit) {
@@ -286,13 +288,21 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
   };
 
   // Maneja la eliminación de un registro con confirmación
-  const handleDelete = (recordId: string) => {
-    if (confirm('¿Está seguro de que desea eliminar este registro de mantenimiento?')) {
-      const updatedRecords = records.filter(record => record.id !== recordId);
-      onUpdateRecords(updatedRecords);
+   const handleDelete = async (recordId: string) => {
+    if (!confirm('¿Está seguro de eliminar este registro?')) return;
+
+    try {
+      setLoading(true);
+      await MaintenanceController.deleteMaintenanceRecord(recordId);
+      const updated = records.filter(r => r.id !== recordId);
+      onUpdateRecords(updated);
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      alert('No se pudo eliminar el registro');
+    } finally {
+      setLoading(false);
     }
   };
-
   // Limpia todos los filtros aplicados
   const clearFilters = () => {
     setWorkTypeFilter('all');
@@ -525,7 +535,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ records
               >
                 <option value="">Seleccionar obra...</option>
                 {filteredWorks.map(work => (
-                 <option key={work.inventoryNumber} value={work.inventoryNumber}>
+                 <option key={work.id} value={String(work.id)}>
                     {work.name} - {work.artist}
                   </option>
                 ))}

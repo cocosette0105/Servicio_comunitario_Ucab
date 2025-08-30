@@ -60,7 +60,7 @@ function App() {
 
   const updateMaintenanceRecords = (newRecords: MaintenanceRecord[]) => {
     setMaintenanceRecords(newRecords);
-    MaintenanceController.saveMaintenanceRecords(newRecords);
+    
   };
 
   // Si no hay usuario O no hay token, mostramos la vista de login

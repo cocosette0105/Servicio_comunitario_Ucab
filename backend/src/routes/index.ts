@@ -4,7 +4,8 @@ import obraRoutes from "./obra.routes";
 import uploadRoutes from "./upload.routes";
 import authRoutes from "./auth.routes"; 
 import userRoutes from "./user.routes";
-import historialMovimientoRoutes from "./historial-movimiento.routes"; // Importa las nuevas rutas
+import historialMovimientoRoutes from "./historial-movimiento.routes"; 
+import maintenanceRoutes from "./maintenance.routes";
 
 const router = Router();
 
@@ -22,5 +23,8 @@ router.use("/users", userRoutes);
 
 // Todas las rutas de gestión del historial de movimiento bajo /api/historial-movimiento
 router.use("/historial-movimiento", historialMovimientoRoutes);
+
+// Rutas de mantenimiento
+router.use("/maintenance", maintenanceRoutes);
 
 export default router;

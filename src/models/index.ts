@@ -175,4 +175,5 @@ export interface MaintenanceRecord {
   maintenanceCategory: 'Conservación preventiva' | 'Conservación curativa';
   interventionDescription: string;
   date: string;
+   userName: string; // <-- AÑADIDO: Usuario que realizó el registro
 }
