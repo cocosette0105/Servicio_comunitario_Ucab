@@ -262,30 +262,32 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
   };
 
   // Prepara el formulario para editar un registro existente
-  const handleEdit = (record: MaintenanceRecord) => {
-     setFormData({
-      workType: record.workType,
-      workId: record.workId,
-      author: record.author,
-      workName: record.workName,
-      dimensions: record.dimensions,
-      technique: record.technique,
-      year: record.year,
-      currentPrice: record.currentPrice, 
-      maintenanceCategory: record.maintenanceCategory,
-      interventionDescription: record.interventionDescription,
-      date: record.date
-    });
-    // Configura el buscador con la obra del registro en edición
-    const workInEdit = works.find(work => work.inventoryNumber === record.workId);
-    if (workInEdit) {
-      setSelectedWorkForSearch(workInEdit);
-      setWorkSearchTerm(`${workInEdit.name} - ${workInEdit.artist}`);
-    }
-    
-    setEditingRecord(record);
-    setShowForm(true);
-  };
+const handleEdit = (record: MaintenanceRecord) => {
+  const formattedDate = record.date ? new Date(record.date).toISOString().split('T')[0] : '';
+
+  setFormData({
+    workType: record.workType,
+    workId: record.workId,
+    author: record.author,
+    workName: record.workName,
+    dimensions: record.dimensions,
+    technique: record.technique,
+    year: record.year,
+    currentPrice: record.currentPrice, 
+    maintenanceCategory: record.maintenanceCategory,
+    interventionDescription: record.interventionDescription,
+    date: formattedDate
+  });
+
+  const workInEdit = works.find(work => work.inventoryNumber === record.workId);
+  if (workInEdit) {
+    setSelectedWorkForSearch(workInEdit);
+    setWorkSearchTerm(`${workInEdit.name} - ${workInEdit.artist}`);
+  }
+
+  setEditingRecord(record);
+  setShowForm(true);
+};
 
   // Maneja la eliminación de un registro con confirmación
    const handleDelete = async (recordId: string) => {

@@ -144,21 +144,20 @@ CREATE TABLE Rol_Privilegio (
 
 -- HISTORIAL MOVIMIENTO
 CREATE TABLE Historial_movimiento (
-    -- ¡NUEVO! Se añade un ID único para cada movimiento.
     his_mov_id SERIAL PRIMARY KEY,
-
-    -- Se cambia el tipo de dato a TIMESTAMP para guardar la hora exacta.
     his_mov_fecha TIMESTAMP NOT NULL,
-
     his_tip_movimiento VARCHAR(100) NOT NULL,
     his_mov_motiv TEXT,
     his_mov_notas TEXT,
+    his_mov_coleccion VARCHAR(255),
+
+    
+    his_mov_descripcion_estado TEXT,
+
     his_mov_obr_id_fk INT NOT NULL,
     his_mov_envia_fk INT,
     his_mov_usu_id_fk INT NOT NULL,
     his_mov_recibe_fk INT,
-
-    -- Se eliminó la clave primaria compuesta que causaba el error.
     
     FOREIGN KEY (his_mov_obr_id_fk) REFERENCES Obra(obr_id),
     FOREIGN KEY (his_mov_envia_fk) REFERENCES Persona_externa(per_ext_id),

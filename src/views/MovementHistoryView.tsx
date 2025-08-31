@@ -74,7 +74,7 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
             setIsLoading(true);
             setError(null);
             try {
-                const movements = await MovementController.getAllMovements(token);
+                const movements = await MovementController.getMovements(token);
                 setRecords(movements);
             } catch (err) {
                 setError('No se pudieron cargar los movimientos.');
@@ -178,21 +178,22 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
         if (!token) { setError('Error de autenticación.'); return; }
         if (!selectedWorkId) { setError('Por favor, seleccione una obra de la lista.'); return; }
 
-        const newMovementData: NewMovementData = {
-            his_mov_obr_id_fk: selectedWorkId,
-            his_mov_usu_id_fk: user.id,
-            his_tip_movimiento: formData.type,
-            his_mov_motiv: formData.reason,
-            his_mov_notas: formData.notes,
-            receiver: { nombre: formData.receiver.name, cedula: formData.receiver.idCard, telefono: formData.receiver.phone },
-            deliverer: { nombre: formData.deliverer.name, cedula: formData.deliverer.idCard, telefono: formData.deliverer.phone }
-        };
-
+const newMovementData: NewMovementData = {
+    his_mov_obr_id_fk: selectedWorkId,
+    his_mov_usu_id_fk: user.id,
+    his_tip_movimiento: formData.type,
+    his_mov_motiv: formData.reason,
+    his_mov_notas: formData.notes,
+    his_mov_coleccion: formData.workDetails.collection,          // ⬅️ Colección
+    his_mov_descripcion_estado: formData.conservationState,      // ⬅️ Estado de conservación
+    receiver: { nombre: formData.receiver.name, cedula: formData.receiver.idCard, telefono: formData.receiver.phone },
+    deliverer: { nombre: formData.deliverer.name, cedula: formData.deliverer.idCard, telefono: formData.deliverer.phone }
+};
         setIsLoading(true);
         setError(null);
         try {
             await MovementController.createMovement(newMovementData, token);
-            const updatedMovements = await MovementController.getAllMovements(token);
+            const updatedMovements = await MovementController.getMovements(token);
             setRecords(updatedMovements);
             setShowForm(false);
             resetForm();
@@ -203,42 +204,60 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
         }
     };
 
-    const handleEdit = (record: MovementRecord) => {
-        const selectedWork = works.find(work => work.id === record.workId);
-        setFormData({
-            workId: selectedWork?.inventoryNumber || '',
-            date: new Date(record.date).toISOString().split('T')[0],
-            type: record.type,
-            reason: record.reason,
-            notes: record.notes || '',
-            workDetails: record.workDetails,
-            conservationState: record.conservationState,
-            receiver: record.receiver,
-            deliverer: record.deliverer
-        });
-        setEditingRecord(record);
-        setSelectedWorkId(parseInt(record.workId, 10));
-        setWorkSearchTerm(record.workName);
-        setShowForm(true);
-    };
+   const handleEdit = (record: MovementRecord) => {
+    const selectedWork = works.find(work => work.id === record.workId); // busca por id interno
+    if (!selectedWork) return;
+
+    setFormData({
+        workId: selectedWork.inventoryNumber, // <-- aquí usamos inventoryNumber
+        date: new Date(record.date).toISOString().split('T')[0],
+        type: record.type,
+        reason: record.reason,
+        notes: record.notes || '',
+        workDetails: selectedWork ? {
+            author: selectedWork.artist,
+            title: selectedWork.name,
+            technique: selectedWork.technique || 'No especificado',
+            dimensions: [
+                selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm alto`,
+                selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm ancho`,
+                selectedWork.dimensions.depth && `${selectedWork.dimensions.depth}cm prof.`,
+                selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm diám.`
+            ].filter(Boolean).join(' × ') || 'No especificado',
+            collection: 'Colección General'
+        } : initialFormData.workDetails,
+        conservationState: record.conservationState,
+        receiver: record.receiver,
+        deliverer: record.deliverer
+    });
+
+    setEditingRecord(record);
+    setSelectedWorkId(parseInt(selectedWork.id, 10));
+    setWorkSearchTerm(`${selectedWork.name} - ${selectedWork.artist}`);
+    setShowForm(true);
+};
+
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingRecord || !selectedWorkId || !token) return;
 
-        const movementData: UpdateMovementData = {
-            his_tip_movimiento: formData.type,
-            his_mov_motiv: formData.reason,
-            his_mov_notas: formData.notes,
-            receiver: { nombre: formData.receiver.name, cedula: formData.receiver.idCard, telefono: formData.receiver.phone },
-            deliverer: { nombre: formData.deliverer.name, cedula: formData.deliverer.idCard, telefono: formData.deliverer.phone }
-        };
+       const movementData: UpdateMovementData = {
+    his_tip_movimiento: formData.type,
+    his_mov_motiv: formData.reason,
+    his_mov_notas: formData.notes,
+    his_mov_coleccion: formData.workDetails.collection,          // ⬅️ Colección
+    his_mov_descripcion_estado: formData.conservationState,      // ⬅️ Estado de conservación
+    receiver: { nombre: formData.receiver.name, cedula: formData.receiver.idCard, telefono: formData.receiver.phone },
+    deliverer: { nombre: formData.deliverer.name, cedula: formData.deliverer.idCard, telefono: formData.deliverer.phone }
+};
+
 
         setIsLoading(true);
         setError(null);
         try {
             await MovementController.updateMovement(parseInt(editingRecord.id, 10), movementData, token);
-            const updatedMovements = await MovementController.getAllMovements(token);
+            const updatedMovements = await MovementController.getMovements(token);
             setRecords(updatedMovements);
             setShowForm(false);
             resetForm();
