@@ -1,6 +1,8 @@
-import React, { useState, ChangeEvent, FormEvent,  useRef } from 'react';
+import React, { useState, ChangeEvent, FormEvent,  useRef,  useEffect} from 'react';
 import { Save, X, UploadCloud } from 'lucide-react';
 import { Work } from '../models';
+import AutocompleteInput from './AutocompleteInput'; 
+import { getArtists, getClassifications, getMaterials, getTechniques } from '../services/suggestionsService'; // --- NUEVO ---
 
 
 interface WorkFormProps {
@@ -56,9 +58,23 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
     },
   });
 
+  const [artists, setArtists] = useState<string[]>([]);
+  const [classifications, setClassifications] = useState<string[]>([]);
+  const [materials, setMaterials] = useState<string[]>([]);
+  const [techniques, setTechniques] = useState<string[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(work?.photoUrl || null);
   const [imageFile, setImageFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+    const loadSuggestions = async () => {
+      setArtists(await getArtists());
+      setClassifications(await getClassifications());
+      setMaterials(await getMaterials());
+      setTechniques(await getTechniques());
+    };
+    loadSuggestions();
+  }, []);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -79,6 +95,11 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
       });
     }
   };
+
+   const handleAutocompleteChange = (fieldName: keyof Work, value: string) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
+  };
+  
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -122,6 +143,8 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
     // 4. Llamar a la función onSubmit del padre con los datos preparados
     onSubmit(data, imageFile);
   };
+
+  const inputClassName = "w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-2 focus:ring-[#192d71] transition-colors";
   // Renderizado del formulario
   return (
     <div className="p-4 sm:p-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
@@ -154,10 +177,17 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
                   <label className="block text-sm font-bold text-[#192d71] mb-2">Título de la Obra *</label>
                   <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-[#192d71]" placeholder="Ej: Poseidón" required />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-2">Autor / Taller *</label>
-                  <input type="text" name="artist" value={formData.artist} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-[#192d71]" placeholder="Ej: Erma Alvarez Piñeiro" required />
-                </div>
+                  <div>
+          <label className="block text-sm font-bold text-[#192d71] mb-2">Autor/Artesano/Taller</label>
+          <AutocompleteInput
+            name="artist"
+            value={formData.artist || ''}
+            onChange={(value) => handleAutocompleteChange('artist', value)}
+            suggestions={artists}
+            placeholder="Ej: Jesús Soto"
+            className={inputClassName}
+          />
+        </div>
               </div>
             </fieldset>
 
@@ -165,22 +195,43 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
             <fieldset className="border-t-2 border-[#192d71]/20 pt-6">
               <legend className="px-4 text-xl font-semibold text-[#192d71]">Descripción Técnica</legend>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                 <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-2">Clasificación Genérica</label>
-                  <input type="text" name="classification" value={formData.classification} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-[#192d71]" placeholder="Ej: Obra Gráfica"/>
-                </div>
+                  <div>
+          <label className="block text-sm font-bold text-[#192d71] mb-2">Clasificación Genérica</label>
+          <AutocompleteInput
+            name="classification"
+            value={formData.classification || ''}
+            onChange={(value) => handleAutocompleteChange('classification', value)}
+            suggestions={classifications}
+            placeholder="Ej: Obra Gráfica"
+            className={inputClassName}
+          />
+        </div>
                  <div>
                   <label className="block text-sm font-bold text-[#192d71] mb-2">Época / Año de Realización *</label>
                   <input type="text" name="realizationDate" value={formData.realizationDate} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-[#192d71]" placeholder="Ej: 1981"/>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-2">Técnica</label>
-                  <input type="text" name="technique" value={formData.technique} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-[#192d71]" placeholder="Ej: Aguafuerte"/>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-2">Materiales</label>
-                  <input type="text" name="materials" value={formData.materials} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-[#192d71]" placeholder="Ej: Tinta gráfica y papel"/>
-                </div>
+                  <div>
+          <label className="block text-sm font-bold text-[#192d71] mb-2">Técnica</label>
+          <AutocompleteInput
+            name="technique"
+            value={formData.technique || ''}
+            onChange={(value) => handleAutocompleteChange('technique', value)}
+            suggestions={techniques}
+            placeholder="Ej: Aguafuerte"
+            className={inputClassName}
+          />
+        </div>
+                 <div>
+          <label className="block text-sm font-bold text-[#192d71] mb-2">Materiales (separados por coma)</label>
+          <AutocompleteInput
+            name="materials"
+            value={formData.materials || ''}
+            onChange={(value) => handleAutocompleteChange('materials', value)}
+            suggestions={materials}
+            placeholder="Ej: Óleo, Lienzo"
+            className={inputClassName}
+          />
+        </div>
               </div>
               <div className="mt-6">
                 <label className="block text-sm font-bold text-[#192d71] mb-2">Dimensiones (en cm)</label>

@@ -7,7 +7,7 @@ import userRoutes from "./user.routes";
 import historialMovimientoRoutes from "./historial-movimiento.routes"; 
 import maintenanceRoutes from "./maintenance.routes";
 import externalPersonsRoutes from "./external-persons.routes";
-
+import suggestionsRoutes from "./suggestions.routes";
 const router = Router();
 
 // Todas las rutas de obras bajo /api/obras
@@ -30,5 +30,7 @@ router.use("/maintenance", maintenanceRoutes);
 
 // Rutas de personas externas
 router.use("/external-persons", externalPersonsRoutes);
+
+router.use("/suggestions", suggestionsRoutes);
 
 export default router;
