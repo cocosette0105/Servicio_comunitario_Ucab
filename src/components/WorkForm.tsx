@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent, FormEvent,  useRef,  useEffect} from 'rea
 import { Save, X, UploadCloud } from 'lucide-react';
 import { Work } from '../models';
 import AutocompleteInput from './AutocompleteInput'; 
-import { getArtists, getClassifications, getMaterials, getTechniques } from '../services/suggestionsService'; // --- NUEVO ---
+import { getArtists, getClassifications, getMaterials, getTechniques } from '../services/suggestionsService'; 
 
 
 interface WorkFormProps {
@@ -99,7 +99,7 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
    const handleAutocompleteChange = (fieldName: keyof Work, value: string) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
   };
-  
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
