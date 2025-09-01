@@ -1,75 +1,61 @@
+// frontend/src/services/workService.ts
 import { Work } from "../models";
 
+// URL base de la API para las obras
 const API_URL = "http://localhost:5000/api/obras";
 
-export const getWorks = async (): Promise<Work[]> => {
+/**
+ * Obtiene todas las obras del backend.
+ * Ya no realiza el mapeo aquí, eso se centralizó en App.tsx.
+ */
+export const getWorks = async (): Promise<any[]> => {
   const res = await fetch(API_URL);
+  if (!res.ok) {
+    throw new Error('Error al obtener las obras');
+  }
   return res.json();
 };
 
-// src/services/workService.ts
-export interface BackendWork {
-  obr_mcf: string;
-  obr_numeros_anteriores?: string;
-  obr_titulo: string;
-  obr_fecha_realizacion?: string | null;
-  obr_alto_cm?: string;
-  obr_ancho_cm?: string;
-  obr_profundidad_cm?: string;
-  obr_diametro_cm?: string;
-  obr_descripcion_formal?: string;
-  obr_detalles_firma?: string;
-  obr_observaciones?: string;
-  obr_url_foto?: string;
-  obr_estado_condicion?: string;
-  obr_estado_integridad?: string;
-  obr_procedencia?: string;
-  obr_cultura_tradicion?: string;
-  obr_epoca_estilo?: string;
-  obr_valor_avaluo?: string;
-  obr_moneda_avaluo?: string;
-  obr_responsable_avaluo?: string;
-  obr_fecha_avaluo?: string | null;
-  obr_propietario_original?: string;
-  obr_documentos_relacionados?: string;
-  obr_bibliografia?: string;
-  obr_fecha_ingreso?: string | null;
-  obr_fuente_adquisicion?: string;
-  obr_metodo_adquisicion?: string;
-  obr_entidad_responsable?: string;
-  obr_cla_fk?: number;
-  obr_art_fk?: number;
-  obr_lu_fk?: number;
-  material_id?: number;
-  technique_id?: number;
-}
+/**
+ * Guarda una obra (la crea si no tiene ID, la actualiza si lo tiene).
+ * IMPORTANTE: Ahora acepta FormData para poder incluir archivos de imagen.
+ *
+ * @param workData - Los datos del formulario como FormData.
+ * @param workId - El ID de la obra si se está editando.
+ * @returns La obra creada o actualizada.
+ */
+export const saveWork = async (workData: FormData, workId?: string): Promise<Work> => {
+  const method = workId ? 'PUT' : 'POST';
+  const url = workId ? `${API_URL}/${workId}` : API_URL;
 
-export const createWork = async (work: BackendWork): Promise<Work> => {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(work),
+  const response = await fetch(url, {
+    method: method,
+    body: workData,
+    // ¡OJO! No se establece 'Content-Type'. 
+    // El navegador lo hace automáticamente por nosotros cuando el body es FormData,
+    // incluyendo el 'boundary' necesario para la subida de archivos.
   });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`HTTP ${res.status}: ${errorText}`);
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Error al guardar la obra');
   }
 
-  return res.json();
+  return response.json();
 };
 
 
-
-export const updateWork = async (id: string, work: Partial<Work>): Promise<Work> => {
-  const res = await fetch(`${API_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(work),
+/**
+ * Elimina una obra por su ID.
+ * @param workId - El ID de la obra a eliminar.
+ */
+export const deleteWork = async (workId: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/${workId}`, {
+    method: 'DELETE',
   });
-  return res.json();
-};
 
-export const deleteWork = async (id: string): Promise<void> => {
-  await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Error al eliminar la obra');
+  }
 };

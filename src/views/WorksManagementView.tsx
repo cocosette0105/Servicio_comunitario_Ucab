@@ -9,7 +9,7 @@ import { usePagination } from '../hooks/usePagination';
 import { PDFUtils } from '../utils/pdfUtils';
 import WorkForm from '../components/WorkForm';
 import WorkDetails from '../components/WorkDetails';
-import { getWorks, createWork, updateWork, deleteWork } from '../services/workService';
+import { getWorks, saveWork, deleteWork } from '../services/workService';
 
 // Definimos las props que recibirá el componente
 interface WorksManagementViewProps {
@@ -30,7 +30,7 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
   const canDeleteWork = user.privileges.includes('eliminar_obra');
   const canReadWork = user.privileges.includes('leer_obra');
 
-  useEffect(() => {
+/*  useEffect(() => {
     const fetchWorks = async () => {
       try {
         const data = await getWorks();
@@ -71,7 +71,7 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
     if (canReadWork) {
       fetchWorks();
     }
-  }, [canReadWork, onUpdateWorks]); // Dependencia del privilegio y onUpdateWorks
+  }, [canReadWork, onUpdateWorks]); // Dependencia del privilegio y onUpdateWorks*/
 
   // Filtrado de obras basado en el término de búsqueda
   // Busca coincidencias en nombre, artista y ubicación de almacenamiento
@@ -102,10 +102,62 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
     initialPage: 1
   });
 
+   const handleSaveWork = async (formData: FormData) => {
+    if ((editingWork && !canUpdateWork) || (!editingWork && !canCreateWork)) {
+      console.error("Acción no permitida por falta de privilegios.");
+      return;
+    }
+    
+    try {
+      const workId = editingWork ? editingWork.id : undefined;
+      const savedWorkResponse: any = await saveWork(formData, workId);
+
+      const savedWork: Work = {
+        id: savedWorkResponse.obr_id,
+        name: savedWorkResponse.obr_titulo ?? '',
+        inventoryNumber: savedWorkResponse.obr_mcf ?? '',
+        artist: savedWorkResponse.artist_name ?? 'Desconocido',
+        storageLocation: savedWorkResponse.location_name ?? 'Sin ubicación',
+        realizationDate: savedWorkResponse.obr_fecha_realizacion ?? '',
+        collection: { entryDate: savedWorkResponse.obr_fecha_ingreso ?? '' },
+        classification: savedWorkResponse.classification_name ?? '',
+        technique: savedWorkResponse.technique ?? '',
+        materials: savedWorkResponse.materials ?? '',
+        dimensions: {
+          height: savedWorkResponse.obr_alto_cm ?? '',
+          width: savedWorkResponse.obr_ancho_cm ?? '',
+          depth: savedWorkResponse.obr_profundidad_cm ?? '',
+          diameter: savedWorkResponse.obr_diametro_cm ?? ''
+        },
+        description: savedWorkResponse.obr_descripcion_formal ?? '',
+        signatureDetails: savedWorkResponse.obr_detalles_firma ?? '',
+        observations: savedWorkResponse.obr_observaciones ?? '',
+        photoUrl: savedWorkResponse.obr_url_foto ?? '',
+        conservationState: savedWorkResponse.obr_estado_conservacion ?? '',
+        technicalData: savedWorkResponse.obr_datos_tecnicos ?? '',
+        references: savedWorkResponse.obr_referencias ?? '',
+        responsibleEntity: savedWorkResponse.obr_entidad_responsable ?? '',
+        inventory: savedWorkResponse.obr_inventario ?? ''
+      };
+
+      if (editingWork) {
+        onUpdateWorks(works.map(w => (w.id === savedWork.id ? savedWork : w)));
+      } else {
+        onUpdateWorks([savedWork, ...works]);
+      }
+
+      setShowForm(false);
+      setEditingWork(null);
+
+    } catch (err) {
+      console.error('Error al guardar la obra:', err);
+    }
+  };
+
   // ==========================
   // Manejo de creación de obra
   // ==========================
-  const handleAddWork = async (workData: Partial<Work>) => {
+ /* const handleAddWork = async (workData: Partial<Work>) => {
     if (!canCreateWork) return; // Validación adicional en el frontend
     try {
       const payload = {
@@ -156,7 +208,7 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
     } catch (err) {
       console.error('Error al actualizar obra:', err);
     }
-  };
+  };*/
 
   const handleDeleteWork = async (workId: string | number) => {
     if (!canDeleteWork) return; // Validación adicional
@@ -190,20 +242,21 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
       
       {/* FORMULARIO Y DETALLES */}
       {/* Los formularios de edición y creación solo se muestran si el usuario tiene los privilegios */}
-      {showForm && canCreateWork && (
-        <WorkForm
-          onSubmit={handleAddWork}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
-
-      {editingWork && canUpdateWork && (
-        <WorkForm
-          work={editingWork}
-          onSubmit={handleEditWork}
-          onCancel={() => setEditingWork(null)}
-        />
-      )}
+    {(showForm || editingWork) && (
+  <WorkForm
+    // Si 'editingWork' existe, lo pasamos para rellenar el form. Si no, es un form vacío.
+    work={editingWork || undefined}
+    
+    // Usamos nuestra nueva función unificada para el 'submit'
+    onSubmit={handleSaveWork} 
+    
+    // La cancelación cierra el form y limpia el estado de edición
+    onCancel={() => {
+      setShowForm(false);
+      setEditingWork(null);
+    }}
+  />
+)}
 
       {viewingWork && (
         <WorkDetails

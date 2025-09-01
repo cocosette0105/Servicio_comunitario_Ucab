@@ -1,11 +1,12 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import React, { useState, ChangeEvent, FormEvent,  useRef } from 'react';
 import { Save, X, UploadCloud } from 'lucide-react';
 import { Work } from '../models';
 
 
 interface WorkFormProps {
   work?: Work;
-  onSubmit: (workData: Partial<Work>) => void;
+// IMPORTANTE: onSubmit ahora espera FormData y un archivo opcional
+  onSubmit: (formData: FormData, imageFile: File | null) => void;
   onCancel: () => void;
 }
 
@@ -57,6 +58,7 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
 
   const [imagePreview, setImagePreview] = useState<string | null>(work?.photoUrl || null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -68,18 +70,15 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
       setFormData(prev => {
         const newState = { ...prev };
         let currentLevel: any = newState;
-
         for (let i = 0; i < keys.length - 1; i++) {
-          currentLevel[keys[i]] = { ...(currentLevel[keys[i]] || {}) };
+          currentLevel[keys[i]] = { ...currentLevel[keys[i]] };
           currentLevel = currentLevel[keys[i]];
         }
-
         currentLevel[keys[keys.length - 1]] = value;
         return newState;
       });
     }
   };
-
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -90,44 +89,38 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
     }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    console.log('✅ Formulario enviado');
-
-    let photoUrl = formData.photoUrl || '';
-
-    if (imageFile) {
-      console.log('📤 Subiendo imagen:', imageFile.name);
-      const imageData = new FormData();
-      imageData.append('image', imageFile); // clave correcta para backend
-
-      try {
-        const res = await fetch('http://localhost:5000/api/upload', {
-          method: 'POST',
-          body: imageData
-        });
-
-        if (!res.ok) {
-          throw new Error(`Error HTTP: ${res.status}`);
-        }
-
-        const data = await res.json();
-        photoUrl = data.url;
-        console.log('✅ Imagen subida. URL recibida:', photoUrl);
-      } catch (err) {
-        console.error('❌ Error al subir imagen:', err);
-      }
-    } else {
-      console.log('ℹ No se seleccionó nueva imagen, se mantiene la actual');
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
+  };
 
-    const submitData: Partial<Work> = {
-      ...formData,
-      photoUrl,
-    };
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    
+    // 1. Crear un objeto FormData
+    const data = new FormData();
 
-    console.log('📦 Datos finales que se envían al backend:', submitData);
-    onSubmit(submitData);
+    // 2. Adjuntar todos los campos del formulario al FormData
+    // FormData solo maneja strings, por lo que convertimos objetos a JSON
+    Object.entries(formData).forEach(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        data.append(key, JSON.stringify(value));
+      } else {
+        data.append(key, value as string);
+      }
+    });
+
+    // 3. Adjuntar el archivo de imagen si existe
+    if (imageFile) {
+      // El nombre 'obr_url_foto' DEBE COINCIDIR con el que espera Multer en el backend
+      data.append('obr_url_foto', imageFile);
+    }
+    
+    // 4. Llamar a la función onSubmit del padre con los datos preparados
+    onSubmit(data, imageFile);
   };
   // Renderizado del formulario
   return (
