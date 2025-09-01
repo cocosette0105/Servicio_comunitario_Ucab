@@ -6,6 +6,7 @@ import authRoutes from "./auth.routes";
 import userRoutes from "./user.routes";
 import historialMovimientoRoutes from "./historial-movimiento.routes"; 
 import maintenanceRoutes from "./maintenance.routes";
+import externalPersonsRoutes from "./external-persons.routes";
 
 const router = Router();
 
@@ -26,5 +27,8 @@ router.use("/historial-movimiento", historialMovimientoRoutes);
 
 // Rutas de mantenimiento
 router.use("/maintenance", maintenanceRoutes);
+
+// Rutas de personas externas
+router.use("/external-persons", externalPersonsRoutes);
 
 export default router;

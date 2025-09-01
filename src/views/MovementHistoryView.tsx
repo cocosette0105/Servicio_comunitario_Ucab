@@ -3,16 +3,18 @@
 // Permite registrar, consultar, editar y generar reportes de movimientos con paginación responsive
 //frontend/src/views/MovementHistoryView.tsx
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, ChevronDown, Download, Edit, Eye, Trash2, X, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { Plus, Search, Filter, ChevronDown, Download, Edit, Eye, Trash2, X, ArrowDownCircle, ArrowUpCircle, User, Users } from 'lucide-react';
 
 import Pagination from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
-import { MovementRecord, Work, User } from '../models';
+import { MovementRecord, Work, User as AppUser } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
 import { MovementController, NewMovementData, UpdateMovementData } from '../controllers/MovementController';
+import { ExternalPersonsService } from '../services/externalPersonsService';
+import { AuthController } from '../controllers/AuthController';
 
 interface MovementHistoryViewProps {
-    user: User;
+    user: AppUser;
     works: Work[];
     token: string;
 }
@@ -43,6 +45,12 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
     const [workSearchTerm, setWorkSearchTerm] = useState('');
     const [showWorkDropdown, setShowWorkDropdown] = useState(false);
     const [dateFilter, setDateFilter] = useState('');
+
+    // NUEVOS ESTADOS PARA VISUALIZAR PERSONAS EXTERNAS
+    const [showExternalPersons, setShowExternalPersons] = useState(false); // Controla la visibilidad del modal
+    const [externalPersons, setExternalPersons] = useState<any[]>([]); // Lista de personas de la BD
+    const [loadingPersons, setLoadingPersons] = useState(false); // Estado de carga para personas
+    const [personType, setPersonType] = useState<'receiver' | 'deliverer'>('receiver'); // Tipo de modal
 
     const initialFormData: MovementFormData = {
         workId: '',
@@ -284,6 +292,24 @@ const newMovementData: NewMovementData = {
         }
     };
 
+    const handleDeletePerson = async (personId: number) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar a esta persona? Esta acción no se puede deshacer.')) {
+        try {
+            const success = await ExternalPersonsService.deleteExternalPerson(personId, token);
+            if (success) {
+                // Actualiza el estado para remover a la persona de la lista sin recargar la página
+                setExternalPersons(currentPersons => currentPersons.filter(p => p.per_ext_id !== personId));
+                alert('Persona eliminada exitosamente.');
+            } else {
+                alert('Error: No se pudo eliminar a la persona.');
+            }
+        } catch (error) {
+            console.error('Error al eliminar persona:', error);
+            alert('Ocurrió un error en el servidor.');
+        }
+    }
+};
+
     const generatePDF = async (record: MovementRecord) => {
         await PDFUtils.generateMovementPDF(record);
     };
@@ -292,6 +318,64 @@ const newMovementData: NewMovementData = {
         setTypeFilter('all');
         setDateFilter('');
         setSearchTerm('');
+    };
+
+    // NUEVA FUNCIÓN PARA CARGAR PERSONAS EXTERNAS
+    const loadExternalPersons = async () => {
+        setLoadingPersons(true);
+        try {
+            console.log('Cargando personas externas...');
+            
+            const token = AuthController.getToken();
+            console.log(' Token obtenido:', token ? 'Sí' : 'No');
+            
+            if (!token) {
+                console.error('No se encontró el token de autenticación');
+                throw new Error('No se encontró el token de autenticación');
+            }
+            
+            console.log('Llamando a la API...');
+            const persons = await ExternalPersonsService.getAllExternalPersons(token);
+            console.log('Personas recibidas:', persons);
+            
+            const mappedPersons = persons.map(person => ({
+                id: person.per_ext_id,
+                nombre: person.per_ext_nombre,
+                cedula: person.per_ext_cedula,
+                telefono: person.per_ext_telefono
+            }));
+            
+            console.log(' Personas mapeadas:', mappedPersons);
+            setExternalPersons(mappedPersons);
+        } catch (err) {
+            console.error(' Error cargando personas:', err);
+        } finally {
+            setLoadingPersons(false);
+        }
+    };
+
+    // NUEVA FUNCIÓN PARA SELECCIONAR UNA PERSONA DEL DIRECTORIO
+    const selectPersonFromDirectory = (person: any) => {
+        if (personType === 'receiver') {
+            setFormData(prev => ({
+                ...prev,
+                receiver: {
+                    name: person.nombre,
+                    idCard: person.cedula,
+                    phone: person.telefono
+                }
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                deliverer: {
+                    name: person.nombre,
+                    idCard: person.cedula,
+                    phone: person.telefono
+                }
+            }));
+        }
+        setShowExternalPersons(false);
     };
 
   // Renderizado principal del componente con diseño responsive
@@ -634,18 +718,36 @@ const newMovementData: NewMovementData = {
               <h3 className="text-base sm:text-lg font-bold text-[#192d71] mb-3 sm:mb-4">Información del Receptor</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Nombre *</label>
-                  <input
-                    type="text"
-                    value={formData.receiver.name}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      receiver: { ...prev.receiver, name: e.target.value }
-                    }))}
-                    className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
-                    placeholder="Nombre completo"
-                    required
-                  />
+                  <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2 sm:mb-3 flex items-center">
+                    <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    Nombre Completo *
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={formData.receiver.name}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        receiver: { ...prev.receiver, name: e.target.value }
+                      }))}
+                      className="flex-1 px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
+                      placeholder="Ej: María González"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPersonType('receiver');
+                        setShowExternalPersons(true);
+                        loadExternalPersons();
+                      }}
+                      className="px-4 py-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white rounded-xl transition-all duration-200 font-semibold text-sm flex items-center space-x-2"
+                      title="Ver directorio de personas registradas"
+                    >
+                      <Users className="h-4 w-4" />
+                      <span className="hidden sm:inline">Ver Personas</span>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Cédula de Identidad *</label>
@@ -684,18 +786,36 @@ const newMovementData: NewMovementData = {
               <h3 className="text-base sm:text-lg font-bold text-[#192d71] mb-3 sm:mb-4">Información del Entregador</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Nombre *</label>
-                  <input
-                    type="text"
-                    value={formData.deliverer.name}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      deliverer: { ...prev.deliverer, name: e.target.value }
-                    }))}
-                    className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
-                    placeholder="Nombre completo"
-                    required
-                  />
+                  <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2 sm:mb-3 flex items-center">
+                    <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    Nombre Completo *
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={formData.deliverer.name}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        deliverer: { ...prev.deliverer, name: e.target.value }
+                      }))}
+                      className="flex-1 px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
+                      placeholder="Ej: Carlos Mendoza"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPersonType('deliverer');
+                        setShowExternalPersons(true);
+                        loadExternalPersons();
+                      }}
+                      className="px-4 py-3 bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white rounded-xl transition-all duration-200 font-semibold text-sm flex items-center space-x-2"
+                      title="Ver directorio de personas registradas"
+                    >
+                      <Users className="h-4 w-4" />
+                      <span className="hidden sm:inline">Ver Personas</span>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Cédula de Identidad *</label>
@@ -749,6 +869,79 @@ const newMovementData: NewMovementData = {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* NUEVO MODAL PARA VISUALIZAR PERSONAS EXTERNAS */}
+      {showExternalPersons && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto mx-2 sm:mx-4">
+            {/* Encabezado del modal */}
+            <div className="p-4 sm:p-6 border-b border-[#192d71]/20">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#192d71]">
+                  Directorio de Personas - {personType === 'receiver' ? 'Receptor' : 'Entregador'}
+                </h2>
+                <button
+                  onClick={() => setShowExternalPersons(false)}
+                  className="p-2 text-[#192d71] hover:bg-[#192d71]/10 rounded-xl transition-all duration-200"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Contenido del modal */}
+            <div className="p-4 sm:p-6">
+              {loadingPersons ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#192d71] mx-auto"></div>
+                  <p className="text-[#192d71] mt-2">Cargando personas...</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                {externalPersons.map(person => (
+  <div
+    key={person.id}
+    className="p-4 border border-[#192d71]/20 rounded-xl hover:bg-[#192d71]/5 transition-colors"
+  >
+    <div className="flex justify-between items-center">
+      <div onClick={() => selectPersonFromDirectory(person)} className="cursor-pointer flex-1">
+        <h3 className="font-semibold text-[#192d71]">{person.nombre}</h3>
+        <p className="text-sm text-[#192d71]/70">CI: {person.cedula}</p>
+        <p className="text-sm text-[#192d71]/70">Tel: {person.telefono}</p>
+      </div>
+      <div className="flex space-x-2">
+        {/* Botón seleccionar */}
+        <button
+          onClick={() => selectPersonFromDirectory(person)}
+          className="text-[#192d71] hover:text-[#1e3a8a] font-semibold text-sm"
+          title="Seleccionar persona"
+        >
+          Seleccionar
+        </button>
+        {/* Botón eliminar */}
+        <button
+          onClick={() => handleDeletePerson(person.id)}
+          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition"
+          title="Eliminar persona"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  </div>
+))}
+                  
+                  {externalPersons.length === 0 && (
+                    <div className="text-center py-8 text-[#192d71]/60">
+                      No hay personas registradas en el directorio
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
