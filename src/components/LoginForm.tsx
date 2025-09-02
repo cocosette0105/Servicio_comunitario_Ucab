@@ -106,4 +106,4 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => { // Componente fun
   );
 };
 
-export default LoginForm; // Exporta el componente LoginForm para su uso en otras
+export default LoginForm; // Exporta el componente LoginForm para su uso en otras9

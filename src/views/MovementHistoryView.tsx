@@ -12,6 +12,11 @@ import { PDFUtils } from '../utils/pdfUtils';
 import { MovementController, NewMovementData, UpdateMovementData } from '../controllers/MovementController';
 import { ExternalPersonsService } from '../services/externalPersonsService';
 import { AuthController } from '../controllers/AuthController';
+// NUEVA IMPORTACIÓN: jsPDF y autoTable para generar PDF de reporte de movimientos
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+// NUEVA IMPORTACIÓN: Logo para el encabezado del PDF
+import logoSrc from '/logoblanco_negro.jpg';
 
 interface MovementHistoryViewProps {
     user: AppUser;
@@ -377,6 +382,59 @@ const newMovementData: NewMovementData = {
         }
         setShowExternalPersons(false);
     };
+
+  // NUEVA FUNCIÓN: Exporta los movimientos filtrados a PDF 
+  
+  const exportMovementsToPDF = () => {
+    const doc = new jsPDF();
+    const MARGIN = 14; // Margen para el contenido - mismo que reportes de obras
+
+    // Encabezados de la tabla - adaptados para movimientos
+    const headers = [['Obra', 'Autor', 'Tipo', 'Fecha', 'Receptor', 'Entregador', 'Motivo']];
+
+    // Datos de la tabla - mapea los movimientos filtrados al formato de tabla
+    const data = filteredMovements.map(movement => [
+      movement.workDetails.title || 'N/A',
+      movement.workDetails.author || 'N/A', 
+      movement.type === 'entrada' ? 'Entrada' : 'Salida',
+      new Date(movement.date).toLocaleDateString('es-ES'),
+      movement.receiver.name || 'N/A',
+      movement.deliverer.name || 'N/A',
+      movement.reason || 'N/A'
+    ]);
+
+    // Configuración de la tabla - misma estructura que reportes de obras
+    autoTable(doc, {
+      startY: 30, // Espacio para el encabezado
+      head: headers,
+      body: data,
+      styles: { fontSize: 8, cellPadding: 2 }, // Mismo estilo que reportes
+      headStyles: { fillColor: [12, 57, 102], textColor: 255, fontStyle: 'bold' }, // Mismo color que reportes
+
+      // Hook para dibujar encabezado en cada página - mismo formato que reportes de obras
+      didDrawPage: (data) => {
+        // Configuración del logo - mismas dimensiones que reportes
+        const LOGO_WIDTH = 30;
+        const LOGO_HEIGHT = 12;
+
+        // Logo en esquina superior izquierda - misma posición que reportes
+        doc.addImage(logoSrc, 'JPEG', MARGIN, MARGIN - 5, LOGO_WIDTH, LOGO_HEIGHT);
+
+        // Título del reporte - adaptado para movimientos
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Reporte de Movimientos del Museo', MARGIN + LOGO_WIDTH + 5, MARGIN + 2);
+
+        // Fecha de generación - mismo formato que reportes
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, doc.internal.pageSize.getWidth() - MARGIN, MARGIN + 2, { align: 'right' });
+      },
+    });
+
+    // Descarga del archivo - mismo formato de nombre que reportes
+    doc.save(`reporte_movimientos_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
 
   // Renderizado principal del componente con diseño responsive
   // Renderizado de la vista de historial de movimientos
@@ -927,6 +985,16 @@ const newMovementData: NewMovementData = {
           title="Eliminar persona"
         >
           <Trash2 className="h-4 w-4" />
+        </button>
+
+         {/* NUEVO BOTÓN: Exportar PDF de movimientos - Agregado sin modificar lógica existente */}
+        <button
+          onClick={exportMovementsToPDF}
+          className="flex items-center justify-center sm:justify-start space-x-2 sm:space-x-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-sm sm:text-base w-full sm:w-auto"
+          title="Exportar reporte PDF de movimientos"
+        >
+          <FileDown className="h-5 w-5 sm:h-6 sm:w-6" />
+          <span>Exportar PDF</span>
         </button>
       </div>
     </div>

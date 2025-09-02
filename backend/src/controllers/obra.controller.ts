@@ -71,7 +71,14 @@ export const createObra = async (req: Request, res: Response) => {
         materials, technique
     } = req.body;
     
-    const photoUrl = req.file ? path.join('uploads', 'obras', req.file.filename).replace(/\\/g, '/') : null;
+   const file = (req as Request & { file?: Express.Multer.File }).file;
+
+
+const photoUrl = file
+  ? path.join('uploads', 'obras', file.filename).replace(/\\/g, '/')
+  : null;
+
+
     
     const parsedDimensions = dimensions ? JSON.parse(dimensions) : {};
     const parsedCollection = collection ? JSON.parse(collection) : {};
