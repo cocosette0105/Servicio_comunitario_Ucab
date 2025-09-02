@@ -13,7 +13,7 @@ const fetchSuggestions = async (endpoint: string): Promise<string[]> => {
         return [];
     }
 };
-
+//
 export const getArtists = () => fetchSuggestions("artistas");
 export const getClassifications = () => fetchSuggestions("clasificaciones");
 export const getMaterials = () => fetchSuggestions("materiales");
