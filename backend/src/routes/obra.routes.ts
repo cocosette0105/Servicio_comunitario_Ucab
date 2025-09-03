@@ -26,7 +26,7 @@ router.post("/", upload.single("obr_url_foto"), createObra);
 // ==========================
 // Ruta PUT: actualizar obra (imagen opcional)
 // ==========================
-router.put("/:id", upload.single("image"), updateObra);
+router.put("/:id", upload.single("obr_url_foto"), updateObra);
 
 // ==========================
 // Ruta DELETE: eliminar obra

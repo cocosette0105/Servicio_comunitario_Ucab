@@ -15,7 +15,8 @@ import { getWorks, saveWork, deleteWork } from '../services/workService';
 interface WorksManagementViewProps {
   user: User;
   works: Work[];
-  onUpdateWorks: (works: Work[]) => void;
+
+  onUpdateWorks: () => Promise<void>;
 }
 
 const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, onUpdateWorks }) => {
@@ -23,6 +24,8 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
   const [editingWork, setEditingWork] = useState<Work | null>(null);
   const [viewingWork, setViewingWork] = useState<Work | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Lógica de privilegios
   const canCreateWork = user.privileges.includes('crear_obra');
@@ -104,55 +107,31 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
 
    const handleSaveWork = async (formData: FormData) => {
     if ((editingWork && !canUpdateWork) || (!editingWork && !canCreateWork)) {
-      console.error("Acción no permitida por falta de privilegios.");
+      setError("No tienes permiso para realizar esta acción.");
       return;
     }
-    
+
+    setIsLoading(true);
+    setError(null);
+
     try {
       const workId = editingWork ? editingWork.id : undefined;
-      const savedWorkResponse: any = await saveWork(formData, workId);
+      // El servicio 'saveWork' ya maneja si es creación o edición
+      await saveWork(formData, workId);
 
-      const savedWork: Work = {
-        id: savedWorkResponse.obr_id,
-        name: savedWorkResponse.obr_titulo ?? '',
-        inventoryNumber: savedWorkResponse.obr_mcf ?? '',
-        artist: savedWorkResponse.artist_name ?? 'Desconocido',
-        storageLocation: savedWorkResponse.location_name ?? 'Sin ubicación',
-        realizationDate: savedWorkResponse.obr_fecha_realizacion ?? '',
-        collection: { entryDate: savedWorkResponse.obr_fecha_ingreso ?? '' },
-        classification: savedWorkResponse.classification_name ?? '',
-        technique: savedWorkResponse.technique ?? '',
-        materials: savedWorkResponse.materials ?? '',
-        dimensions: {
-          height: savedWorkResponse.obr_alto_cm ?? '',
-          width: savedWorkResponse.obr_ancho_cm ?? '',
-          depth: savedWorkResponse.obr_profundidad_cm ?? '',
-          diameter: savedWorkResponse.obr_diametro_cm ?? ''
-        },
-        description: savedWorkResponse.obr_descripcion_formal ?? '',
-        signatureDetails: savedWorkResponse.obr_detalles_firma ?? '',
-        observations: savedWorkResponse.obr_observaciones ?? '',
-        photoUrl: savedWorkResponse.obr_url_foto ?? '',
-        conservationState: savedWorkResponse.obr_estado_conservacion ?? '',
-        technicalData: savedWorkResponse.obr_datos_tecnicos ?? '',
-        references: savedWorkResponse.obr_referencias ?? '',
-        responsibleEntity: savedWorkResponse.obr_entidad_responsable ?? '',
-        inventory: savedWorkResponse.obr_inventario ?? ''
-      };
-
-      if (editingWork) {
-        onUpdateWorks(works.map(w => (w.id === savedWork.id ? savedWork : w)));
-      } else {
-        onUpdateWorks([savedWork, ...works]);
-      }
+      // Llama a la función del App.tsx para recargar y re-mapear TODA la data.
+      await onUpdateWorks(); 
 
       setShowForm(false);
       setEditingWork(null);
-
     } catch (err) {
-      console.error('Error al guardar la obra:', err);
+      console.error("Error al guardar la obra:", err);
+      setError("No se pudo guardar la obra. Por favor, intente de nuevo.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
 
   // ==========================
   // Manejo de creación de obra
@@ -210,16 +189,21 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
     }
   };*/
 
-  const handleDeleteWork = async (workId: string | number) => {
-    if (!canDeleteWork) return; // Validación adicional
-    // CORREGIDO: Reemplazar 'confirm' por una alerta personalizada
-    console.log('Confirmación de eliminación: ¿Está seguro de que desea eliminar esta obra?');
-    if (!window.confirm('¿Está seguro de que desea eliminar esta obra?')) return;
+ const handleDeleteWork = async (workId: string) => {
+    if (!canDeleteWork) return;
+    if (!window.confirm('¿Estás seguro de que quieres eliminar esta obra?')) return;
+    
     try {
-      await deleteWork(workId as string);
-      onUpdateWorks(works.filter(w => w.id !== workId));
+        await deleteWork(workId);
+        // ✅ ¡CORRECCIÓN AQUÍ! ✅ 
+        // Simplemente llamamos a la función para que recargue la lista actualizada.
+        await onUpdateWorks(); 
+        if (viewingWork?.id === workId) {
+          setViewingWork(null);
+        }
     } catch (err) {
-      console.error('Error al eliminar obra:', err);
+        console.error('Error al eliminar la obra:', err);
+        setError('No se pudo eliminar la obra.');
     }
   };
 
@@ -264,7 +248,7 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
           onClose={() => setViewingWork(null)}
           // CORREGIDO: Pasar una función vacía en lugar de 'undefined'
           onEdit={canUpdateWork ? () => { setEditingWork(viewingWork); setViewingWork(null); } : () => {}}
-          onDelete={canDeleteWork ? () => { handleDeleteWork(viewingWork.id as string | number); setViewingWork(null); } : () => {}}
+           onDelete={canDeleteWork ? () => handleDeleteWork(viewingWork.id) : () => {}}
         />
       )}
 

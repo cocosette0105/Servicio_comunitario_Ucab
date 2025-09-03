@@ -7,8 +7,8 @@ import { getArtists, getClassifications, getMaterials, getTechniques } from '../
 
 interface WorkFormProps {
   work?: Work;
-// IMPORTANTE: onSubmit ahora espera FormData y un archivo opcional
-  onSubmit: (formData: FormData, imageFile: File | null) => void;
+  // ✅ CORRECCIÓN: onSubmit ahora solo espera FormData, que es más simple y correcto.
+  onSubmit: (formData: FormData) => void;
   onCancel: () => void;
 }
 
@@ -17,7 +17,8 @@ const formatDate = (date?: string | Date) =>
   date ? new Date(date).toISOString().split('T')[0] : '';
 
 const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState<Partial<Work>>({
+
+const [formData, setFormData] = useState<Work>({
     id: work?.id || '',
     inventoryNumber: work?.inventoryNumber || '',
     previousNumbers: work?.previousNumbers || '',
@@ -31,32 +32,17 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
     description: work?.description || '',
     signatureDetails: work?.signatureDetails || '',
     observations: work?.observations || '',
-    conservationState: work?.conservationState || { condition: '', integrity: '' },
     photoUrl: work?.photoUrl || '',
-    technicalData: work?.technicalData || {
-      provenance: '',
-      culture: '',
-      eraStyle: '',
-      value: '',
-      appraiser: '',
-      appraisalDate: work?.technicalData?.appraisalDate ? formatDate(work.technicalData.appraisalDate) : '',
-      originalOwner: ''
-    },
+    conservationState: work?.conservationState || { condition: '', integrity: '' },
+    technicalData: work?.technicalData || { provenance: '', culture: '', eraStyle: '', originalOwner: '' },
+    appraisal: work?.appraisal || { value: '', currency: '', appraiser: '', appraisalDate: '' },
     references: work?.references || { documents: '', bibliography: '', exhibitions: '', treatments: '' },
     storageLocation: work?.storageLocation || '',
-    collection: work?.collection || {
-      acquisitionSource: '',
-      acquisitionMethod: '',
-      entryDate: work?.collection?.entryDate ? formatDate(work.collection.entryDate) : ''
-    },
+    collection: work?.collection || { acquisitionSource: '', acquisitionMethod: '', entryDate: '' },
     responsibleEntity: work?.responsibleEntity || { name: '', address: '' },
-    inventory: work?.inventory || {
-      responsible: '',
-      date: work?.inventory?.date ? formatDate(work.inventory.date) : '',
-      supervisor: '',
-      supervisorDate: work?.inventory?.supervisorDate ? formatDate(work.inventory.supervisorDate) : ''
-    },
+    inventory: work?.inventory || { responsible: '', date: '', supervisor: '', supervisorDate: '' },
   });
+
 
   const [artists, setArtists] = useState<string[]>([]);
   const [classifications, setClassifications] = useState<string[]>([]);
@@ -120,28 +106,26 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    
-    // 1. Crear un objeto FormData
-    const data = new FormData();
+    const dataToSend = new FormData();
 
-    // 2. Adjuntar todos los campos del formulario al FormData
-    // FormData solo maneja strings, por lo que convertimos objetos a JSON
-    Object.entries(formData).forEach(([key, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        data.append(key, JSON.stringify(value));
+    for (const [key, value] of Object.entries(formData)) {
+      if (value === null || value === undefined) continue;
+
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        dataToSend.append(key, JSON.stringify(value));
       } else {
-        data.append(key, value as string);
+        dataToSend.append(key, String(value));
       }
-    });
+    }
 
-    // 3. Adjuntar el archivo de imagen si existe
     if (imageFile) {
-      // El nombre 'obr_url_foto' DEBE COINCIDIR con el que espera Multer en el backend
-      data.append('obr_url_foto', imageFile);
+      dataToSend.append('obr_url_foto', imageFile);
+    } else if (work?.photoUrl) {
+      dataToSend.append('photoUrl', work.photoUrl);
     }
     
-    // 4. Llamar a la función onSubmit del padre con los datos preparados
-    onSubmit(data, imageFile);
+    // ✅ CORRECCIÓN: La llamada ahora coincide con la nueva definición (solo un argumento).
+    onSubmit(dataToSend);
   };
 
   const inputClassName = "w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-2 focus:ring-[#192d71] transition-colors";
@@ -332,15 +316,15 @@ const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-[#192d71] mb-2">Valor / Moneda</label>
-                  <input type="text" name="technicalData.value" value={formData.technicalData?.value} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Ej: Bs. 15.000,00"/>
+                   <input type="text" name="appraisal.value" value={formData.appraisal?.value} onChange={handleInputChange} className={inputClassName} placeholder="Ej: Bs. 15.000,00"/>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-[#192d71] mb-2">Responsable de Avalúo</label>
-                  <input type="text" name="technicalData.appraiser" value={formData.technicalData?.appraiser} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Ej: Rafael Principal"/>
+                   <input type="text" name="appraisal.appraiser" value={formData.appraisal?.appraiser} onChange={handleInputChange} className={inputClassName} placeholder="Ej: Rafael Principal"/>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-[#192d71] mb-2">Fecha de Avalúo</label>
-                 <input type="date" name="technicalData.appraisalDate" value={formData.technicalData?.appraisalDate} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg"/>
+                  <input type="date" name="appraisal.appraisalDate" value={formatDate(formData.appraisal?.appraisalDate)} onChange={handleInputChange} className={inputClassName}/>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-bold text-[#192d71] mb-2">Propietario Original</label>

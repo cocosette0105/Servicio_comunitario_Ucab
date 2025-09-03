@@ -51,6 +51,7 @@ export class MovementController {
             type: data.his_tip_movimiento,
             reason: data.his_mov_motiv,
             notes: data.his_mov_notas,
+             userName: data.usuario_nombre,
             workDetails: {
                 author: data.autor_nombre || 'N/A',
                 title: data.obra_titulo || 'N/A',

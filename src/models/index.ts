@@ -48,14 +48,18 @@ export interface Work {
   
   // SECCIÓN: DATOS TÉCNICOS
   technicalData: {
-    provenance?: string;       // Procedencia
-    culture?: string;          // Cultura/Tradición
-    eraStyle?: string;         // Epoca /Estilo...
-    value?: string;            // Valor / Moneda
-    appraiser?: string;        // Responsable de avalúo
-    appraisalDate?: string;    // Fecha de avalúo
-    originalOwner?: string;    // Propietario Original
-    currency?: string;     // menda del avaluo
+    provenance?: string;
+    culture?: string;
+    eraStyle?: string;
+    originalOwner?: string;
+  };
+
+  // ✅ CORRECCIÓN: Se añade el objeto 'appraisal' que faltaba.
+  appraisal: {
+    value?: string;
+    currency?: string;
+    appraiser?: string;
+    appraisalDate?: string | Date;
   };
   
   // SECCIÓN: REFERENCIAS
@@ -138,6 +142,7 @@ export interface MovementRecord {
   type: 'entrada' | 'salida';
   reason: string;
   notes?: string;
+   userName: string;
   // Nuevos campos para detalles de la obra
   workDetails: {
     author: string;
@@ -175,5 +180,6 @@ export interface MaintenanceRecord {
   maintenanceCategory: 'Conservación preventiva' | 'Conservación curativa';
   interventionDescription: string;
   date: string;
+  userName: string;
   
 }

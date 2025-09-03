@@ -3,13 +3,16 @@
 // Permite crear, consultar, editar y generar reportes de intervenciones realizadas
 
 import React, { useState, useEffect } from 'react';
+// NUEVO: Importaciones para generar PDF con el mismo formato que reportes de obras
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logoSrc from '/logoblanco_negro.jpg';
 import html2canvas from 'html2canvas';
 import { 
-  Plus, Search, Filter, ChevronDown, Eye, Edit, Trash2, FileDown,
+  Plus, Search, User, Filter, ChevronDown, Eye, Edit, Trash2, FileDown,
   Palette, Hammer, Calendar, DollarSign, FileText, Wrench, X
 } from 'lucide-react';
-import { MaintenanceRecord, Work, User } from '../models';
+import { MaintenanceRecord, Work, User as AppUser } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
 // Importación de componentes de paginación para manejo responsive
 import Pagination from '../components/Pagination';
@@ -18,7 +21,7 @@ import { MaintenanceController } from '../controllers/MaintenanceController';
 
 // Define las propiedades que recibe la vista de historial de mantenimiento
 interface MaintenanceHistoryViewProps {
-  user: User;
+  user: AppUser;
   token: string;
   records: MaintenanceRecord[];
   works: Work[];
@@ -48,6 +51,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
   const [viewingRecord, setViewingRecord] = useState<MaintenanceRecord | null>(null);
   const [editingRecord, setEditingRecord] = useState<MaintenanceRecord | null>(null);
   const [loading, setLoading] = useState(false);
+  
 
   // Estados para filtros y búsqueda (igual que antes)
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +63,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
   const [workSearchTerm, setWorkSearchTerm] = useState('');
   const [showWorkDropdown, setShowWorkDropdown] = useState(false);
   const [selectedWorkForSearch, setSelectedWorkForSearch] = useState<Work | null>(null);
+  
   const [formData, setFormData] = useState<MaintenanceFormData>({
     workType: 'Pintura',
     workId: '',
@@ -162,18 +167,18 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
       workId: String(selectedWork.id), // ✅ guarda el ID interno
       author: selectedWork.artist,
       workName: selectedWork.name,
-      dimensions: [
-        selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm alto`,
-        selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm ancho`,
-        selectedWork.dimensions.depth && `${selectedWork.dimensions.depth}cm prof.`,
-        selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm diám.`
-      ].filter(Boolean).join(' × ') || 'No especificado',
+     dimensions: [
+  selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm alto`,
+  selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm ancho`,
+  selectedWork.dimensions.depth && `${selectedWork.dimensions.depth}cm prof.`,
+  selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm diám.`
+].filter(Boolean).join(' × ') || 'No especificado',
       technique: selectedWork.technique || 'No especificado',
       year: selectedWork.realizationDate || 'No especificado'
     }));
 
     setSelectedWorkForSearch(selectedWork);
-    setWorkSearchTerm(`${selectedWork.name} - ${selectedWork.artist}`);
+   setWorkSearchTerm(`${selectedWork.name} - ${selectedWork.artist}`);
     setShowWorkDropdown(false);
   } else {
     resetForm();
@@ -318,6 +323,52 @@ const handleEdit = (record: MaintenanceRecord) => {
     await PDFUtils.generateMaintenancePDF(record);
   };
 
+  // NUEVA FUNCIÓN: Exporta reporte de mantenimientos a PDF usando el mismo formato que reportes de obras
+  const exportMaintenanceReportToPDF = () => {
+  const doc = new jsPDF();
+  const MARGIN = 14;
+
+  // Encabezados de la tabla para el reporte de mantenimientos
+  const headers = [['Obra', 'Autor', 'Tipo', 'Categoría', 'Fecha', 'Precio', 'descripcion']];
+
+  // Datos de los mantenimientos filtrados para la tabla
+  const data = filteredRecords.map((record: MaintenanceRecord) => [
+    record.workName,
+    record.author,
+    record.workType,
+    record.maintenanceCategory,
+    new Date(record.date).toLocaleDateString('es-ES'),
+    record.currentPrice,
+    record.interventionDescription
+  ]);
+
+  autoTable(doc, {
+    startY: 30, // Espacio para el encabezado
+    head: headers,
+    body: data,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [12, 57, 102], textColor: 255, fontStyle: 'bold' },
+
+    // Hook para dibujar el encabezado en cada página
+    didDrawPage: (_data) => {
+      // Encabezado con logo y título
+      const LOGO_WIDTH = 30;
+      const LOGO_HEIGHT = 12;
+
+      doc.addImage(logoSrc, 'JPEG', MARGIN, MARGIN - 5, LOGO_WIDTH, LOGO_HEIGHT);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Reporte de Mantenimientos del Museo', MARGIN + LOGO_WIDTH + 5, MARGIN + 2);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+     doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, doc.internal.pageSize.getWidth() - MARGIN, MARGIN + 2, { align: 'right' });
+    },
+  });
+
+  // Guardar el PDF con nombre descriptivo
+  doc.save(`reporte_mantenimientos_${new Date().toISOString().split('T')[0]}.pdf`);
+};
+
   // Renderizado de la vista de historial de mantenimiento
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
@@ -347,6 +398,16 @@ const handleEdit = (record: MaintenanceRecord) => {
           </button>
           
           {/* Botón para agregar nuevo registro */}
+          {/* NUEVO: Botón para exportar reporte PDF de mantenimientos */}
+          <button
+            onClick={exportMaintenanceReportToPDF}
+            className="flex items-center justify-center sm:justify-start space-x-2 sm:space-x-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-sm sm:text-base"
+            title="Exportar reporte de mantenimientos"
+          >
+            <FileDown className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span>Exportar PDF</span>
+          </button>
+          
           <button
             onClick={() => {
               resetForm();
@@ -707,6 +768,13 @@ const handleEdit = (record: MaintenanceRecord) => {
                   ×
                 </button>
               </div>
+
+                {/* --- Bloque de Información del Usuario --- */}
+        <div className="mb-6 flex items-center text-sm text-gray-700 bg-blue-50 p-3 rounded-xl border border-blue-200">
+            <User className="w-5 h-5 mr-3 text-[#192d71]" />
+            <span className="font-semibold text-[#192d71]">Registrado por:</span>
+            <span className="ml-2">{viewingRecord.userName}</span>
+        </div>
 
               <div className="space-y-4 sm:space-y-6">
                 {/* Información de la obra */}
