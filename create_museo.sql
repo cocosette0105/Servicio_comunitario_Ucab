@@ -35,7 +35,6 @@ CREATE TABLE Obra (
     obr_profundidad_cm VARCHAR(255),
     obr_diametro_cm VARCHAR(255),
     obr_descripcion_formal TEXT,
-    obr_detalles_firma TEXT,
     obr_observaciones TEXT,
     obr_url_foto VARCHAR(500),
     obr_estado_condicion VARCHAR(100),
@@ -54,6 +53,13 @@ CREATE TABLE Obra (
     obr_fuente_adquisicion VARCHAR(255),
     obr_metodo_adquisicion VARCHAR(255),
     obr_entidad_responsable VARCHAR(255),
+    
+    -- Campos añadidos desde el formulario
+    obr_detalles_firma TEXT,
+    obr_exposiciones TEXT,
+    obr_tratamientos TEXT,
+
+    -- Claves Foráneas
     obr_cla_fk INT,
     obr_art_fk INT,
     obr_lu_fk INT,
@@ -61,6 +67,7 @@ CREATE TABLE Obra (
     FOREIGN KEY (obr_art_fk) REFERENCES Artista(art_id),
     FOREIGN KEY (obr_lu_fk) REFERENCES Lugar(lu_id)
 );
+
 
 -- MATERIAL
 CREATE TABLE Material (
@@ -144,20 +151,21 @@ CREATE TABLE Rol_Privilegio (
 
 -- HISTORIAL MOVIMIENTO
 CREATE TABLE Historial_movimiento (
+    -- ¡NUEVO! Se añade un ID único para cada movimiento.
     his_mov_id SERIAL PRIMARY KEY,
+
+    -- Se cambia el tipo de dato a TIMESTAMP para guardar la hora exacta.
     his_mov_fecha TIMESTAMP NOT NULL,
+
     his_tip_movimiento VARCHAR(100) NOT NULL,
     his_mov_motiv TEXT,
     his_mov_notas TEXT,
-    his_mov_coleccion VARCHAR(255),
-
-    
-    his_mov_descripcion_estado TEXT,
-
     his_mov_obr_id_fk INT NOT NULL,
     his_mov_envia_fk INT,
     his_mov_usu_id_fk INT NOT NULL,
     his_mov_recibe_fk INT,
+
+    -- Se eliminó la clave primaria compuesta que causaba el error.
     
     FOREIGN KEY (his_mov_obr_id_fk) REFERENCES Obra(obr_id),
     FOREIGN KEY (his_mov_envia_fk) REFERENCES Persona_externa(per_ext_id),
@@ -177,3 +185,32 @@ CREATE TABLE Historial_mantenimiento (
     FOREIGN KEY (his_man_obr_fk) REFERENCES Obra(obr_id),
     FOREIGN KEY (his_man_usu_fk) REFERENCES Usuario(usu_id)
 );
+
+
+CREATE TABLE Historial_Inventario (
+    -- ID único para cada registro de inventario.
+    his_inv_id SERIAL PRIMARY KEY,
+
+    -- Fecha en que se realizó el inventario.
+    his_inv_fecha DATE NOT NULL,
+
+    -- Nombre de la persona que realizó el inventario.
+    his_inv_responsable VARCHAR(255),
+
+    -- Nombre del supervisor que verificó el inventario.
+    his_inv_supervisor VARCHAR(255),
+
+    -- Fecha en que el supervisor realizó la verificación.
+    his_inv_fecha_supervisor DATE,
+
+    -- Clave foránea para vincular el registro con la obra correspondiente.
+    his_inv_obr_fk INT NOT NULL,
+
+    -- Clave foránea para saber qué usuario del sistema registró el inventario.
+    his_inv_usu_fk INT NOT NULL,
+
+    -- Definición de las restricciones de clave foránea.
+    FOREIGN KEY (his_inv_obr_fk) REFERENCES Obra(obr_id),
+    FOREIGN KEY (his_inv_usu_fk) REFERENCES Usuario(usu_id)
+);
+
