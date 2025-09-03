@@ -160,6 +160,8 @@ CREATE TABLE Historial_movimiento (
     his_tip_movimiento VARCHAR(100) NOT NULL,
     his_mov_motiv TEXT,
     his_mov_notas TEXT,
+    his_mov_coleccion VARCHAR(255), -- Nombre de la colección
+    his_mov_descripcion_estado TEXT, -- Descripción del estado de la obra
     his_mov_obr_id_fk INT NOT NULL,
     his_mov_envia_fk INT,
     his_mov_usu_id_fk INT NOT NULL,
