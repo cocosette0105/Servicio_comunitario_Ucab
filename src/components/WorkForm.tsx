@@ -7,7 +7,7 @@ import { getArtists, getClassifications, getMaterials, getTechniques } from '../
 
 interface WorkFormProps {
   work?: Work;
-  // ✅ CORRECCIÓN: onSubmit ahora solo espera FormData, que es más simple y correcto.
+ 
   onSubmit: (formData: FormData) => void;
   onCancel: () => void;
 }
@@ -15,6 +15,9 @@ interface WorkFormProps {
 // Función para formatear fechas a YYYY-MM-DD
 const formatDate = (date?: string | Date) =>
   date ? new Date(date).toISOString().split('T')[0] : '';
+
+const today = new Date().toISOString().split("T")[0];
+
 
 const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
 
@@ -35,12 +38,12 @@ const [formData, setFormData] = useState<Work>({
     photoUrl: work?.photoUrl || '',
     conservationState: work?.conservationState || { condition: '', integrity: '' },
     technicalData: work?.technicalData || { provenance: '', culture: '', eraStyle: '', originalOwner: '' },
-    appraisal: work?.appraisal || { value: '', currency: '', appraiser: '', appraisalDate: '' },
+    appraisal: work?.appraisal || { value: '', currency: '', appraiser: '', appraisalDate: today },
     references: work?.references || { documents: '', bibliography: '', exhibitions: '', treatments: '' },
     storageLocation: work?.storageLocation || '',
-    collection: work?.collection || { acquisitionSource: '', acquisitionMethod: '', entryDate: '' },
+    collection: work?.collection || { acquisitionSource: '', acquisitionMethod: '', entryDate: today },
     responsibleEntity: work?.responsibleEntity || { name: '', address: '' },
-    inventory: work?.inventory || { responsible: '', date: '', supervisor: '', supervisorDate: '' },
+     inventory: work?.inventory || { responsible: '', date: today, supervisor: '', supervisorDate: today },
   });
 
 
@@ -314,10 +317,30 @@ const [formData, setFormData] = useState<Work>({
                   <label className="block text-sm font-bold text-[#192d71] mb-2">Época / Estilo / Escuela</label>
                   <input type="text" name="technicalData.eraStyle" value={formData.technicalData?.eraStyle} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Ej: 1981"/>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-[#192d71] mb-2">Valor / Moneda</label>
-                   <input type="text" name="appraisal.value" value={formData.appraisal?.value} onChange={handleInputChange} className={inputClassName} placeholder="Ej: Bs. 15.000,00"/>
-                </div>
+               <div>
+  <label className="block text-sm font-bold text-[#192d71] mb-2">Valor de Avalúo</label>
+  <div className="flex space-x-2">
+    <input
+      type="number"
+      name="appraisal.value"
+      value={formData.appraisal?.value}
+      onChange={handleInputChange}
+      className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg"
+      placeholder="Ej: 15000"
+    />
+    <select
+      name="appraisal.currency"
+      value={formData.appraisal?.currency}
+      onChange={handleInputChange}
+      className="px-4 py-3 border border-[#192d71]/20 rounded-lg"
+    >
+      <option value="">Moneda</option>
+      <option value="VES">VES</option>
+      <option value="USD">USD</option>
+      <option value="EUR">EUR</option>
+    </select>
+  </div>
+</div>
                 <div>
                   <label className="block text-sm font-bold text-[#192d71] mb-2">Responsable de Avalúo</label>
                    <input type="text" name="appraisal.appraiser" value={formData.appraisal?.appraiser} onChange={handleInputChange} className={inputClassName} placeholder="Ej: Rafael Principal"/>
