@@ -182,7 +182,6 @@ CREATE TABLE Historial_mantenimiento (
     his_man_categoria VARCHAR(100),
     his_man_descripcion_intervencion TEXT,
     his_man_precio VARCHAR(250),
-    his_man_moneda VARCHAR(10), 
     his_man_obr_fk INT NOT NULL,
     his_man_usu_fk INT NOT NULL,
     FOREIGN KEY (his_man_obr_fk) REFERENCES Obra(obr_id),
