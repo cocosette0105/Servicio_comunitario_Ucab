@@ -1,19 +1,26 @@
-// backend/src/routes/external-persons.routes.ts
-// Rutas para la gestión de personas externas registradas en la base de datos
-
 import { Router } from 'express';
-import { getAllExternalPersons, deleteExternalPerson } from '../controllers/external-persons.controller';
+import { 
+    getAllExternalPersons, 
+    getDirectoryContacts,
+    toggleDirectoryStatus // <-- 1. Se importa la nueva función
+} from '../controllers/external-persons.controller';
 import { authenticateToken, authorize } from '../controllers/auth.controller';
 
 const router = Router();
 
-// Middleware de autenticación para todas las rutas de personas externas
 router.use(authenticateToken);
 
-// Ruta para obtener todas las personas externas
-// Requiere privilegio de lectura de historial de movimientos
-router.get('/', authorize('leer_historial_movimiento'), getAllExternalPersons); // ← única ruta GET (evita duplicados)
+// Ruta para obtener TODAS las personas externas (para autocompletados, etc.)
+router.get('/', authorize('leer_historial_movimiento'), getAllExternalPersons);
 
-router.delete('/:id', authorize('registrar_movimiento'), deleteExternalPerson);
+// Ruta para obtener solo los contactos guardados en el DIRECTORIO
+router.get('/directory', authorize('leer_historial_movimiento'), getDirectoryContacts);
+
+// ========================================================================
+// RUTA CORREGIDA
+// Esta ruta ahora usa el método PUT y apunta a la nueva función `toggleDirectoryStatus`.
+// Reemplaza la antigua ruta DELETE.
+// ========================================================================
+router.put('/:id/toggle-directory', authorize('registrar_movimiento'), toggleDirectoryStatus);
 
 export default router;

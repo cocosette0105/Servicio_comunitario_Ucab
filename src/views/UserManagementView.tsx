@@ -151,6 +151,18 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ user, users, on
 
       const apiData = mapToApiData(formData);
 
+       const usernameExists = localUsers.some(
+      u =>
+        u.username.toLowerCase() === formData.username.toLowerCase() &&
+        (!editingUser || u.id !== editingUser.id) // permite el mismo si está editando
+    );
+
+    if (usernameExists) {
+      toast.error('El nombre de usuario ya existe, elija otro.');
+      setIsLoading(false);
+      return;
+    }
+
       if (editingUser) {
         // Validación de permisos para editar
         // Un administrador no puede editar a un desarrollador. Solo el desarrollador puede editar a otros desarrolladores.
@@ -209,7 +221,8 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ user, users, on
       return;
     }
 
-    const isConfirmed = await showConfirmation('¿Está seguro de que desea eliminar este usuario?');
+   const isConfirmed = await showConfirmation(`¿Está seguro de que desea eliminar al usuario "${selectedUser.username}"? Esta acción no se puede deshacer.`);
+
     if (!isConfirmed) return;
     setIsLoading(true);
     try {
@@ -285,6 +298,15 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ user, users, on
     colaborador: 'bg-green-100 text-green-800',
   };
 
+
+const rolePrivileges: Record<UserFormData['role'], string> = {
+  desarrollador: 'Puede gestionar todo el sistema, incluidos otros desarrolladores.',
+  administrador: 'Gestiona usuarios, obras y reportes, excepto desarrolladores.',
+  supervisor: 'Puede crear, leer, actualizar y eliminar obras, además de generar reportes.',
+  colaborador: 'Solo puede registrar movimientos, mantenimientos y consultar información.',
+};
+
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       <Toaster position="top-center" reverseOrder={false} />
@@ -324,6 +346,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ user, users, on
               <input
                 type="text"
                 value={formData.fullName}
+                maxLength={255}
                 onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                 className="w-full px-4 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
                 required
@@ -334,6 +357,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ user, users, on
               <input
                 type="text"
                 value={formData.username}
+                maxLength={100} 
                 onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
                 className="w-full px-4 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
                 required
@@ -344,6 +368,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ user, users, on
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
+                 maxLength={255}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                 className="w-full px-4 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] pr-12 text-sm sm:text-base"
                 // La contraseña es opcional al editar, pero requerida al crear un nuevo usuario
@@ -373,6 +398,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = ({ user, users, on
                   return <option key={value} value={value}>{label}</option>;
                 })}
               </select>
+               <p className="text-xs text-gray-500 mt-1">{rolePrivileges[formData.role]}</p>
             </div>
             {/* Botones del formulario - Responsive */}
             <div className="md:col-span-2 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">

@@ -39,6 +39,7 @@ interface MaintenanceFormData {
   technique: string; // Técnica (autocompletado)
   year: string; // Año (autocompletado)
   currentPrice: string; // Precio actual
+  currency: string;  
   maintenanceCategory: MaintenanceRecord['maintenanceCategory']; // Categoría de mantenimiento
   interventionDescription: string; // Descripción de la intervención
   date: string; // Fecha del mantenimiento
@@ -63,6 +64,8 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
   const [workSearchTerm, setWorkSearchTerm] = useState('');
   const [showWorkDropdown, setShowWorkDropdown] = useState(false);
   const [selectedWorkForSearch, setSelectedWorkForSearch] = useState<Work | null>(null);
+
+  const getTodayDate = () => new Date().toISOString().split('T')[0];
   
   const [formData, setFormData] = useState<MaintenanceFormData>({
     workType: 'Pintura',
@@ -73,9 +76,10 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
     technique: '',
     year: '',
     currentPrice: '',
+     currency: 'Bs',
     maintenanceCategory: 'Conservación preventiva',
     interventionDescription: '',
-    date: ''
+    date: getTodayDate()
   });
 
 
@@ -219,12 +223,17 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
   try {
     setLoading(true);
 
+    const dataToSend = {
+  ...formData,
+  currentPrice: `${formData.currentPrice}${formData.currency}`
+};
+
     if (editingRecord) {
       // Actualizar registro existente
-      await MaintenanceController.updateMaintenanceRecord(editingRecord.id, formData);
+      await MaintenanceController.updateMaintenanceRecord(editingRecord.id, dataToSend);
     } else {
       // Crear nuevo registro
-      await MaintenanceController.addMaintenanceRecord(formData);
+      await MaintenanceController.addMaintenanceRecord(dataToSend);
     }
 
     // 🔄 Vuelvo a cargar todos los registros desde el servidor
@@ -255,6 +264,7 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
       technique: '',
       year: '',
       currentPrice: '',
+      currency: 'Bs',
       maintenanceCategory: 'Conservación preventiva',
       interventionDescription: '',
       date: ''
@@ -270,6 +280,17 @@ const MaintenanceHistoryView: React.FC<MaintenanceHistoryViewProps> = ({ user, t
 const handleEdit = (record: MaintenanceRecord) => {
   const formattedDate = record.date ? new Date(record.date).toISOString().split('T')[0] : '';
 
+  let priceValue = '';
+  let currencyValue = 'Bs';
+
+  if (record.currentPrice) {
+    const match = record.currentPrice.match(/^(\d+(?:\.\d+)?)([A-Za-z]+)$/);
+    if (match) {
+      priceValue = match[1];
+      currencyValue = match[2];
+    }
+  }
+
   setFormData({
     workType: record.workType,
     workId: record.workId,
@@ -278,13 +299,15 @@ const handleEdit = (record: MaintenanceRecord) => {
     dimensions: record.dimensions,
     technique: record.technique,
     year: record.year,
-    currentPrice: record.currentPrice, 
+    currentPrice: priceValue,   // ✅ ahora sólo el número
+    currency: currencyValue,    // ✅ moneda separada
     maintenanceCategory: record.maintenanceCategory,
     interventionDescription: record.interventionDescription,
     date: formattedDate
   });
 
-  const workInEdit = works.find(work => work.inventoryNumber === record.workId);
+  // ✅ ahora busca por id
+  const workInEdit = works.find(work => String(work.id) === String(record.workId));
   if (workInEdit) {
     setSelectedWorkForSearch(workInEdit);
     setWorkSearchTerm(`${workInEdit.name} - ${workInEdit.artist}`);
@@ -671,17 +694,33 @@ const handleEdit = (record: MaintenanceRecord) => {
                 <div>
                   <label className="block text-xs sm:text-sm font-bold text-[#192d71] mb-2 sm:mb-3 flex items-center">
                     <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    Precio Actual (Bs.) *
+                    Precio Actual  *
                   </label>
                   <input
-                    type="text"
-                    value={formData.currentPrice}
-                    onChange={(e) => setFormData(prev => ({ ...prev, currentPrice: e.target.value }))}
-                    className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
-                    placeholder="Ej: Bs. 50.000,00"
-                    required
-                  />
-                </div>
+                   type="number"
+      min="0"
+      step="0.01"
+      value={formData.currentPrice}
+      onChange={(e) =>
+        setFormData(prev => ({ ...prev, currentPrice: e.target.value }))
+      }
+      className="flex-1 px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-white text-[#192d71] text-sm sm:text-base"
+      placeholder="Ej: 2000"
+      required
+    />
+    <select
+      value={formData.currency}
+      onChange={(e) =>
+        setFormData(prev => ({ ...prev, currency: e.target.value }))
+      }
+      className="px-3 py-3 border-2 border-[#192d71]/20 rounded-xl bg-white text-[#192d71] text-sm"
+    >
+      <option value="Bs">Bs</option>
+      <option value="USD">USD</option>
+      <option value="EUR">EUR</option>
+    </select>
+  </div>
+
 
                 {/* Selector categoría de mantenimiento */}
                 <div>

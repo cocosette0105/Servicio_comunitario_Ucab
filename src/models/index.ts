@@ -134,6 +134,15 @@ export interface UserFormData {
   role: 'administrador' | 'supervisor' | 'colaborador' | 'desarrollador';
 }
 
+export interface Person {
+    id: number;
+    name: string;
+    idCard: string;
+    phone: string;
+    agregado_directorio: boolean; // <-- AÑADIR ESTE CAMPO
+}
+
+
 export interface MovementRecord {
   id: string;
   workId: string;
@@ -154,17 +163,9 @@ export interface MovementRecord {
   // Nuevo campo para estado de conservación
   conservationState: string;
   // Información de quien recibe la obra
-  receiver: {
-    name: string;
-    idCard: string;
-    phone: string;
-  };
-  // Información de quien entrega la obra
-  deliverer: {
-    name: string;
-    idCard: string;
-    phone: string;
-  };
+   receiver: Person | null; // Puede ser nulo
+  deliverer: Person | null; // Puede ser nulo
+
 }
 
 export interface MaintenanceRecord {

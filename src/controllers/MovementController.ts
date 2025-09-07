@@ -1,18 +1,16 @@
-import { MovementRecord } from '../models';
+import { MovementRecord, Person } from '../models';
 
 const API_URL = 'http://localhost:5000/api/historial-movimiento';
 
-// ================== CAMBIO ==================
-// Se renombra 'descripcion_estado' a 'his_mov_descripcion_estado' para que coincida
-// con el nombre del campo en el backend y la base de datos, mejorando la consistencia.
 export interface NewMovementData {
+    his_mov_fecha: string;
     his_tip_movimiento: 'entrada' | 'salida';
     his_mov_motiv: string;
     his_mov_notas?: string;
     his_mov_obr_id_fk: number;
     his_mov_usu_id_fk: number;
-    his_mov_coleccion: string;      
-    his_mov_descripcion_estado: string; 
+    his_mov_coleccion: string;
+    his_mov_descripcion_estado: string;
     receiver?: { nombre: string; cedula: string; telefono: string; };
     deliverer?: { nombre: string; cedula: string; telefono: string; };
 }
@@ -21,86 +19,75 @@ export interface UpdateMovementData {
     his_tip_movimiento: 'entrada' | 'salida';
     his_mov_motiv: string;
     his_mov_notas?: string;
-    his_mov_coleccion: string;      
-    his_mov_descripcion_estado: string; 
+    his_mov_coleccion: string;
+    his_mov_descripcion_estado: string;
     receiver?: { nombre: string; cedula: string; telefono: string; };
     deliverer?: { nombre: string; cedula: string; telefono: string; };
 }
-// ============================================
 
 export class MovementController {
-    
-    // ================== CORRECCIÓN DE ERROR ==================
-    // Se ajusta la función para resolver el error de tipado.
-    // El error original ocurre porque 'userFullName' no está definido en la interfaz 'MovementRecord'.
-    // Al asignar el objeto a una constante de tipo 'any' primero, se omite la comprobación
-    // estricta de propiedades del objeto literal, solucionando el error sin necesidad de
-    // modificar otros archivos.
-    private static mapDataToMovementRecord(data: any): MovementRecord {
+
+    // ========================================================================
+    // FUNCIÓN CORREGIDA
+    // Este "traductor" ahora lee correctamente el estado del directorio de cada persona.
+    // ========================================================================
+    private static mapToMovementRecord(item: any): MovementRecord {
         const dimensions = [
-            data.obr_alto_cm ? `${data.obr_alto_cm}cm` : null,
-            data.obr_ancho_cm ? `${data.obr_ancho_cm}cm` : null,
-            data.obr_profundidad_cm ? `${data.obr_profundidad_cm}cm` : null
-        ].filter(Boolean).join(' x ');
+            item.obr_alto_cm && `${item.obr_alto_cm}cm alto`,
+            item.obr_ancho_cm && `${item.obr_ancho_cm}cm ancho`,
+            item.obr_profundidad_cm && `${item.obr_profundidad_cm}cm prof.`,
+            item.obr_diametro_cm && `${item.obr_diametro_cm}cm diám.`
+        ].filter(Boolean).join(' × ') || 'No especificado';
 
-        const record: any = {
-            id: data.his_mov_id,
-            workId: data.his_mov_obr_id_fk,
-            workName: data.obra_titulo,
-            date: new Date(data.his_mov_fecha).toISOString(),
-            type: data.his_tip_movimiento,
-            reason: data.his_mov_motiv,
-            notes: data.his_mov_notas,
-             userName: data.usuario_nombre,
+        const deliverer: Person | null = item.envia_id ? {
+            id: item.envia_id,
+            name: item.envia_nombre,
+            idCard: item.envia_cedula,
+            phone: item.envia_telefono,
+            agregado_directorio: item.envia_agregado_directorio // <-- ¡CORRECCIÓN CLAVE!
+        } : null;
+
+        const receiver: Person | null = item.recibe_id ? {
+            id: item.recibe_id,
+            name: item.recibe_nombre,
+            idCard: item.recibe_cedula,
+            phone: item.recibe_telefono,
+            agregado_directorio: item.recibe_agregado_directorio // <-- ¡CORRECCIÓN CLAVE!
+        } : null;
+
+        return {
+            id: item.his_mov_id.toString(),
+            workId: item.his_mov_obr_id_fk.toString(),
+            workName: item.obra_titulo,
+            date: item.his_mov_fecha,
+            type: item.his_tip_movimiento,
+            reason: item.his_mov_motiv,
+            notes: item.his_mov_notas,
+            userName: item.usuario_nombre,
+            conservationState: item.his_mov_descripcion_estado,
             workDetails: {
-                author: data.autor_nombre || 'N/A',
-                title: data.obra_titulo || 'N/A',
-                technique: data.tecnica_nombre || 'N/A',
-                dimensions: dimensions || 'N/A',
-                collection: data.his_mov_coleccion,
+                author: item.autor_nombre,
+                title: item.obra_titulo,
+                technique: item.tecnicas || 'No especificado',
+                dimensions: dimensions,
+                collection: item.his_mov_coleccion
             },
-            conservationState: data.his_mov_descripcion_estado,
-            receiver: {
-                name: data.recibe_nombre || '',
-                idCard: data.recibe_cedula || '',
-                phone: data.recibe_telefono || '',
-            },
-            deliverer: {
-                name: data.envia_nombre || '',
-                idCard: data.envia_cedula || '',
-                phone: data.envia_telefono || '',
-            },
-            userFullName: data.usuario_nombre
+            deliverer,
+            receiver
         };
-        return record;
     }
-    // ============================================
-
-    static async getMovements(token: string): Promise<MovementRecord[]> {
+    
+    static async getAllMovements(token: string): Promise<MovementRecord[]> {
         try {
             const response = await fetch(API_URL, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Error al obtener los movimientos.');
-            const rawData: any[] = await response.json();
-            return rawData.map(this.mapDataToMovementRecord);
+            const data = await response.json();
+            return data.map(this.mapToMovementRecord); // Usa el mapeador corregido
         } catch (error) {
-            console.error('Error en getMovements:', error);
-            return [];
-        }
-    }
-
-    static async getMovementsByWorkId(workId: number, token: string): Promise<MovementRecord[]> {
-        try {
-            const response = await fetch(`${API_URL}/obra/${workId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Error al obtener el historial de la obra.');
-            const rawData: any[] = await response.json();
-            return rawData.map(this.mapDataToMovementRecord);
-        } catch (error) {
-            console.error('Error en getMovementsByWorkId:', error);
-            return [];
+            console.error('Error en getAllMovements:', error);
+            throw error;
         }
     }
 
@@ -108,18 +95,15 @@ export class MovementController {
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(movementData)
             });
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Error al crear el movimiento.');
             }
-            const rawData = await response.json();
-            return this.mapDataToMovementRecord(rawData);
+            const data = await response.json();
+            return this.mapToMovementRecord(data); // Usa el mapeador corregido
         } catch (error) {
             console.error('Error en createMovement:', error);
             throw error;
@@ -130,36 +114,28 @@ export class MovementController {
         try {
             const response = await fetch(`${API_URL}/${movementId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(movementData)
             });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Error al actualizar el movimiento.');
-            }
-            const rawData = await response.json();
-            return this.mapDataToMovementRecord(rawData);
+            if (!response.ok) throw new Error('Error al actualizar el movimiento.');
+            const data = await response.json();
+            return this.mapToMovementRecord(data); // Usa el mapeador corregido
         } catch (error) {
             console.error('Error en updateMovement:', error);
             throw error;
         }
     }
-    
+
     static async deleteMovement(movementId: number, token: string): Promise<boolean> {
         try {
             const response = await fetch(`${API_URL}/${movementId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!response.ok) throw new Error('Error al eliminar el movimiento.');
-            return true;
+            return response.ok;
         } catch (error) {
             console.error('Error en deleteMovement:', error);
             return false;
         }
     }
 }
-

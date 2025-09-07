@@ -2,20 +2,22 @@
 // Vista de presentación para la gestión de movimientos de obras (entradas y salidas)
 // Permite registrar, consultar, editar y generar reportes de movimientos con paginación responsive
 //frontend/src/views/MovementHistoryView.tsx
+// VISTA DE HISTORIAL DE MOVIMIENTOS
+// Vista de presentación para la gestión de movimientos de obras (entradas y salidas)
+// Permite registrar, consultar, editar y generar reportes de movimientos con paginación responsive
+//frontend/src/views/MovementHistoryView.tsx
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, ChevronDown, Download, Edit, Eye, Trash2, X, ArrowDownCircle, ArrowUpCircle, User, Users } from 'lucide-react';
+import { Plus, Search, Filter, ChevronDown, Download, Edit, Eye, Trash2, X, ArrowDownCircle, ArrowUpCircle, User, Users, Star, XCircle } from 'lucide-react';
 
 import Pagination from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
-import { MovementRecord, Work, User as AppUser } from '../models';
+import { MovementRecord, Work, User as AppUser, Person } from '../models'; // Se importa 'Person'
 import { PDFUtils } from '../utils/pdfUtils';
 import { MovementController, NewMovementData, UpdateMovementData } from '../controllers/MovementController';
 import { ExternalPersonsService } from '../services/externalPersonsService';
 import { AuthController } from '../controllers/AuthController';
-// NUEVA IMPORTACIÓN: jsPDF y autoTable para generar PDF de reporte de movimientos
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-// NUEVA IMPORTACIÓN: Logo para el encabezado del PDF
 import logoSrc from '/logoblanco_negro.jpg';
 
 interface MovementHistoryViewProps {
@@ -25,7 +27,7 @@ interface MovementHistoryViewProps {
 }
 
 interface MovementFormData {
-    workId: string; // Este es el inventoryNumber
+    workId: string;
     date: string;
     type: 'entrada' | 'salida';
     reason: string;
@@ -38,7 +40,7 @@ interface MovementFormData {
 
 const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, token }) => {
     const [records, setRecords] = useState<MovementRecord[]>([]);
-    const [selectedWorkId, setSelectedWorkId] = useState<number | null>(null); // ID numérico para el backend
+    const [selectedWorkId, setSelectedWorkId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
@@ -50,12 +52,12 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
     const [workSearchTerm, setWorkSearchTerm] = useState('');
     const [showWorkDropdown, setShowWorkDropdown] = useState(false);
     const [dateFilter, setDateFilter] = useState('');
+    const [cedulaError, setCedulaError] = useState('');
 
-    // NUEVOS ESTADOS PARA VISUALIZAR PERSONAS EXTERNAS
-    const [showExternalPersons, setShowExternalPersons] = useState(false); // Controla la visibilidad del modal
-    const [externalPersons, setExternalPersons] = useState<any[]>([]); // Lista de personas de la BD
-    const [loadingPersons, setLoadingPersons] = useState(false); // Estado de carga para personas
-    const [personType, setPersonType] = useState<'receiver' | 'deliverer'>('receiver'); // Tipo de modal
+    const [showExternalPersons, setShowExternalPersons] = useState(false);
+    const [externalPersons, setExternalPersons] = useState<any[]>([]);
+    const [loadingPersons, setLoadingPersons] = useState(false);
+    const [personType, setPersonType] = useState<'receiver' | 'deliverer'>('receiver');
 
     const initialFormData: MovementFormData = {
         workId: '',
@@ -87,7 +89,7 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
             setIsLoading(true);
             setError(null);
             try {
-                const movements = await MovementController.getMovements(token);
+                const movements = await MovementController.getAllMovements(token);
                 setRecords(movements);
             } catch (err) {
                 setError('No se pudieron cargar los movimientos.');
@@ -99,22 +101,79 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
         fetchMovements();
     }, [token]);
 
+    // ========================================================================
+    // LÓGICA CORREGIDA PARA EL DIRECTORIO
+    // ========================================================================
+    const handleToggleDirectory = async (personId: number) => {
+        try {
+            const response = await ExternalPersonsService.toggleDirectoryStatus(personId, token);
+    
+            const updatePersonStatus = (person: Person | null): Person | null => {
+                if (person && person.id === personId) {
+                    return { ...person, agregado_directorio: response.newStatus };
+                }
+                return person;
+            };
+    
+            const updatedRecords = records.map(rec => ({
+                ...rec,
+                deliverer: updatePersonStatus(rec.deliverer),
+                receiver: updatePersonStatus(rec.receiver),
+            }));
+            setRecords(updatedRecords);
+    
+            if (viewingRecord) {
+                setViewingRecord(prev => prev ? {
+                    ...prev,
+                    deliverer: updatePersonStatus(prev.deliverer),
+                    receiver: updatePersonStatus(prev.receiver),
+                } : null);
+            }
+    
+        } catch (error) {
+            console.error("Error al cambiar el estado del directorio:", error);
+            alert("Ocurrió un error al actualizar el contacto.");
+        }
+    };
+
+
+     const handleRemoveFromDirectory = async (personId: number) => {
+        if (window.confirm('¿Estás seguro de que quieres quitar a esta persona del directorio?')) {
+            try {
+                // Se reutiliza la misma función, ya que 'toggle' la quitará si ya está agregada.
+                await handleToggleDirectory(personId); 
+                // Se actualiza la lista del modal para que la persona desaparezca al instante.
+                setExternalPersons(currentPersons => currentPersons.filter(p => p.id !== personId));
+            } catch (error) {
+                alert('Ocurrió un error al quitar a la persona del directorio.');
+            }
+        }
+    };
+
+    // ========================================================================
+    // FIN DE LA LÓGICA CORREGIDA
+    // ========================================================================
+
     const filteredRecords = records.filter(record => {
-        const searchString = `${record.workName} ${record.workDetails?.author} ${record.reason}`.toLowerCase();
-        const matchesSearch = searchString.includes(searchTerm.toLowerCase());
+        const searchString = `${record.workName} ${record.workDetails?.author ?? ''} ${record.reason}`.toLowerCase();
+        const receiverString = record.receiver?.name.toLowerCase() ?? '';
+        const delivererString = record.deliverer?.name.toLowerCase() ?? '';
+
+        const matchesSearch = searchString.includes(searchTerm.toLowerCase()) || 
+                              receiverString.includes(searchTerm.toLowerCase()) ||
+                              delivererString.includes(searchTerm.toLowerCase());
+                              
         const matchesType = typeFilter === 'all' || record.type === typeFilter;
         const matchesDate = !dateFilter || new Date(record.date).toISOString().startsWith(dateFilter);
         return matchesSearch && matchesType && matchesDate;
     });
 
-    const { 
-        paginatedItems: paginatedRecords, 
-        currentPage, 
-        totalPages, 
-        goToPage, 
-        nextPage, 
-        prevPage 
-    } = usePagination(filteredRecords, { itemsPerPage: 4 });
+    const {
+        paginatedItems: paginatedRecords,
+        currentPage,
+        totalPages,
+        goToPage,
+    } = usePagination(filteredRecords, { itemsPerPage: 6 });
 
     // --- MANEJADORES DE EVENTOS ---
 
@@ -126,12 +185,12 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
             setSelectedWorkId(null);
         }
     };
-    
+
     const clearWorkSelection = () => {
         setWorkSearchTerm('');
         setSelectedWorkId(null);
         setShowWorkDropdown(false);
-        setFormData(prev => ({...prev, workId: '', workDetails: initialFormData.workDetails}));
+        setFormData(prev => ({ ...prev, workId: '', workDetails: initialFormData.workDetails }));
     };
 
     const handleWorkSelection = (inventoryNumber: string) => {
@@ -140,8 +199,6 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
         if (selectedWork) {
             setSelectedWorkId(parseInt(selectedWork.id, 10));
 
-            // --- ¡NUEVO! ---
-            // Formateamos las dimensiones a partir del objeto 'Work' que ya tenemos en el frontend.
             const dimensions = [
                 selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm alto`,
                 selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm ancho`,
@@ -149,8 +206,6 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
                 selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm diám.`
             ].filter(Boolean).join(' × ') || 'No especificado';
 
-            // *** CORRECCIÓN CLAVE AQUÍ ***
-            // Actualizamos el estado del formulario con la técnica y las dimensiones formateadas.
             setFormData(prev => ({
                 ...prev,
                 workId: inventoryNumber,
@@ -159,21 +214,20 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
                     title: selectedWork.name,
                     technique: selectedWork.technique || 'No especificado',
                     dimensions: dimensions,
-                    collection: 'Colección General' // Puedes ajustar este valor si lo tienes
+                    collection: 'Colección General'
                 }
             }));
-            
+
             setWorkSearchTerm(`${selectedWork.name} - ${selectedWork.artist}`);
             setShowWorkDropdown(false);
         } else {
-            // Lógica para limpiar el formulario si se deselecciona
             setSelectedWorkId(null);
             const { workId, workDetails, ...rest } = initialFormData;
             setFormData(prev => ({ ...prev, workId: '', workDetails: initialFormData.workDetails }));
             setWorkSearchTerm('');
         }
     };
-    
+
     const handleWorkSearchSelection = (work: Work) => {
         handleWorkSelection(work.inventoryNumber);
     };
@@ -191,86 +245,87 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
         if (!token) { setError('Error de autenticación.'); return; }
         if (!selectedWorkId) { setError('Por favor, seleccione una obra de la lista.'); return; }
 
-const newMovementData: NewMovementData = {
-    his_mov_obr_id_fk: selectedWorkId,
-    his_mov_usu_id_fk: user.id,
-    his_tip_movimiento: formData.type,
-    his_mov_motiv: formData.reason,
-    his_mov_notas: formData.notes,
-    his_mov_coleccion: formData.workDetails.collection,          // ⬅️ Colección
-    his_mov_descripcion_estado: formData.conservationState,      // ⬅️ Estado de conservación
-    receiver: { nombre: formData.receiver.name, cedula: formData.receiver.idCard, telefono: formData.receiver.phone },
-    deliverer: { nombre: formData.deliverer.name, cedula: formData.deliverer.idCard, telefono: formData.deliverer.phone }
-};
+        const newMovementData: NewMovementData = {
+            his_mov_fecha: formData.date,
+            his_mov_obr_id_fk: selectedWorkId,
+            his_mov_usu_id_fk: user.id,
+            his_tip_movimiento: formData.type,
+            his_mov_motiv: formData.reason,
+            his_mov_notas: formData.notes,
+            his_mov_coleccion: formData.workDetails.collection,
+            his_mov_descripcion_estado: formData.conservationState,
+            receiver: { nombre: formData.receiver.name, cedula: formData.receiver.idCard, telefono: formData.receiver.phone },
+            deliverer: { nombre: formData.deliverer.name, cedula: formData.deliverer.idCard, telefono: formData.deliverer.phone }
+        };
         setIsLoading(true);
         setError(null);
         try {
             await MovementController.createMovement(newMovementData, token);
-            const updatedMovements = await MovementController.getMovements(token);
+            const updatedMovements = await MovementController.getAllMovements(token);
             setRecords(updatedMovements);
             setShowForm(false);
             resetForm();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Ocurrió un error desconocido.');
-        } finally {
-            setIsLoading(false);
+        } catch (error) {
+            console.error('Error al guardar el movimiento:', error);
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError('Ocurrió un error inesperado. Por favor, intente de nuevo.');
+            }
         }
     };
 
-   const handleEdit = (record: MovementRecord) => {
-    const selectedWork = works.find(work => work.id === record.workId); // busca por id interno
-    if (!selectedWork) return;
+      const handleEdit = (record: MovementRecord) => {
+        // Se asegura de que los detalles de la obra existan
+        if (!record.workDetails) {
+            alert("Faltan detalles de la obra en este registro para poder editar.");
+            return;
+        }
 
-    setFormData({
-        workId: selectedWork.inventoryNumber, // <-- aquí usamos inventoryNumber
-        date: new Date(record.date).toISOString().split('T')[0],
-        type: record.type,
-        reason: record.reason,
-        notes: record.notes || '',
-        workDetails: selectedWork ? {
-            author: selectedWork.artist,
-            title: selectedWork.name,
-            technique: selectedWork.technique || 'No especificado',
-            dimensions: [
-                selectedWork.dimensions.height && `${selectedWork.dimensions.height}cm alto`,
-                selectedWork.dimensions.width && `${selectedWork.dimensions.width}cm ancho`,
-                selectedWork.dimensions.depth && `${selectedWork.dimensions.depth}cm prof.`,
-                selectedWork.dimensions.diameter && `${selectedWork.dimensions.diameter}cm diám.`
-            ].filter(Boolean).join(' × ') || 'No especificado',
-            collection: 'Colección General'
-        } : initialFormData.workDetails,
-        conservationState: record.conservationState,
-        receiver: record.receiver,
-        deliverer: record.deliverer
-    });
+        // 1. Llenar el formulario con los datos del registro
+        setFormData({
+            workId: record.workId, // Guardamos el ID real en el formulario
+            date: new Date(record.date).toISOString().split('T')[0],
+            type: record.type,
+            reason: record.reason,
+            notes: record.notes || '',
+            workDetails: record.workDetails,
+            conservationState: record.conservationState,
+            receiver: record.receiver ?? { name: '', idCard: '', phone: '' },
+            deliverer: record.deliverer ?? { name: '', idCard: '', phone: '' }
+        });
 
-    setEditingRecord(record);
-    setSelectedWorkId(parseInt(selectedWork.id, 10));
-    setWorkSearchTerm(`${selectedWork.name} - ${selectedWork.artist}`);
-    setShowForm(true);
-};
-
+        // 2. Establecer el ID de la obra y el registro que se está editando
+        setSelectedWorkId(parseInt(record.workId, 10));
+        setEditingRecord(record);
+        
+        // 3. ¡CORRECCIÓN CLAVE! Establecer el texto que se ve en el input de búsqueda.
+        setWorkSearchTerm(`${record.workDetails.title} - ${record.workDetails.author}`);
+        
+        // 4. Abrir el formulario
+        setShowForm(true);
+    };
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingRecord || !selectedWorkId || !token) return;
 
-       const movementData: UpdateMovementData = {
-    his_tip_movimiento: formData.type,
-    his_mov_motiv: formData.reason,
-    his_mov_notas: formData.notes,
-    his_mov_coleccion: formData.workDetails.collection,          // ⬅️ Colección
-    his_mov_descripcion_estado: formData.conservationState,      // ⬅️ Estado de conservación
-    receiver: { nombre: formData.receiver.name, cedula: formData.receiver.idCard, telefono: formData.receiver.phone },
-    deliverer: { nombre: formData.deliverer.name, cedula: formData.deliverer.idCard, telefono: formData.deliverer.phone }
-};
+        const movementData: UpdateMovementData = {
+            his_tip_movimiento: formData.type,
+            his_mov_motiv: formData.reason,
+            his_mov_notas: formData.notes,
+            his_mov_coleccion: formData.workDetails.collection,
+            his_mov_descripcion_estado: formData.conservationState,
+            receiver: { nombre: formData.receiver.name, cedula: formData.receiver.idCard, telefono: formData.receiver.phone },
+            deliverer: { nombre: formData.deliverer.name, cedula: formData.deliverer.idCard, telefono: formData.deliverer.phone }
+        };
 
 
         setIsLoading(true);
         setError(null);
         try {
             await MovementController.updateMovement(parseInt(editingRecord.id, 10), movementData, token);
-            const updatedMovements = await MovementController.getMovements(token);
+            const updatedMovements = await MovementController.getAllMovements(token);
             setRecords(updatedMovements);
             setShowForm(false);
             resetForm();
@@ -297,51 +352,23 @@ const newMovementData: NewMovementData = {
         }
     };
 
-    const handleDeletePerson = async (personId: number) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar a esta persona? Esta acción no se puede deshacer.')) {
-        try {
-            const success = await ExternalPersonsService.deleteExternalPerson(personId, token);
-            if (success) {
-                // Actualiza el estado para remover a la persona de la lista sin recargar la página
-                setExternalPersons(currentPersons => currentPersons.filter(p => p.per_ext_id !== personId));
-                alert('Persona eliminada exitosamente.');
-            } else {
-                alert('Error: No se pudo eliminar a la persona.');
-            }
-        } catch (error) {
-            console.error('Error al eliminar persona:', error);
-            alert('Ocurrió un error en el servidor.');
-        }
-    }
-};
-
     const generatePDF = async (record: MovementRecord) => {
         await PDFUtils.generateMovementPDF(record);
     };
-    
+
     const clearFilters = () => {
         setTypeFilter('all');
         setDateFilter('');
         setSearchTerm('');
     };
 
-    // NUEVA FUNCIÓN PARA CARGAR PERSONAS EXTERNAS
     const loadExternalPersons = async () => {
         setLoadingPersons(true);
         try {
-            console.log('Cargando personas externas...');
-            
             const token = AuthController.getToken();
-            console.log(' Token obtenido:', token ? 'Sí' : 'No');
+            if (!token) throw new Error('No se encontró el token de autenticación');
             
-            if (!token) {
-                console.error('No se encontró el token de autenticación');
-                throw new Error('No se encontró el token de autenticación');
-            }
-            
-            console.log('Llamando a la API...');
-            const persons = await ExternalPersonsService.getAllExternalPersons(token);
-            console.log('Personas recibidas:', persons);
+            const persons = await ExternalPersonsService.getDirectoryContacts(token);
             
             const mappedPersons = persons.map(person => ({
                 id: person.per_ext_id,
@@ -350,16 +377,14 @@ const newMovementData: NewMovementData = {
                 telefono: person.per_ext_telefono
             }));
             
-            console.log(' Personas mapeadas:', mappedPersons);
             setExternalPersons(mappedPersons);
         } catch (err) {
-            console.error(' Error cargando personas:', err);
+            console.error('Error cargando personas del directorio:', err);
         } finally {
             setLoadingPersons(false);
         }
     };
 
-    // NUEVA FUNCIÓN PARA SELECCIONAR UNA PERSONA DEL DIRECTORIO
     const selectPersonFromDirectory = (person: any) => {
         if (personType === 'receiver') {
             setFormData(prev => ({
@@ -383,48 +408,64 @@ const newMovementData: NewMovementData = {
         setShowExternalPersons(false);
     };
 
-  // NUEVA FUNCIÓN: Exporta los movimientos filtrados a PDF 
-  
-  const exportMovementsToPDF = () => {
-    const doc = new jsPDF();
-    const MARGIN = 14; 
-    const headers = [['Obra', 'Autor', 'Tipo', 'Fecha', 'Receptor', 'Entregador', 'Motivo']];
+    const exportMovementsToPDF = () => {
+        const doc = new jsPDF();
+        const MARGIN = 14;
+        const headers = [['Obra', 'Autor', 'Tipo', 'Fecha', 'Receptor', 'Entregador', 'Motivo']];
 
-    // FIX: Changed filteredMovements to filteredRecords and added type to movement
-    const data = filteredRecords.map((movement: MovementRecord) => [
-      movement.workDetails.title || 'N/A',
-      movement.workDetails.author || 'N/A', 
-      movement.type === 'entrada' ? 'Entrada' : 'Salida',
-      new Date(movement.date).toLocaleDateString('es-ES'),
-      movement.receiver.name || 'N/A',
-      movement.deliverer.name || 'N/A',
-      movement.reason || 'N/A'
-    ]);
+        const data = filteredRecords.map((movement: MovementRecord) => [
+            movement.workDetails?.title || 'N/A',
+            movement.workDetails?.author || 'N/A',
+            movement.type === 'entrada' ? 'Entrada' : 'Salida',
+            new Date(movement.date).toLocaleDateString('es-ES'),
+            movement.receiver?.name || 'N/A',
+            movement.deliverer?.name || 'N/A',
+            movement.reason || 'N/A'
+        ]);
 
-    autoTable(doc, {
-      startY: 30,
-      head: headers,
-      body: data,
-      styles: { fontSize: 8, cellPadding: 2 }, 
-      headStyles: { fillColor: [12, 57, 102], textColor: 255, fontStyle: 'bold' },
-      didDrawPage: (data) => {
-        const LOGO_WIDTH = 30;
-        const LOGO_HEIGHT = 12;
-        doc.addImage(logoSrc, 'JPEG', MARGIN, MARGIN - 5, LOGO_WIDTH, LOGO_HEIGHT);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Reporte de Movimientos del Museo', MARGIN + LOGO_WIDTH + 5, MARGIN + 2);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, doc.internal.pageSize.getWidth() - MARGIN, MARGIN + 2, { align: 'right' });
-      },
-    });
+        autoTable(doc, {
+            startY: 30,
+            head: headers,
+            body: data,
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [12, 57, 102], textColor: 255, fontStyle: 'bold' },
+            didDrawPage: (data) => {
+                const LOGO_WIDTH = 30;
+                const LOGO_HEIGHT = 12;
+                doc.addImage(logoSrc, 'JPEG', MARGIN, MARGIN - 5, LOGO_WIDTH, LOGO_HEIGHT);
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Reporte de Movimientos del Museo', MARGIN + LOGO_WIDTH + 5, MARGIN + 2);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, doc.internal.pageSize.getWidth() - MARGIN, MARGIN + 2, { align: 'right' });
+            },
+        });
 
-    doc.save(`reporte_movimientos_${new Date().toISOString().split('T')[0]}.pdf`);
-  };
-  // Renderizado principal del componente con diseño responsive
-  // Renderizado de la vista de historial de movimientos
-  return (
+        doc.save(`reporte_movimientos_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
+    // ========================================================================
+    // COMPONENTE DE BOTÓN SIMPLIFICADO Y REUTILIZABLE
+    // ========================================================================
+    const DirectoryToggleButton = ({ isAdded, onClick }: { isAdded: boolean; onClick: () => void; }) => (
+        <button
+            onClick={onClick}
+            className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 shadow-md ${
+                isAdded
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : 'bg-green-500 hover:bg-green-600 text-white'
+            }`}
+        >
+            {isAdded ? <XCircle className="h-4 w-4" /> : <Star className="h-4 w-4" />}
+            <span>
+                {isAdded ? 'Quitar del Directorio' : 'Guardar Contacto'}
+            </span>
+        </button>
+    );
+    // Renderizado principal del componente con diseño responsive
+    // Renderizado de la vista de historial de movimientos
+return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       {/* Encabezado con título y botones de acción */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
@@ -613,9 +654,9 @@ const newMovementData: NewMovementData = {
                 >
                   <option value="">Seleccionar obra...</option>
                   {works.map(work => (
-                    <option key={work.inventoryNumber} value={work.inventoryNumber}>
-                      {work.name} - {work.artist}
-                    </option>
+                    <option key={work.id} value={work.id}>
+        {work.name} - {work.artist} ({work.inventoryNumber})
+      </option>
                   ))}
                 </select>
               </div>
@@ -810,12 +851,19 @@ const newMovementData: NewMovementData = {
                   <input
                     type="text"
                     value={formData.receiver.idCard}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      receiver: { ...prev.receiver, idCard: e.target.value }
-                    }))}
+                   onChange={(e) => {
+    const value = e.target.value;
+    if (/^\d*$/.test(value)) {  
+      setFormData(prev => ({
+        ...prev,
+        receiver: { ...prev.receiver, idCard: value }
+      }));
+    }
+  }}
                     className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
                     placeholder="12.345.678"
+                     maxLength={20}
+                     
                     required
                   />
                 </div>
@@ -829,7 +877,10 @@ const newMovementData: NewMovementData = {
                       receiver: { ...prev.receiver, phone: e.target.value }
                     }))}
                     className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
-                    placeholder="+58 212-555-0123"
+                   placeholder="0412-1234567"
+  maxLength={20}   // coincide con VARCHAR(20) de la BD
+  pattern="^0\d{3}-\d{7}$"
+  title="Formato válido: 0412-1234567"
                     required
                   />
                 </div>
@@ -876,12 +927,18 @@ const newMovementData: NewMovementData = {
                 <div>
                   <label className="block text-sm font-bold text-[#192d71] mb-2 sm:mb-3">Cédula de Identidad *</label>
                   <input
-                    type="text"
-                    value={formData.deliverer.idCard}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      deliverer: { ...prev.deliverer, idCard: e.target.value }
-                    }))}
+                 type="text"
+  value={formData.deliverer.idCard}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (/^\d*$/.test(value)) {  
+      setFormData(prev => ({
+        ...prev,
+      
+        deliverer: { ...prev.deliverer, idCard: value } 
+      }));
+    }
+  }}
                     className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
                     placeholder="87.654.321"
                     required
@@ -897,7 +954,10 @@ const newMovementData: NewMovementData = {
                       deliverer: { ...prev.deliverer, phone: e.target.value }
                     }))}
                     className="w-full px-3 sm:px-5 py-3 sm:py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] text-sm sm:text-base"
-                    placeholder="+58 212-555-0456"
+                   placeholder="0412-1234567"
+  maxLength={20}   // coincide con VARCHAR(20) de la BD
+  pattern="^0\d{3}-\d{7}$"
+  title="Formato válido: 0412-1234567"
                     required
                   />
                 </div>
@@ -907,6 +967,11 @@ const newMovementData: NewMovementData = {
             {/* Botones de acción del formulario */}
             {/* Botones para cancelar o enviar el formulario */}
             <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 pt-6 sm:pt-8 border-t border-[#192d71]/20">
+            {error && (
+    <div className="w-full text-center p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+      <p>{error}</p>
+    </div>
+  )}
               <button
                 type="button"
                 onClick={() => {
@@ -976,24 +1041,14 @@ const newMovementData: NewMovementData = {
         >
           Seleccionar
         </button>
-        {/* Botón eliminar */}
-        <button
-          onClick={() => handleDeletePerson(person.id)}
-          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition"
-          title="Eliminar persona"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-
-         {/* NUEVO BOTÓN: Exportar PDF de movimientos - Agregado sin modificar lógica existente */}
-        <button
-          onClick={exportMovementsToPDF}
-          className="flex items-center justify-center sm:justify-start space-x-2 sm:space-x-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-sm sm:text-base w-full sm:w-auto"
-          title="Exportar reporte PDF de movimientos"
-        >
-          <Download className="h-5 w-5 sm:h-6 sm:w-6" />
-          <span>Exportar PDF</span>
-        </button>
+        
+       <button 
+                                            onClick={() => handleRemoveFromDirectory(person.id)} 
+                                            className="p-2 text-red-500 hover:bg-red-100 rounded-full transition-colors"
+                                            title="Quitar del directorio"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
       </div>
     </div>
   </div>
@@ -1096,20 +1151,23 @@ const newMovementData: NewMovementData = {
                   </td>
                   {/* Información del receptor visible en pantallas grandes */}
                   <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 hidden lg:table-cell">
-                    <div>
-                      <p className="font-semibold text-[#192d71]">{record.receiver.name}</p>
-                      <p className="text-sm text-[#192d71]/70">CI: {record.receiver.idCard}</p>
-                      <p className="text-sm text-[#192d71]/70">{record.receiver.phone}</p>
-                    </div>
-                  </td>
+  <div>
+    {/* Se usa optional chaining (?.) y el operador (??) para evitar errores si no hay receptor */}
+    <p className="font-semibold text-[#192d71]">{record.receiver?.name ?? 'No aplica'}</p>
+    <p className="text-sm text-[#192d71]/70">CI: {record.receiver?.idCard ?? 'N/A'}</p>
+    <p className="text-sm text-[#192d71]/70">{record.receiver?.phone ?? 'N/A'}</p>
+  </div>
+</td>
                   {/* Información del entregador visible en pantallas extra grandes */}
-                  <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 hidden xl:table-cell">
-                    <div>
-                      <p className="font-semibold text-[#192d71]">{record.deliverer.name}</p>
-                      <p className="text-sm text-[#192d71]/70">CI: {record.deliverer.idCard}</p>
-                      <p className="text-sm text-[#192d71]/70">{record.deliverer.phone}</p>
-                    </div>
-                  </td>
+                 {/* 👇 ESTA ES LA VERSIÓN CORREGIDA 👇 */}
+<td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 hidden xl:table-cell">
+  <div>
+    {/* Se aplica la misma corrección para el entregador */}
+    <p className="font-semibold text-[#192d71]">{record.deliverer?.name ?? 'No aplica'}</p>
+    <p className="text-sm text-[#192d71]/70">CI: {record.deliverer?.idCard ?? 'N/A'}</p>
+    <p className="text-sm text-[#192d71]/70">{record.deliverer?.phone ?? 'N/A'}</p>
+  </div>
+</td>
                   <td className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
                     {/* Botones de acción con tooltips descriptivos */}
                     <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
@@ -1253,45 +1311,47 @@ const newMovementData: NewMovementData = {
               </div>
 
               {/* Información del receptor y entregador */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                {/* Información del receptor */}
-                <div className="bg-gradient-to-br from-[#192d71]/30 to-white rounded-2xl p-4 sm:p-6 border border-[#192d71]/50">
-                  <h3 className="text-lg sm:text-xl font-bold text-[#192d71] mb-3 sm:mb-4">Receptor</h3>
-                  <div className="space-y-2 text-sm sm:text-base">
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-[#192d71]">Nombre:</p>
-                      <p className="text-[#192d71]">{viewingRecord.receiver.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-[#192d71]">Cédula:</p>
-                      <p className="text-[#192d71]">{viewingRecord.receiver.idCard}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-[#192d71]">Teléfono:</p>
-                      <p className="text-[#192d71]">{viewingRecord.receiver.phone}</p>
-                    </div>
-                  </div>
-                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                            {/* --- Información del Receptor --- */}
+                            <div className="bg-gradient-to-br from-[#192d71]/30 to-white rounded-2xl p-4 sm:p-6 border border-[#192d71]/50 flex flex-col justify-between">
+                                <div>
+                                    <h3 className="text-lg sm:text-xl font-bold text-[#192d71] mb-3 sm:mb-4">Receptor</h3>
+                                    <div className="space-y-2 text-sm sm:text-base">
+                                        <p><strong className="font-semibold text-[#192d71]">Nombre:</strong> {viewingRecord.receiver?.name ?? 'No aplica'}</p>
+                                        <p><strong className="font-semibold text-[#192d71]">Cédula:</strong> {viewingRecord.receiver?.idCard ?? 'N/A'}</p>
+                                        <p><strong className="font-semibold text-[#192d71]">Teléfono:</strong> {viewingRecord.receiver?.phone ?? 'N/A'}</p>
+                                    </div>
+                                </div>
+                                {viewingRecord.receiver && (
+                                    <div className="mt-4">
+                                        <DirectoryToggleButton 
+                                            isAdded={viewingRecord.receiver.agregado_directorio} 
+                                            onClick={() => handleToggleDirectory(viewingRecord.receiver!.id)} 
+                                        />
+                                    </div>
+                                )}
+                            </div>
 
-                {/* Información del entregador */}
-                <div className="bg-gradient-to-br from-[#192d71]/40 to-white rounded-2xl p-4 sm:p-6 border border-[#192d71]/60">
-                  <h3 className="text-lg sm:text-xl font-bold text-[#192d71] mb-3 sm:mb-4">Entregador</h3>
-                  <div className="space-y-2 text-sm sm:text-base">
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-[#192d71]">Nombre:</p>
-                      <p className="text-[#192d71]">{viewingRecord.deliverer.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-[#192d71]">Cédula:</p>
-                      <p className="text-[#192d71]">{viewingRecord.deliverer.idCard}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-[#192d71]">Teléfono:</p>
-                      <p className="text-[#192d71]">{viewingRecord.deliverer.phone}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                            {/* --- Información del Entregador --- */}
+                            <div className="bg-gradient-to-br from-[#192d71]/40 to-white rounded-2xl p-4 sm:p-6 border border-[#192d71]/60 flex flex-col justify-between">
+                                <div>
+                                    <h3 className="text-lg sm:text-xl font-bold text-[#192d71] mb-3 sm:mb-4">Entregador</h3>
+                                    <div className="space-y-2 text-sm sm:text-base">
+                                        <p><strong className="font-semibold text-[#192d71]">Nombre:</strong> {viewingRecord.deliverer?.name ?? 'No aplica'}</p>
+                                        <p><strong className="font-semibold text-[#192d71]">Cédula:</strong> {viewingRecord.deliverer?.idCard ?? 'N/A'}</p>
+                                        <p><strong className="font-semibold text-[#192d71]">Teléfono:</strong> {viewingRecord.deliverer?.phone ?? 'N/A'}</p>
+                                    </div>
+                                </div>
+                                {viewingRecord.deliverer && (
+                                    <div className="mt-4">
+                                        <DirectoryToggleButton 
+                                            isAdded={viewingRecord.deliverer.agregado_directorio} 
+                                            onClick={() => handleToggleDirectory(viewingRecord.deliverer!.id)} 
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
               {/* Botones de acción del modal */}
               {/* Botones para descargar PDF y editar registro */}

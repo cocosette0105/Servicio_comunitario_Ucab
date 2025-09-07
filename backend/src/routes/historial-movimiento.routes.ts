@@ -20,6 +20,8 @@ router.get('/', authorize('leer_historial_movimiento'), getAllHistorialMovimient
 // Crea un nuevo movimiento
 router.post('/', authorize('registrar_movimiento'), createHistorialMovimiento);
 
+
+
 // Obtiene el historial de una obra específica
 router.get('/obra/:id', authorize('leer_historial_movimiento'), getHistorialByObraId);
 
