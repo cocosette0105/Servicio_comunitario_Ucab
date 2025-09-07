@@ -86,7 +86,8 @@ CREATE TABLE Persona_externa (
     per_ext_id SERIAL PRIMARY KEY,
     per_ext_nombre VARCHAR(255) NOT NULL,
     per_ext_cedula VARCHAR(20) UNIQUE NOT NULL,
-    per_ext_telefono VARCHAR(20)
+    per_ext_telefono VARCHAR(20),
+    per_ext_agregado_directorio BOOLEAN DEFAULT FALSE
 );
 
 -- ROL
@@ -177,17 +178,16 @@ CREATE TABLE Historial_movimiento (
 
 -- HISTORIAL MANTENIMIENTO
 CREATE TABLE Historial_mantenimiento (
-    his_man_id SERIAL PRIMARY KEY, -- ID único para cada registro
+    his_man_id SERIAL PRIMARY KEY,
     his_man_fecha DATE NOT NULL,
     his_man_categoria VARCHAR(100),
     his_man_descripcion_intervencion TEXT,
-    his_man_precio VARCHAR(250), -- Nuevo campo para el precio
+    his_man_precio VARCHAR(250),
     his_man_obr_fk INT NOT NULL,
     his_man_usu_fk INT NOT NULL,
     FOREIGN KEY (his_man_obr_fk) REFERENCES Obra(obr_id),
     FOREIGN KEY (his_man_usu_fk) REFERENCES Usuario(usu_id)
 );
-
 
 CREATE TABLE Historial_Inventario (
     -- ID único para cada registro de inventario.
