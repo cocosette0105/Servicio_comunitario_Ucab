@@ -86,7 +86,8 @@ CREATE TABLE Persona_externa (
     per_ext_id SERIAL PRIMARY KEY,
     per_ext_nombre VARCHAR(255) NOT NULL,
     per_ext_cedula VARCHAR(20) UNIQUE NOT NULL,
-    per_ext_telefono VARCHAR(20)
+    per_ext_telefono VARCHAR(20),
+    per_ext_agregado_directorio BOOLEAN DEFAULT FALSE
 );
 
 -- ROL
@@ -162,7 +163,6 @@ CREATE TABLE Historial_movimiento (
     his_mov_notas TEXT,
     his_mov_coleccion VARCHAR(255), -- Nombre de la colección
     his_mov_descripcion_estado TEXT, -- Descripción del estado de la obra
-    his_mov_agregado_directorio BOOLEAN NOT NULL DEFAULT FALSE,
     his_mov_obr_id_fk INT NOT NULL,
     his_mov_envia_fk INT,
     his_mov_usu_id_fk INT NOT NULL,
