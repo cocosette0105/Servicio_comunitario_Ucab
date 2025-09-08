@@ -111,7 +111,7 @@ export const getObraById = async (req: Request, res: Response) => {
 
 export const createObra = async (req: Request, res: Response) => {
     const data = processWorkData(req.body);
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const imageUrl = req.file ? `/uploads/obras/${req.file.filename}` : null;
     const client = await pool.connect();
 
     try {
@@ -182,7 +182,7 @@ export const updateObra = async (req: Request, res: Response) => {
     const { id } = req.params;
     const data = processWorkData(req.body);
     let imageUrl = req.body.photoUrl;
-    if (req.file) { imageUrl = `/uploads/${req.file.filename}`; }
+    if (req.file) { imageUrl = `/uploads/obras/${req.file.filename}`; }
     
     const client = await pool.connect();
 

@@ -15,7 +15,7 @@ interface DashboardViewProps {
   token: string;
   works: Work[]; // Lista de obras del museo
   onLogout: () => void; // Función para cerrar sesión
-  onUpdateWorks: (works: Work[]) => void; // Función para actualizar obras
+   onUpdateWorks: () => Promise<void>;
   systemUsers: SystemUser[]; // Lista de usuarios del sistema
   onUpdateSystemUsers: (users: SystemUser[]) => void; // Función para actualizar usuarios
   movementRecords: MovementRecord[]; // Registros de movimientos

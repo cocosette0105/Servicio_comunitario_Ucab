@@ -32,12 +32,16 @@ export class PDFUtils {
         <div style="margin-bottom: 15px;">
     Hoy <span style="border-bottom: 1px dashed #000; display: inline-block; min-width: 200px; padding-bottom: 5px; line-height: 1.6;">${new Date(
       record.date
-    ).toLocaleDateString("es-ES")}</span>,
-    el Museo Carmelo Fernández recibe del ciudadano(a):
-    <span style="border-bottom: 1px dashed #000; min-width: 200px; padding-bottom: 5px; line-height: 1.6;">${record.receiver.name}</span> C.I.:
-    <span style="border-bottom: 1px dashed #000; min-width: 200px; padding-bottom: 5px; line-height: 1.6;">${record.receiver.idCard}</span>
-    la obra que se describe a continuación:
-  </div>
+   ).toLocaleDateString("es-ES")}</span>,
+el Museo Carmelo Fernández recibe del ciudadano(a):
+<span style="border-bottom: 1px dashed #000; min-width: 200px; padding-bottom: 5px; line-height: 1.6;">
+  ${record.receiver?.name ?? 'N/A'}
+</span> C.I.:
+<span style="border-bottom: 1px dashed #000; min-width: 200px; padding-bottom: 5px; line-height: 1.6;">
+  ${record.receiver?.idCard ?? 'N/A'}
+</span>
+la obra que se describe a continuación:
+</div>
 
         <div style="margin-bottom: 15px;">
           <b>Autor:</b> ${record.workDetails.author}<br>
@@ -60,17 +64,17 @@ export class PDFUtils {
         <div style="display: flex; justify-content: space-between; margin-top: 40px;">
           <div style="width: 45%;">
             <p><strong>Recibe por el Museo:</strong></p>
-            <p>Nombre: ${record.deliverer.name}</p>
-            <p>C.I.: ${record.deliverer.idCard}</p>
-            <p>Firma: _______________________</p>
-            <p>Teléfono: ${record.deliverer.phone}</p>
+           <p>Nombre: ${record.deliverer?.name ?? 'N/A'}</p>
+<p>C.I.: ${record.deliverer?.idCard ?? 'N/A'}</p>
+<p>Firma: _______________________</p>
+<p>Teléfono: ${record.deliverer?.phone ?? 'N/A'}</p>
           </div>
           <div style="width: 45%;">
             <p><strong>Entrega:</strong></p>
-            <p>Nombre: ${record.receiver.name}</p>
-            <p>C.I.: ${record.receiver.idCard}</p>
-            <p>Firma: _______________________</p>
-            <p>Teléfono: ${record.receiver.phone}</p>
+            <p>Nombre: ${record.receiver?.name ?? 'N/A'}</p>
+<p>C.I.: ${record.receiver?.idCard ?? 'N/A'}</p>
+<p>Firma: _______________________</p>
+<p>Teléfono: ${record.receiver?.phone ?? 'N/A'}</p>
           </div>
         </div>
 
@@ -208,39 +212,60 @@ export class PDFUtils {
    * Genera la ficha de inventario en PDF para una obra
    * @param work - Obra del museo
    */
-  static generateWorkInventoryPDF(work: Work): void {
+  static async generateWorkInventoryPDF(work: Work): Promise<void> {
     const doc = new jsPDF('p', 'mm', 'a4');
     const MARGIN = 15;
     const PAGE_WIDTH = doc.internal.pageSize.getWidth();
 
-    // --- Encabezado reutilizable ---
-    const addHeader = () => {
-      const LOGO_WIDTH = 35;
-      const LOGO_HEIGHT = 15;
-      const HEADER_BOTTOM_Y = MARGIN + LOGO_HEIGHT + 25;
-
-      doc.addImage(logoSrc, 'JPEG', MARGIN, MARGIN, LOGO_WIDTH, LOGO_HEIGHT);
-
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text("VENEZUELA", PAGE_WIDTH / 2, MARGIN + 8, { align: 'center' });
-      doc.setFontSize(10);
-      doc.text("Consejo Nacional de la Cultura (CONAC)", PAGE_WIDTH / 2, MARGIN + 12, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.text("Dirección General Sectorial de Museos", PAGE_WIDTH / 2, MARGIN + 15, { align: 'center' });
-
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.rect(MARGIN, MARGIN + 20, PAGE_WIDTH - (MARGIN * 2), 10);
-      doc.text("FICHA DE INVENTARIO GENERAL", PAGE_WIDTH / 2, MARGIN + 26, { align: 'center' });
-
-      return HEADER_BOTTOM_Y;
+    // --- Función para cargar la imagen ---
+    const loadImage = (url: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "Anonymous"; // Necesario para cargar imágenes de otro dominio
+            img.onload = () => resolve(img);
+            img.onerror = (err) => reject(err);
+            img.src = url;
+        });
     };
 
-    const formatDate = (dateString?: string) => {
-      if (!dateString) return 'No especificado';
-      const date = new Date(dateString.split('T')[0] + 'T00:00:00');
-      return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    // --- Encabezado ---
+    const addHeader = (docInstance: jsPDF) => {
+        const LOGO_WIDTH = 35;
+        const LOGO_HEIGHT = 15;
+        const HEADER_BOTTOM_Y = MARGIN + LOGO_HEIGHT + 25;
+
+        docInstance.addImage(logoSrc, 'JPEG', MARGIN, MARGIN, LOGO_WIDTH, LOGO_HEIGHT);
+
+        docInstance.setFontSize(12);
+        docInstance.setFont('helvetica', 'bold');
+        docInstance.text("VENEZUELA", PAGE_WIDTH / 2, MARGIN + 8, { align: 'center' });
+        docInstance.setFontSize(10);
+        docInstance.text("Consejo Nacional de la Cultura (CONAC)", PAGE_WIDTH / 2, MARGIN + 12, { align: 'center' });
+        docInstance.setFont('helvetica', 'normal');
+        docInstance.text("Dirección General Sectorial de Museos", PAGE_WIDTH / 2, MARGIN + 15, { align: 'center' });
+
+        docInstance.setFontSize(14);
+        docInstance.setFont('helvetica', 'bold');
+        docInstance.rect(MARGIN, MARGIN + 20, PAGE_WIDTH - (MARGIN * 2), 10);
+        docInstance.text("FICHA DE INVENTARIO GENERAL", PAGE_WIDTH / 2, MARGIN + 26, { align: 'center' });
+
+        return HEADER_BOTTOM_Y;
+    };
+
+    // --- Funciones auxiliares de formato ---
+    const formatDate = (dateString?: string | Date) => {
+        if (!dateString) return 'No especificado';
+        try {
+            const date = new Date(dateString);
+            const adjustedDate = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+            if (isNaN(adjustedDate.getTime())) return 'Fecha inválida';
+            return adjustedDate.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+        } catch { return 'Fecha inválida'; }
+    };
+
+     const formatValue = (value?: string, currency?: string) => {
+        if (!value) return 'No especificado';
+        return `${currency || ''} ${value}`.trim();
     };
 
     const workDimensions = [
@@ -250,60 +275,59 @@ export class PDFUtils {
       work.dimensions.diameter && `Diám.: ${work.dimensions.diameter}cm`,
     ].filter(Boolean).join(' / ');
 
-    // Funciones drawTextBox, drawSectionBox y drawConservationBox (igual que en tu código actual)
-
+    // --- Funciones de dibujo (sin cambios en su lógica interna) ---
     const drawTextBox = (title: string, value: string, x: number, y: number, w: number): number => {
-      const PADDING = 3;
-      const HEADER_HEIGHT = 8;
-      const FONT_SIZE = 9;
-      const LINE_HEIGHT_FACTOR = 1.4;
-      doc.setFontSize(FONT_SIZE);
-      const textLines = doc.splitTextToSize(value || ' ', w - (PADDING * 2));
-      const textHeight = textLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
-      const totalHeight = HEADER_HEIGHT + textHeight + (PADDING * 2);
-      doc.rect(x, y, w, totalHeight);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text(title, x + PADDING, y + 5);
-      doc.line(x, y + HEADER_HEIGHT, x + w, y + HEADER_HEIGHT);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(FONT_SIZE);
-      doc.text(textLines, x + PADDING, y + HEADER_HEIGHT + PADDING, { lineHeightFactor: LINE_HEIGHT_FACTOR });
-      return y + totalHeight;
+        const PADDING = 3;
+        const HEADER_HEIGHT = 8;
+        const FONT_SIZE = 9;
+        const LINE_HEIGHT_FACTOR = 1.4;
+        doc.setFontSize(FONT_SIZE);
+        const textLines = doc.splitTextToSize(value || ' ', w - (PADDING * 2));
+        const textHeight = textLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
+        const totalHeight = HEADER_HEIGHT + textHeight + (PADDING * 2);
+        doc.rect(x, y, w, totalHeight);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text(title, x + PADDING, y + 5);
+        doc.line(x, y + HEADER_HEIGHT, x + w, y + HEADER_HEIGHT);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(FONT_SIZE);
+        doc.text(textLines, x + PADDING, y + HEADER_HEIGHT + PADDING, { lineHeightFactor: LINE_HEIGHT_FACTOR });
+        return y + totalHeight;
     };
 
     const drawSectionBox = (title: string, content: { label: string, value?: string }[], x: number, y: number, w: number): number => {
-      const PADDING = 3;
-      const HEADER_HEIGHT = 8;
-      const LABEL_X_OFFSET = 35;
-      const MIN_ITEM_HEIGHT = 7;
-      const FONT_SIZE = 8;
-      const LINE_HEIGHT_FACTOR = 1.4;
-      let contentAreaHeight = PADDING;
-      doc.setFontSize(FONT_SIZE);
-      content.forEach(item => {
-        const valueLines = doc.splitTextToSize(item.value || ' ', w - LABEL_X_OFFSET - (PADDING * 2));
-        const itemTextHeight = valueLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
-        contentAreaHeight += Math.max(MIN_ITEM_HEIGHT, itemTextHeight);
-      });
-      const totalHeight = HEADER_HEIGHT + contentAreaHeight + PADDING;
-      doc.rect(x, y, w, totalHeight);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text(title, x + PADDING, y + 5);
-      doc.line(x, y + HEADER_HEIGHT, x + w, y + HEADER_HEIGHT);
-      let itemY = y + HEADER_HEIGHT + PADDING + 2;
-      doc.setFontSize(FONT_SIZE);
-      content.forEach(item => {
-        const valueLines = doc.splitTextToSize(item.value || ' ', w - LABEL_X_OFFSET - (PADDING * 2));
-        const itemTextHeight = valueLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
-        doc.setFont('helvetica', 'normal');
-        doc.text(item.label, x + PADDING, itemY);
+        const PADDING = 3;
+        const HEADER_HEIGHT = 8;
+        const LABEL_X_OFFSET = 35;
+        const MIN_ITEM_HEIGHT = 7;
+        const FONT_SIZE = 8;
+        const LINE_HEIGHT_FACTOR = 1.4;
+        let contentAreaHeight = PADDING;
+        doc.setFontSize(FONT_SIZE);
+        content.forEach(item => {
+            const valueLines = doc.splitTextToSize(item.value || ' ', w - LABEL_X_OFFSET - (PADDING * 2));
+            const itemTextHeight = valueLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
+            contentAreaHeight += Math.max(MIN_ITEM_HEIGHT, itemTextHeight);
+        });
+        const totalHeight = HEADER_HEIGHT + contentAreaHeight + PADDING;
+        doc.rect(x, y, w, totalHeight);
         doc.setFont('helvetica', 'bold');
-        doc.text(valueLines, x + LABEL_X_OFFSET, itemY, { maxWidth: w - LABEL_X_OFFSET - PADDING, lineHeightFactor: LINE_HEIGHT_FACTOR });
-        itemY += Math.max(MIN_ITEM_HEIGHT, itemTextHeight);
-      });
-      return y + totalHeight;
+        doc.setFontSize(9);
+        doc.text(title, x + PADDING, y + 5);
+        doc.line(x, y + HEADER_HEIGHT, x + w, y + HEADER_HEIGHT);
+        let itemY = y + HEADER_HEIGHT + PADDING + 2;
+        doc.setFontSize(FONT_SIZE);
+        content.forEach(item => {
+            const valueLines = doc.splitTextToSize(item.value || ' ', w - LABEL_X_OFFSET - (PADDING * 2));
+            const itemTextHeight = valueLines.length * FONT_SIZE * 0.3527 * LINE_HEIGHT_FACTOR;
+            doc.setFont('helvetica', 'normal');
+            doc.text(item.label, x + PADDING, itemY);
+            doc.setFont('helvetica', 'bold');
+            doc.text(valueLines, x + LABEL_X_OFFSET, itemY, { maxWidth: w - LABEL_X_OFFSET - PADDING, lineHeightFactor: LINE_HEIGHT_FACTOR });
+            itemY += Math.max(MIN_ITEM_HEIGHT, itemTextHeight);
+        });
+        return y + totalHeight;
     };
 
     const drawConservationBox = (x: number, y: number, w: number): number => {
@@ -339,15 +363,40 @@ export class PDFUtils {
       return y + TOTAL_HEIGHT;
     };
 
-    // Dibujo principal
-    let currentY = addHeader();
+    // --- DIBUJO DEL PDF ---
+    let currentY = addHeader(doc);
 
+    // ✅ **PASO 1: Dibujar el recuadro de la foto y cargar la imagen**
+    const PHOTO_BOX_WIDTH = 60;
+    const PHOTO_BOX_HEIGHT = 50;
+    const PHOTO_BOX_X = PAGE_WIDTH - MARGIN - PHOTO_BOX_WIDTH;
+    const PHOTO_BOX_Y = currentY;
+
+    doc.rect(PHOTO_BOX_X, PHOTO_BOX_Y, PHOTO_BOX_WIDTH, PHOTO_BOX_HEIGHT);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text("FOTOGRAFIA", PHOTO_BOX_X + (PHOTO_BOX_WIDTH / 2), PHOTO_BOX_Y + 5, { align: 'center' });
+
+    if (work.photoUrl) {
+      try {
+        const img = await loadImage(work.photoUrl);
+        doc.addImage(img, 'JPEG', PHOTO_BOX_X + 1, PHOTO_BOX_Y + 8, PHOTO_BOX_WIDTH - 2, PHOTO_BOX_HEIGHT - 9, undefined, 'FAST');
+      } catch (e) {
+        doc.text("No se pudo cargar la imagen", PHOTO_BOX_X + (PHOTO_BOX_WIDTH / 2), PHOTO_BOX_Y + 25, { align: 'center' });
+      }
+    } else {
+        doc.text("Sin Fotografía", PHOTO_BOX_X + (PHOTO_BOX_WIDTH / 2), PHOTO_BOX_Y + 25, { align: 'center' });
+    }
+
+    // ✅ **PASO 2: Ajustar el ancho de la caja de Identificación**
+    const IDENTIFICATION_BOX_WIDTH = PAGE_WIDTH - (MARGIN * 2) - PHOTO_BOX_WIDTH - 2;
     currentY = drawSectionBox("IDENTIFICACION", [
       { label: "N° de Identificación:", value: work.inventoryNumber },
       { label: "N° anteriores:", value: work.previousNumbers }
-    ], MARGIN, currentY, PAGE_WIDTH - (MARGIN * 2));
+    ], MARGIN, currentY, IDENTIFICATION_BOX_WIDTH);
 
-    currentY += 2;
+    currentY = Math.max(currentY, PHOTO_BOX_Y + PHOTO_BOX_HEIGHT); // Asegura que el contenido siguiente empiece debajo de la foto
+    currentY += 2; // Espacio
 
     const columnStartY = currentY;
     const leftColumnX = MARGIN;
@@ -356,12 +405,12 @@ export class PDFUtils {
     const rightColumnWidth = PAGE_WIDTH - rightColumnX - MARGIN;
 
     let leftColumnEnd_Y = drawSectionBox("DESCRIPCION", [
-      { label: "Clasificación Genérica:", value: work.classification },
-      { label: "Nombre/Título:", value: work.name },
-      { label: "Autor/Taller:", value: work.artist },
-      { label: "Dimensiones (cm):", value: workDimensions },
-      { label: "Técnica:", value: work.technique },
-      { label: "Materiales:", value: work.materials },
+        { label: "Clasificación Genérica:", value: work.classification },
+        { label: "Nombre/Título:", value: work.name },
+        { label: "Autor/Taller:", value: work.artist },
+        { label: "Dimensiones (cm):", value: workDimensions },
+        { label: "Técnica:", value: work.technique },
+        { label: "Materiales:", value: work.materials },
     ], leftColumnX, columnStartY, leftColumnWidth);
 
     leftColumnEnd_Y = drawTextBox("Descripción formal", work.description || '', leftColumnX, leftColumnEnd_Y + 2, leftColumnWidth);
@@ -373,41 +422,41 @@ export class PDFUtils {
 
     currentY = Math.max(leftColumnEnd_Y, rightColumnEnd_Y) + 5;
 
+    // ✅ **PASO 3: Corregir los datos de Avalúo**
     currentY = drawSectionBox("DATOS TECNICOS", [
-      { label: "Procedencia:", value: work.technicalData.provenance },
-      { label: "Cultura/Tradición:", value: work.technicalData.culture },
-      { label: "Época/Estilo:", value: work.realizationDate },
-      { label: "Valor/Moneda:", value: work.technicalData.value },
-      { label: "Responsable Avalúo:", value: work.technicalData.appraiser },
-      { label: "Fecha Avalúo:", value: formatDate(work.technicalData.appraisalDate) },
-      { label: "Propietario Original:", value: work.technicalData.originalOwner },
+        { label: "Procedencia:", value: work.technicalData.provenance },
+        { label: "Cultura/Tradición:", value: work.technicalData.culture },
+        { label: "Época/Estilo:", value: work.realizationDate }, // Este suele estar acá
+        { label: "Valor/Moneda:", value: formatValue(work.appraisal.value, work.appraisal.currency) },
+        { label: "Responsable Avalúo:", value: work.appraisal.appraiser },
+        { label: "Fecha Avalúo:", value: formatDate(work.appraisal.appraisalDate) },
+        { label: "Propietario Original:", value: work.technicalData.originalOwner },
     ], MARGIN, currentY, PAGE_WIDTH - (MARGIN * 2));
 
+    // --- Segunda Página ---
     doc.addPage();
-    currentY = addHeader();
+    currentY = addHeader(doc);
 
     currentY = drawTextBox("OBSERVACIONES", work.observations || '', MARGIN, currentY, PAGE_WIDTH - (MARGIN * 2));
 
     currentY = drawSectionBox("COLECCION", [
-      { label: "Fuente de Adquisición:", value: work.collection.acquisitionSource },
-      { label: "Forma de Adquisición:", value: work.collection.acquisitionMethod },
-      { label: "Fecha de Ingreso:", value: formatDate(work.collection.entryDate) }
+        { label: "Fuente de Adquisición:", value: work.collection.acquisitionSource },
+        { label: "Forma de Adquisición:", value: work.collection.acquisitionMethod },
+        { label: "Fecha de Ingreso:", value: formatDate(work.collection.entryDate) }
     ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN * 2));
 
     currentY = drawSectionBox("RESPONSABLE DE LA OBRA", [
-      { label: "Nombre:", value: work.responsibleEntity.name },
-      { label: "Dirección:", value: work.responsibleEntity.address }
+        { label: "Nombre:", value: work.responsibleEntity.name },
+        { label: "Dirección:", value: work.responsibleEntity.address }
     ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN * 2));
 
     currentY = drawSectionBox("INVENTARIO", [
-      { label: "Responsable:", value: work.inventory.responsible },
-      { label: "Fecha:", value: formatDate(work.inventory.date) },
-      { label: "Supervisado por:", value: work.inventory.supervisor },
-      { label: "Fecha:", value: formatDate(work.inventory.supervisorDate) }
+        { label: "Responsable:", value: work.inventory.responsible },
+        { label: "Fecha:", value: formatDate(work.inventory.date) },
+        { label: "Supervisado por:", value: work.inventory.supervisor },
+        { label: "Fecha:", value: formatDate(work.inventory.supervisorDate) }
     ], MARGIN, currentY + 2, PAGE_WIDTH - (MARGIN * 2));
 
     doc.save(`Ficha-${work.inventoryNumber}-${work.name}.pdf`);
   }
-
-
 }

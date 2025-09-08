@@ -52,6 +52,7 @@ const MovementHistory: React.FC<MovementHistoryProps> = ({ records, works, onUpd
   const [typeFilter, setTypeFilter] = useState<'all' | 'entrada' | 'salida'>('all');
   const [dateFilter, setDateFilter] = useState('');
   
+  
   // Estado del formulario - inicialización con valores vacíos para todos los campos nuevos
   const [formData, setFormData] = useState<MovementFormData>({
     workId: '',

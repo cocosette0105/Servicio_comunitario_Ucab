@@ -208,7 +208,7 @@ const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({ user, works, 
 
             setFormData(prev => ({
                 ...prev,
-                workId: inventoryNumber,
+               workId: selectedWork.id,
                 workDetails: {
                     author: selectedWork.artist,
                     title: selectedWork.name,

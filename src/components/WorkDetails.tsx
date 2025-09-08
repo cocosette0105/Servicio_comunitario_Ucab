@@ -4,7 +4,7 @@ import {
   ArrowLeft, Edit, Trash2, Calendar, User, MapPin, Building,
   Hash, Palette, Ruler, FileText,  Eye, ShieldCheck,
   Image as  Book, Presentation, Wrench, Archive, Landmark,
-  ClipboardCheck, Paperclip, DollarSign, FileDown
+  ClipboardCheck, Paperclip, DollarSign, FileDown, Feather, BookOpen, Globe, History
 } from 'lucide-react';
 import { Work } from '../models';
 import { PDFUtils } from '../utils/pdfUtils';
@@ -19,7 +19,8 @@ interface WorkDetailsProps {
 
 // Pequeño componente auxiliar para mostrar cada detalle y evitar repetición
 const DetailItem = ({ icon, label, children }: { icon: React.ReactNode, label: string, children?: React.ReactNode }) => {
-  if (!children) return null; // No renderizar si no hay contenido
+  // No renderizar si el contenido es nulo, indefinido o una cadena vacía
+  if (children === null || children === undefined || children === '') return null;
   return (
     <div className="flex items-start space-x-3">
       <div className="mt-1 text-amber-600">{icon}</div>
@@ -41,12 +42,25 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
   };
 
   // Función segura para formatear fechas
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString?: string | Date) => {
     if (!dateString) return 'No especificado';
-    // La entrada de tipo 'date' a veces incluye la hora, la quitamos.
-    const date = new Date(dateString.split('T')[0] + 'T00:00:00');
-    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    try {
+        const date = new Date(dateString);
+         // Se añade una validación por si la fecha es inválida
+        if (isNaN(date.getTime())) return 'Fecha inválida';
+        // Ajuste para corregir el desfase de zona horaria al parsear
+        const adjustedDate = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+        return adjustedDate.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch {
+        return 'Fecha inválida';
+    }
   };
+
+  // Formato para el valor monetario
+  const formatValue = (value?: string, currency?: string) => {
+    if (!value) return 'No especificado';
+    return `${currency || ''} ${value}`.trim();
+  }
 
   const workDimensions = [
     work.dimensions.height && `Alto: ${work.dimensions.height}cm`,
@@ -57,11 +71,10 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
 
 
   // --- NUEVA FUNCIÓN PARA EXPORTAR A PDF ---
-  // --- NUEVA FUNCIÓN PARA EXPORTAR A PDF ---
-//pdf 
     const handleExportPDF = (work: Work) => {
-  PDFUtils.generateWorkInventoryPDF(work);
-};
+      PDFUtils.generateWorkInventoryPDF(work);
+    };
+
   return (
     <div className="p-4 sm:p-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -80,7 +93,7 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
                   <span>Editar</span>
                 </button>
 
-                {/* --- NUEVO BOTÓN EXPORTAR PDF --- */}
+                {/* --- BOTÓN EXPORTAR PDF --- */}
                 <button onClick={() => handleExportPDF(work)} className="flex items-center space-x-2 px-5 py-2.5 bg-[#192d71] hover:bg-[#1e3a8a] text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all">
                   <FileDown className="h-5 w-5" />
                   <span>Exportar PDF</span>
@@ -109,6 +122,7 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
                   <p className="text-2xl text-[#192d71]/80 font-semibold flex items-center gap-2">
                     <User className="h-6 w-6" /> {work.artist}
                   </p>
+                  {work.previousNumbers && <p className="text-sm text-gray-500 mt-2">Números Anteriores: {work.previousNumbers}</p>}
                 </section>
 
                 {/* --- FOTO --- */}
@@ -124,6 +138,8 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
                     <p className="whitespace-pre-wrap">{work.description}</p>
                   </DetailItem>
                   
+                  
+
                   <DetailItem icon={<Eye size={20} />} label="Observaciones Adicionales">
                     <p>{work.observations}</p>
                   </DetailItem>
@@ -134,7 +150,7 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
                    <h2 className="text-xl font-bold text-[#192d71] mb-4 border-b-2 border-[#192d71]/20 pb-2">Referencias</h2>
                    <div className="space-y-4 pt-2">
                       <DetailItem icon={<Paperclip size={20}/>} label="Documentos">{work.references.documents}</DetailItem>
-                      <DetailItem icon={<Book size={20}/>} label="Bibliografía">{work.references.bibliography}</DetailItem>
+                      <DetailItem icon={<BookOpen size={20}/>} label="Bibliografía">{work.references.bibliography}</DetailItem>
                       <DetailItem icon={<Presentation size={20}/>} label="Exposiciones">{work.references.exhibitions}</DetailItem>
                       <DetailItem icon={<Wrench size={20}/>} label="Tratamientos">{work.references.treatments}</DetailItem>
                    </div>
@@ -148,6 +164,10 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
                     <DetailItem icon={<Hash size={16}/>} label="Clasificación Genérica">{work.classification}</DetailItem>
                     <DetailItem icon={<Wrench size={16}/>} label="Técnica y Materiales">{`${work.technique} sobre ${work.materials}`}</DetailItem>
                     <DetailItem icon={<Calendar size={16}/>} label="Año de Realización">{work.realizationDate}</DetailItem>
+                    {/* AÑADIDO: Época/Estilo, Procedencia y Cultura */}
+                    <DetailItem icon={<History size={16}/>} label="Época / Estilo">{work.technicalData.eraStyle}</DetailItem>
+                    <DetailItem icon={<Globe size={16}/>} label="Procedencia">{work.technicalData.provenance}</DetailItem>
+                    <DetailItem icon={<Palette size={16}/>} label="Cultura / Tradición">{work.technicalData.culture}</DetailItem>
                     <DetailItem icon={<Ruler size={16}/>} label="Dimensiones">{workDimensions}</DetailItem>
                 </div>
 
@@ -159,17 +179,22 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, onClose, onEdit, onDele
                 
                 <div className="bg-[#192d71]/5 border border-[#192d71]/20 rounded-xl p-5 space-y-4">
                     <h3 className="font-bold text-[#192d71] text-lg flex items-center gap-2"><Landmark/>Datos de Adquisición y Avalúo</h3>
+                    {/* AÑADIDO: Fuente y Forma de Adquisición */}
+                    <DetailItem icon={<Archive size={16}/>} label="Fuente de Adquisición">{work.collection.acquisitionSource}</DetailItem>
                     <DetailItem icon={<Archive size={16}/>} label="Forma de Adquisición">{work.collection.acquisitionMethod}</DetailItem>
                     <DetailItem icon={<Calendar size={16}/>} label="Fecha de Ingreso">{formatDate(work.collection.entryDate)}</DetailItem>
                     <DetailItem icon={<User size={16}/>} label="Propietario Original">{work.technicalData.originalOwner}</DetailItem>
-                    <DetailItem icon={<DollarSign size={16}/>} label="Valor">{work.technicalData.value}</DetailItem>
-                    <DetailItem icon={<User size={16}/>} label="Responsable de Avalúo">{work.technicalData.appraiser}</DetailItem>
-                    <DetailItem icon={<Calendar size={16}/>} label="Fecha de Avalúo">{formatDate(work.technicalData.appraisalDate)}</DetailItem>
+                    {/* CORREGIDO: Datos de avalúo ahora usan el objeto 'appraisal' */}
+                    <DetailItem icon={<DollarSign size={16}/>} label="Valor">{formatValue(work.appraisal.value, work.appraisal.currency)}</DetailItem>
+                    <DetailItem icon={<User size={16}/>} label="Responsable de Avalúo">{work.appraisal.appraiser}</DetailItem>
+                    <DetailItem icon={<Calendar size={16}/>} label="Fecha de Avalúo">{formatDate(work.appraisal.appraisalDate)}</DetailItem>
                 </div>
 
                 <div className="bg-[#192d71]/5 border border-[#192d71]/20 rounded-xl p-5 space-y-4">
                     <h3 className="font-bold text-[#192d71] text-lg flex items-center gap-2"><ClipboardCheck/>Inventario y Ubicación</h3>
                     <DetailItem icon={<Building size={16}/>} label="Entidad Responsable">{work.responsibleEntity.name}</DetailItem>
+                    {/* AÑADIDO: Dirección de la entidad */}
+                    <DetailItem icon={<MapPin size={16}/>} label="Dirección de la Entidad">{work.responsibleEntity.address}</DetailItem>
                     <DetailItem icon={<MapPin size={16}/>} label="Ubicación en Depósito">{work.storageLocation}</DetailItem>
                     <DetailItem icon={<User size={16}/>} label="Inventariado por">{work.inventory.responsible}</DetailItem>
                     <DetailItem icon={<Calendar size={16}/>} label="Fecha de Inventario">{formatDate(work.inventory.date)}</DetailItem>
