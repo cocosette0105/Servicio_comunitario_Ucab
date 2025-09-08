@@ -86,7 +86,8 @@ function App() {
         },
         responsibleEntity: {
           name: obra.obr_entidad_responsable ?? '',
-          address: '' // address no viene del backend, se inicializa vacío
+    
+address: obra.obr_direccion ?? '',
         },
         inventory: {
           responsible: obra.his_inv_responsable ?? '',

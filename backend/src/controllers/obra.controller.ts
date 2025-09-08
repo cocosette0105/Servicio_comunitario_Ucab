@@ -130,8 +130,8 @@ export const createObra = async (req: Request, res: Response) => {
                 obr_moneda_avaluo, obr_responsable_avaluo, obr_fecha_avaluo, obr_propietario_original,
                 obr_documentos_relacionados, obr_bibliografia, obr_fecha_ingreso, obr_fuente_adquisicion,
                 obr_metodo_adquisicion, obr_entidad_responsable, obr_art_fk, obr_cla_fk, obr_lu_fk,
-                obr_detalles_firma, obr_exposiciones, obr_tratamientos
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+                obr_detalles_firma, obr_exposiciones, obr_tratamientos, obr_direccion
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
             RETURNING obr_id;`;
 
         const obraValues = [
@@ -142,7 +142,7 @@ export const createObra = async (req: Request, res: Response) => {
             data.appraisal.currency, data.appraisal.appraiser, data.appraisal.appraisalDate, data.technicalData.originalOwner,
             data.references.documents, data.references.bibliography, data.collection.entryDate, data.collection.acquisitionSource,
             data.collection.acquisitionMethod, data.responsibleEntity.name, artistId, classificationId, locationId,
-            data.signatureDetails, data.references.exhibitions, data.references.treatments
+            data.signatureDetails, data.references.exhibitions, data.references.treatments, data.responsibleEntity.address
         ];
 
         const newObra = await client.query(obraQuery, obraValues);
@@ -202,8 +202,8 @@ export const updateObra = async (req: Request, res: Response) => {
                 obr_moneda_avaluo = $18, obr_responsable_avaluo = $19, obr_fecha_avaluo = $20, obr_propietario_original = $21,
                 obr_documentos_relacionados = $22, obr_bibliografia = $23, obr_fecha_ingreso = $24, obr_fuente_adquisicion = $25,
                 obr_metodo_adquisicion = $26, obr_entidad_responsable = $27, obr_art_fk = $28, obr_cla_fk = $29, obr_lu_fk = $30,
-                obr_detalles_firma = $31, obr_exposiciones = $32, obr_tratamientos = $33
-            WHERE obr_id = $34;`;
+                obr_detalles_firma = $31, obr_exposiciones = $32, obr_tratamientos = $33, obr_direccion = $34
+            WHERE obr_id = $35;`;
 
         const updateValues = [
             data.inventoryNumber, data.previousNumbers, data.name, data.realizationDate, data.dimensions.height,
@@ -213,7 +213,7 @@ export const updateObra = async (req: Request, res: Response) => {
             data.appraisal.currency, data.appraisal.appraiser, data.appraisal.appraisalDate, data.technicalData.originalOwner,
             data.references.documents, data.references.bibliography, data.collection.entryDate, data.collection.acquisitionSource,
             data.collection.acquisitionMethod, data.responsibleEntity.name, artistId, classificationId, locationId,
-            data.signatureDetails, data.references.exhibitions, data.references.treatments,
+            data.signatureDetails, data.references.exhibitions, data.references.treatments, data.responsibleEntity.address,
             id
         ];
         

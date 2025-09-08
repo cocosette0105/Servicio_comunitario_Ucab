@@ -43,7 +43,12 @@ const [formData, setFormData] = useState<Work>({
     storageLocation: work?.storageLocation || '',
     collection: work?.collection || { acquisitionSource: '', acquisitionMethod: '', entryDate: today },
     responsibleEntity: work?.responsibleEntity || { name: '', address: '' },
-     inventory: work?.inventory || { responsible: '', date: today, supervisor: '', supervisorDate: today },
+     inventory: {
+      responsible: work?.inventory?.responsible || '',
+      date: formatDate(work?.inventory?.date) || today, // Formatea la fecha
+      supervisor: work?.inventory?.supervisor || '',
+      supervisorDate: formatDate(work?.inventory?.supervisorDate) || today, // Formatea la fecha
+  },
   });
 
 
@@ -394,7 +399,9 @@ const [formData, setFormData] = useState<Work>({
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#192d71] mb-2">Responsable de Avalúo</label>
-                <input type="text" name="appraisal.appraiser" value={formData.appraisal?.appraiser} onChange={handleInputChange} className={inputClassName} placeholder="Ej: Rafael Principal" maxLength={255}/>
+                <input type="text" name="appraisal.appraiser" value={formData.appraisal?.appraiser} onChange={handleInputChange} className={inputClassName} placeholder="Ej: Rafael Principal" maxLength={255}/> <datalist id="appraiserOptions">
+  <option value="Rafael Principal" />
+</datalist>
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#192d71] mb-2">Fecha de Avalúo</label>
@@ -455,15 +462,24 @@ const [formData, setFormData] = useState<Work>({
             <div className="space-y-6 mt-4">
               <div>
                 <label className="block text-sm font-bold text-[#192d71] mb-2">Nombre</label>
-                <input type="text" name="responsibleEntity.name" value={formData.responsibleEntity?.name} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Ej: Museo Carmelo Fernández" maxLength={255}/>
+                <input type="text" name="responsibleEntity.name" value={formData.responsibleEntity?.name} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Ej: Museo Carmelo Fernández" maxLength={255}  list="responsibleNameOptions"/>
+              <datalist id="responsibleNameOptions">
+        <option value="Museo Carmelo Fernández" />
+      </datalist>
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#192d71] mb-2">Dirección</label>
-                <input type="text" name="responsibleEntity.address" value={formData.responsibleEntity?.address} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Dirección de la institución..." maxLength={255}/>
+                <input type="text" name="responsibleEntity.address" value={formData.responsibleEntity?.address} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Dirección de la institución..." maxLength={255} list="responsibleAddressOptions"/>
+              <datalist id="responsibleAddressOptions">
+        <option value="MEZZANINA DEL TEATRO DEL COMPLEJO CULTURAL ANDRES BELLO 2ª AVENIDA ESQUINA CALLE 15. SAN FELIPE, ESTADO YARACUY" />
+      </datalist>
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#192d71] mb-2">Ubicación en Depósito</label>
-                <input type="text" name="storageLocation" value={formData.storageLocation} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Ubicación física de la obra..." maxLength={255}/>
+                <input type="text" name="storageLocation" value={formData.storageLocation} onChange={handleInputChange} className="w-full px-4 py-3 border border-[#192d71]/20 rounded-lg" placeholder="Ubicación física de la obra..." maxLength={255} list="storageLocationOptions"/>
+                 <datalist id="storageLocationOptions">
+        <option value="Museo Carmelo Fernández" />
+      </datalist>
               </div>
             </div>
           </fieldset>
