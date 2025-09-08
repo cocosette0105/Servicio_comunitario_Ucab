@@ -56,6 +56,7 @@ CREATE TABLE Obra (
     
     -- Campos añadidos desde el formulario
     obr_detalles_firma TEXT,
+    obr_direccion TEXT,
     obr_exposiciones TEXT,
     obr_tratamientos TEXT,
 
