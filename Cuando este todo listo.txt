@@ -1,0 +1,91 @@
+Ultimo paso para convertir el servicio en algo automatizado que solo funcione al prender
+
+-----
+
+### \#\# La Solución Profesional: PM2 (Process Manager 2)
+
+PM2 no solo mantiene tu aplicación viva y la reinicia si falla, sino que también tiene una función para crear y gestionar el script de inicio por ti. Es la herramienta perfecta para esto.
+
+Aquí tienes la guía paso a paso para automatizar todo en tu computadora servidor.
+
+-----
+
+### \#\# Guía Paso a Paso para la Automatización
+
+#### **Paso 1: Usar el Comando de Producción (¡No `dev`\!)**
+
+El comando `npm run dev` es para desarrollar. Usa herramientas que consumen más memoria porque están constantemente vigilando cambios en tus archivos. Para producción, debes usar el comando que ejecuta el código ya compilado.
+
+1.  Revisa tu archivo `package.json` en el backend. Deberías tener un script `start` que se vea algo así:
+    ```json
+    "scripts": {
+      "start": "node dist/index.js",
+      "dev": "nodemon src/index.ts",
+      "build": "tsc"
+    }
+    ```
+2.  El comando que nos interesa es `npm start`. Este es el que PM2 deberá ejecutar.
+
+#### **Paso 2: Detener Procesos Anteriores e Iniciar con PM2**
+
+Si tienes tu aplicación corriendo con `npm run dev` o `npm start`, deténla (`Ctrl + C`). Ahora, la iniciaremos con PM2 de forma correcta.
+
+1.  Abre una terminal **como Administrador** en Windows (clic derecho -\> Ejecutar como administrador). Esto es importante para los siguientes pasos.
+
+2.  Navega a la carpeta de tu proyecto **backend**.
+
+3.  Ejecuta este comando:
+
+    ```bash
+    pm2 start npm --name "api-museo" -- start
+    ```
+
+      * `pm2 start npm`: Le dice a PM2 que use `npm` para iniciar tu app.
+      * `--name "api-museo"`: Le da un nombre fácil de recordar a tu proceso.
+      * `-- start`: Le dice a PM2 que ejecute el script llamado `"start"` de tu `package.json`.
+
+4.  Puedes verificar que está corriendo con `pm2 list`. Deberías ver "api-museo" con el estado `online`.
+
+#### **Paso 3: ¡El Comando Mágico\! Generar el Script de Inicio**
+
+Ahora le diremos a PM2 que configure el sistema operativo para iniciarse automáticamente.
+
+1.  En la misma terminal de administrador, ejecuta:
+    ```bash
+    pm2 startup
+    ```
+2.  **¡Paso crucial\!** PM2 analizará tu sistema (Windows) y te devolverá un comando que debes copiar y pegar. Se verá algo similar a esto:
+    `reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v pm2 /t REG_SZ /d "C:\Users\TuUsuario\AppData\Roaming\npm\pm2.cmd" /f`
+3.  **Copia ese comando que te generó y pégalo en la misma terminal**. Presiona Enter para ejecutarlo. Esto es lo que le dice a Windows que ejecute PM2 cada vez que se inicie el sistema.
+
+#### **Paso 4: Guardar tu Aplicación para el Reinicio**
+
+Ya le dijiste a Windows que inicie PM2, ahora tienes que decirle a PM2 qué aplicaciones debe iniciar.
+
+1.  En la misma terminal, ejecuta:
+    ```bash
+    pm2 save
+    ```
+    Este comando guarda la lista de procesos que están corriendo actualmente (en tu caso, "api-museo") en un archivo. Cuando PM2 se inicie con el sistema, leerá este archivo y levantará tu aplicación automáticamente.
+
+#### **Paso 5: La Prueba Final**
+
+La única forma de estar 100% seguro es... ¡reiniciando\!
+
+1.  **Reinicia la computadora servidor**.
+2.  Una vez que se inicie de nuevo, espera un minuto para que los servicios arranquen.
+3.  **Sin abrir nada más**, ve a tu computadora cliente u otro dispositivo. Intenta acceder a tu aplicación desde el navegador.
+4.  **¡Debería funcionar\!** Tu backend se inició solo.
+
+Para una doble confirmación, puedes iniciar sesión en el servidor, abrir una terminal y ejecutar `pm2 list` para verificar que el proceso "api-museo" está `online`.
+
+-----
+
+### \#\# Resumen de Comandos Clave
+
+1.  `pm2 start npm --name "api-museo" -- start` (Para iniciar tu app con PM2).
+2.  `pm2 startup` (Genera el comando de auto-inicio del sistema).
+3.  *(Pegar y ejecutar el comando que te da el paso 2)*.
+4.  `pm2 save` (Guarda la lista de apps para que PM2 las recuerde).
+
+Con estos pasos, tu servidor será completamente autónomo. Si se va la luz o se reinicia, tu aplicación volverá a estar en línea por sí sola, junto con la base de datos (PostgreSQL usualmente ya se instala como un servicio de inicio automático). ✨

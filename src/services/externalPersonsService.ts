@@ -1,6 +1,11 @@
 // SERVICIO PARA PERSONAS EXTERNAS
-const API_URL = 'http://localhost:5000/api/external-persons';
+// SERVICIO PARA PERSONAS EXTERNAS
 
+// 1. Lees la variable de entorno
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+// 2. Construyes la URL específica
+const API_URL = `${API_BASE_URL}/api/external-persons`;
 export interface ExternalPerson {
   per_ext_id: number;
   per_ext_nombre: string;

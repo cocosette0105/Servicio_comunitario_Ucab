@@ -3,7 +3,8 @@
 import { MaintenanceRecord } from '../models';
 import { AuthController } from './AuthController'; // Para obtener el token
 
-const API_URL = 'http://localhost:5000/api/maintenance'; // URL base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_URL = `${API_BASE_URL}/api/maintenance`;
 
 // Tipo para los datos que se envían al crear/actualizar
 type MaintenanceApiData = Omit<MaintenanceRecord, 'id' | 'workName' | 'userName'>;

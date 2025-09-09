@@ -33,7 +33,7 @@ function App() {
    const loadAndMapWorks = useCallback(async () => {
     try {
       const rawData: any[] = await getWorks(); 
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
       // ✅ CORRECCIÓN CLAVE: El mapeo ahora coincide con el nuevo modelo.
       const mappedWorks: Work[] = rawData.map((obra: any) => ({
         id: obra.obr_id,
@@ -54,7 +54,7 @@ function App() {
         description: obra.obr_descripcion_formal ?? '',
         signatureDetails: obra.obr_detalles_firma ?? '',
         observations: obra.obr_observaciones ?? '',
-        photoUrl: obra.obr_url_foto ? `http://localhost:5000${obra.obr_url_foto}` : '',
+         photoUrl: obra.obr_url_foto ? `${API_BASE_URL}${obra.obr_url_foto}` : '',
         conservationState: {
           condition: obra.obr_estado_condicion ?? '',
           integrity: obra.obr_estado_integridad ?? ''

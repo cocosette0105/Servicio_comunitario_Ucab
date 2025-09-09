@@ -2,7 +2,10 @@
 import { Work } from "../models";
 
 // URL base de la API para las obras
-const API_URL = "http://localhost:5000/api/obras";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+// 2. Construyes la URL específica para este servicio
+const API_URL = `${API_BASE_URL}/api/obras`;
 
 /**
  * Obtiene todas las obras del backend.

@@ -1,4 +1,8 @@
-const API_URL = "http://localhost:5000/api/suggestions";
+// 1. Lees la variable de entorno
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+// 2. Construyes la URL específica
+const API_URL = `${API_BASE_URL}/api/suggestions`;
 
 const fetchSuggestions = async (endpoint: string): Promise<string[]> => {
     try {

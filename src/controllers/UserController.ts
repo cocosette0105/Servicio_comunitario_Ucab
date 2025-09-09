@@ -2,7 +2,13 @@
 import { ApiUser, SystemUser } from '../models/index';
 
 // URL base de la API
-const API_BASE_URL = 'http://localhost:5000/api';
+// src/controllers/UserController.ts
+
+// 1. Lees la variable de entorno principal
+const VITE_API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+// 2. Reconstruyes tu constante 'API_BASE_URL' añadiéndole el /api
+const API_BASE_URL = `${VITE_API_URL}/api`;
 
 /**
  * Clase para manejar todas las operaciones de la API relacionadas con los usuarios.
