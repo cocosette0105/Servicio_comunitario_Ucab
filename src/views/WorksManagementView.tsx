@@ -76,13 +76,26 @@ const WorksManagementView: React.FC<WorksManagementViewProps> = ({ user, works, 
     }
   }, [canReadWork, onUpdateWorks]); // Dependencia del privilegio y onUpdateWorks*/
 
-  // Filtrado de obras basado en el término de búsqueda
-  // Busca coincidencias en nombre, artista y ubicación de almacenamiento
-  const filteredWorks = works.filter(work =>
-    (work.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (work.artist ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (work.storageLocation ?? '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    // Filtrado de obras basado en el término de búsqueda
+  // Busca coincidencias en id, nombre, artista y ubicación de almacenamiento
+  const filteredWorks = works.filter(work => {
+    const term = searchTerm.toLowerCase().trim();
+
+    return (
+      // Filtrar por id (número exacto o parcial si lo conviertes a string)
+      work.id.toString().includes(term) ||
+
+      // Filtrar por nombre de la obra
+      (work.name ?? '').toLowerCase().includes(term) ||
+
+      // Filtrar por artista
+      (work.artist ?? '').toLowerCase().includes(term) ||
+
+      // Filtrar por ubicación
+      (work.storageLocation ?? '').toLowerCase().includes(term)
+    );
+  });
+
 
   // Implementación del hook de paginación personalizado
   // Configurado para mostrar 8 obras por página con diseño responsive
