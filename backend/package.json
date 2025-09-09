@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "vincular-imagenes": "tsc && node dist/scripts/vincularImagenes.js",
+    "limpiar-db": "tsc && node dist/scripts/limpiezaDB.js",
+      "finalizar-limpieza": "tsc && node dist/scripts/finalizarLimpieza.js",
+      "restaurar-obras": "tsc && node dist/scripts/restaurarObras.js"
   },
   "keywords": [],
   "author": "",
