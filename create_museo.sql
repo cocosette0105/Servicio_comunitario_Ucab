@@ -69,6 +69,19 @@ CREATE TABLE Obra (
     FOREIGN KEY (obr_lu_fk) REFERENCES Lugar(lu_id)
 );
 
+--Imagenes de la Obra
+CREATE TABLE Obra_Imagen (
+    img_id SERIAL PRIMARY KEY,
+    img_url VARCHAR(500) NOT NULL,
+    img_obr_fk INT NOT NULL,
+    
+    -- Si una obra se elimina, sus imágenes también se eliminarán en cascada
+    CONSTRAINT fk_obra
+        FOREIGN KEY (img_obr_fk) 
+        REFERENCES Obra(obr_id) 
+        ON DELETE CASCADE
+);
+
 
 -- MATERIAL
 CREATE TABLE Material (

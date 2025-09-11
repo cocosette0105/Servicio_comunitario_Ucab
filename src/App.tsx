@@ -54,7 +54,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
         description: obra.obr_descripcion_formal ?? '',
         signatureDetails: obra.obr_detalles_firma ?? '',
         observations: obra.obr_observaciones ?? '',
-         photoUrl: obra.obr_url_foto ? `${API_BASE_URL}${obra.obr_url_foto}` : '',
+         photoUrl: obra.obr_url_foto ?? '', // La imagen principal
+        imageUrls: obra.image_urls ?? [], // El array de todas las imágenes
         conservationState: {
           condition: obra.obr_estado_condicion ?? '',
           integrity: obra.obr_estado_integridad ?? ''

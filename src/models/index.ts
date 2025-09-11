@@ -36,9 +36,9 @@ export interface Work {
   signatureDetails?: string; // Ubicación y detalles de la firma
   observations?: string; // Otras observaciones generales
   
-  // SECCIÓN: FOTOGRAFÍA
-  photo?: File; // Para la carga de un nuevo archivo de imagen
-  photoUrl?: string; // URL de la foto ya existente
+// SECCIÓN: FOTOGRAFÍA
+  photoUrl: string; //  URL de la imagen principal
+  imageUrls?: string[]; // Array con todas las URLs de las imágenes
   
   // SECCIÓN: ESTADO DE CONSERVACIÓN
   conservationState: {
@@ -54,7 +54,7 @@ export interface Work {
     originalOwner?: string;
   };
 
-  // ✅ CORRECCIÓN: Se añade el objeto 'appraisal' que faltaba.
+  // SECCIÓN: VALORACIÓN Y TASACIÓN
   appraisal: {
     value?: string;
     currency?: string;

@@ -21,12 +21,13 @@ router.get("/:id", getObraById);
 // ==========================
 // Ruta POST: crear obra con imagen
 // ==========================
-router.post("/", upload.single("obr_url_foto"), createObra);
+router.post("/", upload.array("obra_imagenes", 10), createObra);
 
+// ==========================\
+// Ruta PUT: Acepta un array de hasta 10 imágenes para actualizar
 // ==========================
-// Ruta PUT: actualizar obra (imagen opcional)
-// ==========================
-router.put("/:id", upload.single("obr_url_foto"), updateObra);
+router.put("/:id", upload.array("obra_imagenes", 10), updateObra);
+
 
 // ==========================
 // Ruta DELETE: eliminar obra

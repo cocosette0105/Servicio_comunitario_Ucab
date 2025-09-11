@@ -1,13 +1,11 @@
-import React, { useState, ChangeEvent, FormEvent,  useRef,  useEffect} from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { Save, X, UploadCloud } from 'lucide-react';
 import { Work } from '../models';
-import AutocompleteInput from './AutocompleteInput'; 
-import { getArtists, getClassifications, getMaterials, getTechniques } from '../services/suggestionsService'; 
-
+import AutocompleteInput from './AutocompleteInput';
+import { getArtists, getClassifications, getMaterials, getTechniques } from '../services/suggestionsService';
 
 interface WorkFormProps {
   work?: Work;
- 
   onSubmit: (formData: FormData) => void;
   onCancel: () => void;
 }
@@ -18,10 +16,10 @@ const formatDate = (date?: string | Date) =>
 
 const today = new Date().toISOString().split("T")[0];
 
-
 const WorkForm: React.FC<WorkFormProps> = ({ work, onSubmit, onCancel }) => {
 
-const [formData, setFormData] = useState<Work>({
+  // Estado inicial del formulario, sin cambios en su estructura
+  const [formData, setFormData] = useState<Work>({
     id: work?.id || '',
     inventoryNumber: work?.inventoryNumber || '',
     previousNumbers: work?.previousNumbers || '',
@@ -36,6 +34,8 @@ const [formData, setFormData] = useState<Work>({
     signatureDetails: work?.signatureDetails || '',
     observations: work?.observations || '',
     photoUrl: work?.photoUrl || '',
+    
+    imageUrls: work?.imageUrls || [],
     conservationState: work?.conservationState || { condition: '', integrity: '' },
     technicalData: work?.technicalData || { provenance: '', culture: '', eraStyle: '', originalOwner: '' },
     appraisal: work?.appraisal || { value: '', currency: '', appraiser: '', appraisalDate: today },
@@ -43,33 +43,65 @@ const [formData, setFormData] = useState<Work>({
     storageLocation: work?.storageLocation || '',
     collection: work?.collection || { acquisitionSource: '', acquisitionMethod: '', entryDate: today },
     responsibleEntity: work?.responsibleEntity || { name: '', address: '' },
-     inventory: {
+    inventory: {
       responsible: work?.inventory?.responsible || '',
-      date: formatDate(work?.inventory?.date) || today, // Formatea la fecha
+      date: formatDate(work?.inventory?.date) || today,
       supervisor: work?.inventory?.supervisor || '',
-      supervisorDate: formatDate(work?.inventory?.supervisorDate) || today, // Formatea la fecha
-  },
+      supervisorDate: formatDate(work?.inventory?.supervisorDate) || today,
+    },
   });
 
-
+  // Estados para las sugerencias de autocompletado (sin cambios)
   const [artists, setArtists] = useState<string[]>([]);
   const [classifications, setClassifications] = useState<string[]>([]);
   const [materials, setMaterials] = useState<string[]>([]);
   const [techniques, setTechniques] = useState<string[]>([]);
-  const [imagePreview, setImagePreview] = useState<string | null>(work?.photoUrl || null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-    const loadSuggestions = async () => {
-      setArtists(await getArtists());
-      setClassifications(await getClassifications());
-      setMaterials(await getMaterials());
-      setTechniques(await getTechniques());
-    };
-    loadSuggestions();
-  }, []);
+  // ✅ NUEVO: Estados para manejar MÚLTIPLES archivos y sus vistas previas
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  // ✅ NUEVO: imágenes que ya existen en la BD
+const [existingImages, setExistingImages] = useState<string[]>([]);
 
+
+  // Variable de entorno para construir la URL completa de las imágenes existentes
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+useEffect(() => {
+  if (work) {
+    const urls = work.imageUrls?.length
+      ? work.imageUrls.map(url => `${VITE_API_BASE_URL}${url}`)
+      : work.photoUrl
+      ? [`${VITE_API_BASE_URL}${work.photoUrl}`]
+      : [];
+    setExistingImages(urls);
+    setImagePreviews(urls);
+  }
+}, [work, VITE_API_BASE_URL]);
+
+useEffect(() => {
+  const loadSuggestions = async () => {
+    try {
+      const [artistsData, classificationsData, materialsData, techniquesData] = await Promise.all([
+        getArtists(),
+        getClassifications(),
+        getMaterials(),
+        getTechniques()
+      ]);
+      
+      setArtists(artistsData);
+      setClassifications(classificationsData);
+      setMaterials(materialsData);
+      setTechniques(techniquesData);
+    } catch (error) {
+      console.error('Error al cargar sugerencias:', error);
+    }
+  };
+
+  loadSuggestions();
+}, []);
+
+  // Manejador para campos de texto, sin cambios
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const keys = name.split('.');
@@ -90,64 +122,73 @@ const [formData, setFormData] = useState<Work>({
     }
   };
 
-   const handleAutocompleteChange = (fieldName: keyof Work, value: string) => {
+  // Manejador para autocompletado, sin cambios
+  const handleAutocompleteChange = (fieldName: keyof Work, value: string) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
+  // Manejador para la selección de MÚLTIPLES archivos
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
+const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files) {
+    const filesArray = Array.from(e.target.files);
 
+    // Agregar los nuevos archivos a los ya seleccionados
+    setSelectedFiles(prev => [...prev, ...filesArray]);
+
+    // Crear vistas previas para los nuevos archivos
+    const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+    setImagePreviews(prev => [...prev, ...newPreviews]);
+  }
+};
+
+
+  // ✅ ACTUALIZADO: El envío del formulario ahora adjunta múltiples imágenes
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
- const inv = formData.inventoryNumber.trim();
+  // Validación del formato MCF (sin cambios)
+  const inv = formData.inventoryNumber.trim();
   const regex = /^MCF-\d+$/;
   if (!regex.test(inv)) {
     alert("El N° de Identificación debe tener el formato MCF-(número). Ejemplo: MCF-219");
-    return; 
+    return;
   }
 
+  const dataToSend = new FormData();
 
+  // Adjuntar todos los campos de texto del formulario (sin cambios)
+  for (const [key, value] of Object.entries(formData)) {
+    if (key === 'imageUrls') continue; // No enviar el array de strings de vuelta
 
-    const dataToSend = new FormData();
+    if (value === null || value === undefined) continue;
 
-    for (const [key, value] of Object.entries(formData)) {
-      if (value === null || value === undefined) continue;
-
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        dataToSend.append(key, JSON.stringify(value));
-      } else {
-        dataToSend.append(key, String(value));
-      }
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      dataToSend.append(key, JSON.stringify(value));
+    } else {
+      dataToSend.append(key, String(value));
     }
+  }
 
-    if (imageFile) {
-      dataToSend.append('obr_url_foto', imageFile);
-    } else if (work?.photoUrl) {
-      dataToSend.append('photoUrl', work.photoUrl);
-    }
-    
-    // ✅ CORRECCIÓN: La llamada ahora coincide con la nueva definición (solo un argumento).
-    onSubmit(dataToSend);
-  };
+  // ✅ NUEVO: Adjuntar las imágenes existentes que el usuario decidió conservar
+  // Se envían como JSON para que el backend sepa cuáles mantener
+  if (existingImages.length > 0) {
+    dataToSend.append('keepImages', JSON.stringify(existingImages));
+  }
+
+  // ✅ Adjuntar cada archivo NUEVO seleccionado al FormData
+  if (selectedFiles.length > 0) {
+    selectedFiles.forEach(file => {
+      dataToSend.append('obra_imagenes', file);
+    });
+  }
+
+  onSubmit(dataToSend);
+};
+
 
   const inputClassName = "w-full px-4 py-3 border border-[#192d71]/20 rounded-lg focus:ring-2 focus:ring-[#192d71] transition-colors";
-  // Renderizado del formulario
+  
  return (
   <div className="p-4 sm:p-8 bg-gradient-to-br from-[#192d71]/5 to-white min-h-screen">
     <div className="max-w-4xl mx-auto">
@@ -308,24 +349,94 @@ const [formData, setFormData] = useState<Work>({
             </div>
           </fieldset>
 
-          {/* --- SECCIÓN FOTOGRAFÍA --- */}
-          <fieldset className="border-t-2 border-[#192d71]/20 pt-6">
-            <legend className="px-4 text-xl font-semibold text-[#192d71]">Fotografía</legend>
-            <div className="mt-4">
-              <label htmlFor="photo-upload" className="w-full flex flex-col items-center justify-center p-6 border-2 border-[#192d71]/30 border-dashed rounded-lg cursor-pointer hover:bg-[#192d71]/5">
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Vista previa de la obra" className="max-h-60 rounded-lg"/>
-                ) : (
-                  <div className="text-center text-[#192d71]">
-                    <UploadCloud className="mx-auto h-12 w-12"/>
-                    <p className="mt-2 font-semibold">Haz clic para cargar una imagen</p>
-                    <p className="text-sm">PNG, JPG, WEBP (MAX. 5MB)</p>
-                  </div>
-                )}
-              </label>
-              <input id="photo-upload" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
+          {/* --- SECCIÓN FOTOGRAFÍA (CORREGIDA) --- */}
+        {/* --- SECCIÓN FOTOGRAFÍA (MEJORADA) --- */}
+<fieldset className="border-t-4 border-b-4 border-[#192d71]/50 pt-6 pb-8 px-6 rounded-lg">
+  <legend className="text-xl font-bold text-[#192d71] px-4">Fotografía(s)</legend>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+
+    {/* Columna para subir archivos */}
+    <div>
+      <label className="block text-sm font-bold text-[#192d71] mb-2">Subir nuevas imágenes</label>
+      <div className="mt-2 flex justify-center rounded-lg border-2 border-dashed border-[#192d71]/30 px-6 py-10">
+        <div className="text-center">
+          <UploadCloud className="mx-auto h-12 w-12 text-[#192d71]/50" />
+          <div className="mt-4 flex text-sm leading-6 text-gray-600">
+            <label
+              htmlFor="file-upload"
+              className="relative cursor-pointer rounded-md font-semibold text-[#192d71] hover:text-[#1e3a8a]"
+            >
+              <span>Selecciona los archivos</span>
+              <input
+                id="file-upload"
+                name="obra_imagenes"
+                type="file"
+                className="sr-only"
+                multiple
+                onChange={handleFileChange}
+                accept="image/png, image/jpeg, image/webp"
+              />
+            </label>
+            <p className="pl-1">o arrástralos aquí</p>
+          </div>
+          <p className="text-xs leading-5 text-gray-500">PNG, JPG, WEBP hasta 10MB</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Columna para vista previa con eliminar */}
+    <div>
+      <label className="block text-sm font-bold text-[#192d71] mb-2">Vista Previa</label>
+      {(existingImages.length > 0 || selectedFiles.length > 0) ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-2 border rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
+          
+          {/* Imágenes que ya existían */}
+          {existingImages.map((url, index) => (
+            <div key={`existing-${index}`} className="relative group">
+              <img
+                src={url}
+                alt={`Imagen existente ${index + 1}`}
+                className="w-full h-28 object-cover rounded-lg shadow-md border border-gray-200"
+              />
+              <button
+                type="button"
+                onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== index))}
+                className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-80 hover:opacity-100 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-          </fieldset>
+          ))}
+
+          {/* Imágenes nuevas */}
+          {selectedFiles.map((file, index) => {
+            const src = URL.createObjectURL(file);
+            return (
+              <div key={`new-${index}`} className="relative group">
+                <img
+                  src={src}
+                  alt={`Imagen nueva ${index + 1}`}
+                  className="w-full h-28 object-cover rounded-lg shadow-md border border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}
+                  className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-80 hover:opacity-100 transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-48 border-2 border-dashed border-[#192d71]/30 rounded-lg bg-gray-50">
+          <p className="text-sm text-gray-400">Aquí aparecerán las imágenes</p>
+        </div>
+      )}
+    </div>
+  </div>
+</fieldset>
 
           {/* --- SECCIÓN ESTADO DE CONSERVACIÓN --- */}
           <fieldset className="border-t-2 border-[#192d71]/20 pt-6">

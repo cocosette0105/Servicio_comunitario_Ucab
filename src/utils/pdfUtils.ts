@@ -212,10 +212,12 @@ la obra que se describe a continuación:
    * Genera la ficha de inventario en PDF para una obra
    * @param work - Obra del museo
    */
-  static async generateWorkInventoryPDF(work: Work): Promise<void> {
+  static async generateWorkInventoryPDF(work: Work, selectedImageUrl?: string): Promise<void> {
     const doc = new jsPDF('p', 'mm', 'a4');
     const MARGIN = 15;
     const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 
     // --- Función para cargar la imagen ---
     const loadImage = (url: string): Promise<HTMLImageElement> => {
@@ -263,7 +265,7 @@ la obra que se describe a continuación:
         } catch { return 'Fecha inválida'; }
     };
 
-     const formatValue = (value?: string, currency?: string) => {
+      const formatValue = (value?: string, currency?: string) => {
         if (!value) return 'No especificado';
         return `${currency || ''} ${value}`.trim();
     };
@@ -366,7 +368,6 @@ la obra que se describe a continuación:
     // --- DIBUJO DEL PDF ---
     let currentY = addHeader(doc);
 
-    // ✅ **PASO 1: Dibujar el recuadro de la foto y cargar la imagen**
     const PHOTO_BOX_WIDTH = 60;
     const PHOTO_BOX_HEIGHT = 50;
     const PHOTO_BOX_X = PAGE_WIDTH - MARGIN - PHOTO_BOX_WIDTH;
@@ -376,10 +377,14 @@ la obra que se describe a continuación:
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.text("FOTOGRAFIA", PHOTO_BOX_X + (PHOTO_BOX_WIDTH / 2), PHOTO_BOX_Y + 5, { align: 'center' });
+    
+    // ✅ **NUEVO**: Se determina qué imagen usar
+    // Si se pasó una URL seleccionada, se usa. Si no, se usa la principal por defecto.
+    const imageUrlToUse = selectedImageUrl || (work.photoUrl ? `${VITE_API_BASE_URL}${work.photoUrl}` : null);
 
-    if (work.photoUrl) {
+    if (imageUrlToUse) {
       try {
-        const img = await loadImage(work.photoUrl);
+        const img = await loadImage(imageUrlToUse); // Se usa la URL determinada
         doc.addImage(img, 'JPEG', PHOTO_BOX_X + 1, PHOTO_BOX_Y + 8, PHOTO_BOX_WIDTH - 2, PHOTO_BOX_HEIGHT - 9, undefined, 'FAST');
       } catch (e) {
         doc.text("No se pudo cargar la imagen", PHOTO_BOX_X + (PHOTO_BOX_WIDTH / 2), PHOTO_BOX_Y + 25, { align: 'center' });
@@ -388,15 +393,14 @@ la obra que se describe a continuación:
         doc.text("Sin Fotografía", PHOTO_BOX_X + (PHOTO_BOX_WIDTH / 2), PHOTO_BOX_Y + 25, { align: 'center' });
     }
 
-    // ✅ **PASO 2: Ajustar el ancho de la caja de Identificación**
     const IDENTIFICATION_BOX_WIDTH = PAGE_WIDTH - (MARGIN * 2) - PHOTO_BOX_WIDTH - 2;
     currentY = drawSectionBox("IDENTIFICACION", [
       { label: "N° de Identificación:", value: work.inventoryNumber },
       { label: "N° anteriores:", value: work.previousNumbers }
     ], MARGIN, currentY, IDENTIFICATION_BOX_WIDTH);
 
-    currentY = Math.max(currentY, PHOTO_BOX_Y + PHOTO_BOX_HEIGHT); // Asegura que el contenido siguiente empiece debajo de la foto
-    currentY += 2; // Espacio
+    currentY = Math.max(currentY, PHOTO_BOX_Y + PHOTO_BOX_HEIGHT);
+    currentY += 2;
 
     const columnStartY = currentY;
     const leftColumnX = MARGIN;
@@ -422,18 +426,16 @@ la obra que se describe a continuación:
 
     currentY = Math.max(leftColumnEnd_Y, rightColumnEnd_Y) + 5;
 
-    // ✅ **PASO 3: Corregir los datos de Avalúo**
     currentY = drawSectionBox("DATOS TECNICOS", [
         { label: "Procedencia:", value: work.technicalData.provenance },
         { label: "Cultura/Tradición:", value: work.technicalData.culture },
-        { label: "Época/Estilo:", value: work.realizationDate }, // Este suele estar acá
+        { label: "Época/Estilo:", value: work.realizationDate },
         { label: "Valor/Moneda:", value: formatValue(work.appraisal.value, work.appraisal.currency) },
         { label: "Responsable Avalúo:", value: work.appraisal.appraiser },
         { label: "Fecha Avalúo:", value: formatDate(work.appraisal.appraisalDate) },
         { label: "Propietario Original:", value: work.technicalData.originalOwner },
     ], MARGIN, currentY, PAGE_WIDTH - (MARGIN * 2));
 
-    // --- Segunda Página ---
     doc.addPage();
     currentY = addHeader(doc);
 
