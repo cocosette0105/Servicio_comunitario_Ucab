@@ -1,34 +1,33 @@
+// frontend/src/views/LoginView.tsx
 import React, { useState } from 'react';
 import { Lock, User as UserIcon } from 'lucide-react';
-import { User } from '../models';
-import { AuthController } from '../controllers/AuthController'; // Usaremos el controlador actualizado
 
-// CORRECCIÓN 1: La función onLogin ahora espera tanto el usuario como el token.
 interface LoginViewProps {
-  onLogin: (user: User, token: string) => void;
+  onLogin: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      // CORRECCIÓN 2: Llamamos al método login del controlador, que ahora maneja la API.
-      // Este método devolverá un objeto con el usuario y el token.
-      const loginData = await AuthController.login(username, password);
-
-      if (loginData) {
-        // CORRECCIÓN 3: Pasamos ambos datos (usuario y token) a la función onLogin.
-        onLogin(loginData.user, loginData.token);
+      const result = await onLogin(username, password);
+      
+      if (!result.success) {
+        setError(result.message || 'Credenciales incorrectas. Verifique su usuario y contraseña.');
       }
+      // Si es exitoso, el componente padre manejará la navegación
     } catch (err: any) {
-      // Si el login falla, el controlador lanzará un error que capturamos aquí.
-      setError(err.message || 'Credenciales incorrectas. Verifique su usuario y contraseña.');
+      setError(err.message || 'Error de conexión. Intente nuevamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,7 +42,9 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
               <img src="/foto logo.jpg" alt="Logo Museo Carmelo Fernández" className="w-16 h-16 object-contain" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-2">Museo Carmelo Fernández</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#192d71] to-[#1e3a8a] bg-clip-text text-transparent mb-2">
+            Museo Carmelo Fernández
+          </h1>
           <p className="text-[#192d71] font-medium">Sistema de Gestión de Bóveda</p>
         </div>
 
@@ -61,6 +62,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                 className="w-full pl-12 pr-4 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60"
                 placeholder="Ingrese su usuario"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -78,6 +80,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                 className="w-full pl-12 pr-4 py-4 border-2 border-[#192d71]/20 rounded-xl focus:ring-2 focus:ring-[#192d71] focus:border-[#192d71] transition-all bg-[#192d71]/5 text-[#192d71] placeholder-[#192d71]/60"
                 placeholder="Ingrese su contraseña"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -90,14 +93,26 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#192d71] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#192d71] text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            Iniciar Sesión
+            {loading ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <span>Iniciando Sesión...</span>
+              </div>
+            ) : (
+              'Iniciar Sesión'
+            )}
           </button>
         </form>
 
         <div className="mt-8 text-center text-sm text-[#192d71] bg-[#192d71]/5 rounded-lg py-2 px-4">
-          <p>Demo: Josue / fefy1234</p>
+          <p className="text-xs text-gray-500">
+            Tu sesión se mantendrá activa mientras uses la aplicación.
+            <br />
+            Se cerrará automáticamente después de 20 minutos de inactividad.
+          </p>
         </div>
       </div>
     </div>

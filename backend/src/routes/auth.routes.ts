@@ -1,13 +1,32 @@
-// src/routes/auth.routes.ts
+// backend/src/routes/auth.routes.ts
 import { Router } from 'express';
-import { login, authenticateToken, authorize } from '../controllers/auth.controller';
+import { login, authenticateToken, refreshToken, logout, authorize } from '../controllers/auth.controller';
 
 const router = Router();
 
 // Ruta pública para iniciar sesión
 router.post('/login', login);
 
-// Ejemplo de una ruta protegida. Solo los usuarios autenticados pueden acceder.
+// Ruta para refrescar token (requiere autenticación)
+router.post('/refresh-token', authenticateToken, refreshToken);
+
+// Ruta para cerrar sesión (requiere autenticación)
+router.post('/logout', authenticateToken, logout);
+
+// Ruta para verificar el estado del token
+router.get('/verify', authenticateToken, (req, res) => {
+    res.status(200).json({
+        message: 'Token válido.',
+        user: {
+            id: req.user?.id,
+            username: req.user?.username,
+            roleId: req.user?.roleId
+        },
+        tokenStatus: 'valid'
+    });
+});
+
+// Rutas existentes
 router.get('/profile', authenticateToken, (req, res) => {
     res.json({ message: 'Acceso concedido a la información del perfil', user: req.user });
 });

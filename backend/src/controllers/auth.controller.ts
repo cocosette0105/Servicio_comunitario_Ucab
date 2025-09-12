@@ -14,6 +14,9 @@ interface UserPayload {
     id: number;
     username: string;
     roleId: number;
+    iat?: number; // Token issued at
+    exp?: number; // Token expires at
+    lastActivity?: number; // Timestamp de última actividad
 }
 
 declare global {
@@ -24,8 +27,12 @@ declare global {
     }
 }
 
+// 🔧 CONFIGURACIÓN DE TIEMPOS - EDITA AQUÍ PARA CAMBIAR LA INACTIVIDAD PERMITIDA
+const INACTIVITY_TIMEOUT = 5; // ⏰ MINUTOS de inactividad antes de cerrar sesión (cambia este valor)
+const SESSION_DURATION = 8; // HORAS de duración máxima de sesión
+const WARNING_TIME = 3; // ⚠️ MINUTOS de advertencia antes del cierre (cuando mostrar el aviso)
+
 export const login = async (req: Request, res: Response) => {
-    // ... (Tu función de login no necesita cambios)
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -62,13 +69,18 @@ export const login = async (req: Request, res: Response) => {
 
         const privileges = privilegesResult.rows.map(row => row.priv_nombre);
 
+        const now = Math.floor(Date.now() / 1000);
         const payload: UserPayload = {
             id: user.usu_id,
             username: user.usu_nombre_usuario,
             roleId: user.rol_id,
+            lastActivity: now
         };
 
-        const token = jwt.sign(payload, env.JWT_SECRET!, { expiresIn: '1h' });
+        // Token con duración máxima de sesión
+        const token = jwt.sign(payload, env.JWT_SECRET!, { 
+            expiresIn: `${SESSION_DURATION}h` 
+        });
 
         res.status(200).json({
             message: 'Inicio de sesión exitoso.',
@@ -79,6 +91,11 @@ export const login = async (req: Request, res: Response) => {
                 name: user.usu_nombre_completo,
                 role: user.rol_nombre,
                 privileges: privileges
+            },
+            sessionConfig: {
+                inactivityTimeout: INACTIVITY_TIMEOUT,
+                maxSessionDuration: SESSION_DURATION,
+                warningTime: WARNING_TIME // 📤 Enviar tiempo de advertencia al frontend
             }
         });
 
@@ -89,27 +106,61 @@ export const login = async (req: Request, res: Response) => {
 };
 
 /**
- * Middleware para proteger rutas (VERSIÓN CON DEPURACIÓN AVANZADA).
+ * Middleware para verificar inactividad - SIN RENOVACIÓN AUTOMÁTICA
+ */
+export const checkInactivity = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    if (!user) {
+        return next();
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const lastActivity = user.lastActivity || user.iat || 0;
+    const timeSinceLastActivity = now - lastActivity;
+
+    console.log(`Verificando inactividad: Última actividad hace ${Math.floor(timeSinceLastActivity / 60)} minutos`);
+
+    // Verificar si ha pasado el tiempo de inactividad - EXPIRA DEFINITIVAMENTE
+    if (timeSinceLastActivity > (INACTIVITY_TIMEOUT * 60)) {
+        console.log(`Sesión expirada por inactividad. Tiempo transcurrido: ${Math.floor(timeSinceLastActivity / 60)} minutos`);
+        return res.status(401).json({ 
+            message: 'Sesión expirada por inactividad. Debe iniciar sesión nuevamente.',
+            code: 'SESSION_EXPIRED_INACTIVITY',
+            inactivityTime: Math.floor(timeSinceLastActivity / 60),
+            forceLogout: true // Indicador para el frontend
+        });
+    }
+
+    // Continuar sin renovación automática
+    next();
+};
+
+/**
+ * Middleware para proteger rutas - SIN RENOVACIÓN
  */
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
 
-    // --- NUEVOS LOGS DE DEPURACIÓN ---
     console.log('--- [INICIO DEPURACIÓN authenticateToken] ---');
     console.log(`Ruta solicitada: ${req.method} ${req.originalUrl}`);
     console.log(`Header [authorization] completo recibido: ${authHeader}`);
-    // --- FIN DEPURACIÓN ---
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         console.log('Resultado de la depuración: Header no encontrado o no comienza con "Bearer ".');
-        return res.status(401).json({ message: 'Formato de token inválido o token no proporcionado.' });
+        return res.status(401).json({ 
+            message: 'Formato de token inválido o token no proporcionado.',
+            forceLogout: true
+        });
     }
 
     const token = authHeader.split(' ')[1];
 
     if (!token || token === 'null' || token === 'undefined') {
         console.log(`Resultado de la depuración: El token extraído es inválido (valor: ${token}).`);
-        return res.status(401).json({ message: 'Token inválido.' });
+        return res.status(401).json({ 
+            message: 'Token inválido.',
+            forceLogout: true
+        });
     }
     
     console.log('Verificando la siguiente cadena de token:', token);
@@ -117,20 +168,98 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     jwt.verify(token, env.JWT_SECRET!, (err: any, user: any) => {
         if (err) {
             console.log('Error de verificación de JWT:', err.message);
-            return res.status(403).json({ message: 'Token inválido o expirado.' });
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({ 
+                    message: 'Token expirado. Debe iniciar sesión nuevamente.',
+                    code: 'TOKEN_EXPIRED',
+                    forceLogout: true
+                });
+            }
+            return res.status(403).json({ 
+                message: 'Token inválido o expirado.',
+                forceLogout: true
+            });
         }
+        
         req.user = user as UserPayload;
         console.log('--- Token verificado exitosamente ---');
-        next();
+        
+        // Llamar al middleware de verificación de inactividad (SIN renovación)
+        checkInactivity(req, res, next);
+    });
+};
+
+/**
+ * Endpoint para refrescar token manualmente (solo si no ha expirado por inactividad)
+ */
+export const refreshToken = async (req: Request, res: Response) => {
+    const user = req.user;
+    if (!user) {
+        return res.status(401).json({ 
+            message: 'Usuario no autenticado.',
+            forceLogout: true
+        });
+    }
+
+    // Verificar que no haya expirado por inactividad ANTES de refrescar
+    const now = Math.floor(Date.now() / 1000);
+    const lastActivity = user.lastActivity || user.iat || 0;
+    const timeSinceLastActivity = now - lastActivity;
+
+    if (timeSinceLastActivity > (INACTIVITY_TIMEOUT * 60)) {
+        console.log(`No se puede refrescar: sesión expirada por inactividad`);
+        return res.status(401).json({ 
+            message: 'Sesión expirada por inactividad. No se puede refrescar.',
+            code: 'SESSION_EXPIRED_INACTIVITY',
+            forceLogout: true
+        });
+    }
+
+    try {
+        const newPayload: UserPayload = {
+            id: user.id,
+            username: user.username,
+            roleId: user.roleId,
+            lastActivity: now // Actualizar actividad al refrescar manualmente
+        };
+
+        const newToken = jwt.sign(newPayload, env.JWT_SECRET!, { 
+            expiresIn: `${SESSION_DURATION}h` 
+        });
+
+        console.log('Token refrescado manualmente para usuario:', user.username);
+
+        res.status(200).json({
+            message: 'Token refrescado exitosamente.',
+            token: newToken,
+            refreshedAt: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Error al refrescar token:', error);
+        res.status(500).json({ message: 'Error al refrescar token.' });
+    }
+};
+
+/**
+ * Endpoint para cerrar sesión
+ */
+export const logout = async (req: Request, res: Response) => {
+    console.log('Usuario desconectado:', req.user?.username);
+    
+    res.status(200).json({
+        message: 'Sesión cerrada exitosamente.'
     });
 };
 
 export const authorize = (privilegeName: string) => {
-    // ... (Tu función de authorize no necesita cambios)
     return async (req: Request, res: Response, next: NextFunction) => {
         const user = req.user;
         if (!user) {
-            return res.status(401).json({ message: 'Usuario no autenticado.' });
+            return res.status(401).json({ 
+                message: 'Usuario no autenticado.',
+                forceLogout: true
+            });
         }
 
         try {
