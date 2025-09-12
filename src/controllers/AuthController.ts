@@ -78,7 +78,7 @@ export class AuthController {
         token,
         lastActivity: Date.now(),
         sessionConfig: sessionConfig || {
-          inactivityTimeout: 5,
+          inactivityTimeout: 20,
           maxSessionDuration: 8,
           warningTime: 3
         }
