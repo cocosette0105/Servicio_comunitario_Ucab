@@ -28,7 +28,7 @@ declare global {
 }
 
 // 🔧 CONFIGURACIÓN DE TIEMPOS - EDITA AQUÍ PARA CAMBIAR LA INACTIVIDAD PERMITIDA
-const INACTIVITY_TIMEOUT = 5; // ⏰ MINUTOS de inactividad antes de cerrar sesión (cambia este valor)
+const INACTIVITY_TIMEOUT = 20; // ⏰ MINUTOS de inactividad antes de cerrar sesión (cambia este valor)
 const SESSION_DURATION = 8; // HORAS de duración máxima de sesión
 const WARNING_TIME = 3; // ⚠️ MINUTOS de advertencia antes del cierre (cuando mostrar el aviso)
 
